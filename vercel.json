@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "results.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/results", "dest": "/results.js" },
+    { "handle": "filesystem" }
+  ]
+}

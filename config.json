@@ -1,0 +1,31 @@
+{
+  "title": "Howard County Democrats",
+  "subtitle": "Election night results board",
+  "sourceUrl": "https://www.in.gov/counties/howard/files/upl/elections/2026/primary/results.html",
+  "pollSeconds": 30,
+
+  "parties": ["DEM"],
+  "hideNoCandidate": true,
+  "hideUncontested": false,
+  "hidePatterns": ["STATE CONVENTION DELEGATE"],
+
+  "featured": [
+    "DEM STATE SENATOR DIST #21",
+    "DEM US REPRESENTATIVE DIST #5",
+    "DEM COUNTY COUNCIL DIST 3",
+    "DEM COMMISSIONER DIST #1"
+  ],
+
+  "contests": {
+    "DEM STATE SENATOR DIST #21": { "name": "State Senate, District 21" },
+    "DEM US REPRESENTATIVE DIST #5": { "name": "U.S. House, District 5" },
+    "DEM COMMISSIONER DIST #1": { "name": "County Commissioner, District 1" },
+    "DEM COUNTY COUNCIL DIST 3": { "name": "County Council, District 3" }
+  },
+
+  "candidates": {
+    "J.D. FORD": "J.D. Ford",
+    "STEVEN AVITABILE AVIT": "Steven Avitabile",
+    "CHRISTOPHER (CHRIS) R. O'NEILL": "Chris O'Neill"
+  }
+}

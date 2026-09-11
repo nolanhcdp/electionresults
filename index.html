@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Election night results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1D3557;
+    --cream: #F4F1EA;
+    --amber: #C68A3A;
+    --ink: #1a1a1a;
+    --bg: var(--cream);
+    --fg: var(--navy);
+    --muted: #5e6b7c;
+    --card: #ffffff;
+    --track: #e4dfd3;
+    --bar: var(--navy);
+    --bar-lead: var(--navy);
+    --bar-trail: #9aa5b5;
+    --font: 'Newsreader', Georgia, 'Times New Roman', serif;
+  }
+  html[data-theme="dark"] {
+    --bg: #14263f;
+    --fg: var(--cream);
+    --muted: #b8c0cc;
+    --card: var(--navy);
+    --track: #2e4568;
+    --bar-lead: var(--cream);
+    --bar-trail: #6f829d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); }
+  body { padding: 20px clamp(16px, 3vw, 40px) 60px; font-size: 18px; line-height: 1.3; }
+
+  header { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; }
+  h1 { margin: 0; font-weight: 700; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.01em; line-height: 1.05; }
+  .sub { margin: 4px 0 0; font-size: 20px; color: var(--muted); }
+  .status { text-align: right; font-size: 17px; color: var(--muted); line-height: 1.45; }
+  .status b { color: var(--fg); font-weight: 600; }
+  .live { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); margin-right: 6px; vertical-align: 1px; }
+  .live.idle { background: var(--muted); }
+  .notice { background: var(--amber); color: #1a1a1a; padding: 10px 16px; margin: 0 0 20px; font-weight: 500; display: none; }
+  .notice.show { display: block; }
+
+  section { margin-bottom: 36px; }
+  h2 { font-size: 16px; font-weight: 600; color: var(--muted); margin: 0 0 12px; text-transform: none; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .grid.featured { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+
+  .race { background: var(--card); padding: 18px 20px 16px; }
+  .featured .race { padding: 24px 26px 20px; }
+  .race h3 { margin: 0 0 2px; font-size: 22px; font-weight: 600; line-height: 1.15; }
+  .featured .race h3 { font-size: 30px; }
+  .race .meta { color: var(--muted); font-size: 15px; margin-bottom: 14px; }
+  .race .note { color: var(--muted); font-size: 16px; font-style: italic; margin: -8px 0 12px; }
+
+  .cand { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 14px; align-items: baseline; padding: 6px 0 2px; }
+  .cand .name { font-size: 19px; font-weight: 500; }
+  .featured .cand .name { font-size: 24px; }
+  .cand.lead .name { font-weight: 700; }
+  .cand .votes { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 600; }
+  .featured .cand .votes { font-size: 34px; line-height: 1; }
+  .cand .pct { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 17px; min-width: 4.2ch; text-align: right; }
+  .featured .cand .pct { font-size: 20px; }
+  .bar { grid-column: 1 / -1; height: 8px; background: var(--track); }
+  .featured .bar { height: 12px; }
+  .bar i { display: block; height: 100%; background: var(--bar-trail); transition: width .6s ease; }
+  .cand.lead .bar i { background: var(--bar-lead); }
+  .cand.ours .name::after { content: ''; display: inline-block; width: 9px; height: 9px; background: var(--amber); margin-left: 8px; vertical-align: 1px; }
+
+  .margin { margin-top: 12px; font-size: 16px; color: var(--muted); }
+  .featured .margin { font-size: 19px; }
+  .margin b { color: var(--fg); font-weight: 600; }
+  .unopposed { color: var(--muted); font-size: 16px; margin-top: 8px; }
+
+  .bump { animation: bump .9s ease; }
+  @keyframes bump { 0% { background: var(--amber); } 100% { background: var(--card); } }
+
+  .tools { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  button { font: inherit; font-size: 15px; background: transparent; color: var(--muted); border: 1px solid var(--track); padding: 4px 10px; cursor: pointer; }
+  button:hover { color: var(--fg); }
+
+  footer { color: var(--muted); font-size: 14px; margin-top: 40px; }
+  footer a { color: inherit; }
+
+  /* Big-screen mode: only featured races, scaled up */
+  body.tv { font-size: 22px; padding-top: 32px; }
+  body.tv section:not(.featured-section) { display: none; }
+  body.tv .grid.featured { grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 28px; }
+  body.tv .featured .race h3 { font-size: 40px; }
+  body.tv .featured .cand .name { font-size: 32px; }
+  body.tv .featured .cand .votes { font-size: 48px; }
+  body.tv footer, body.tv .tools { display: none; }
+
+  @media (max-width: 600px) {
+    body { font-size: 17px; }
+    header { align-items: flex-start; }
+    .status { text-align: left; }
+    .featured .race { padding: 18px 18px 16px; }
+    .featured .race h3 { font-size: 24px; }
+    .featured .cand .name { font-size: 20px; }
+    .featured .cand .votes { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="title">Election night</h1>
+    <p class="sub" id="subtitle"></p>
+    <div class="tools">
+      <button id="themeBtn" type="button">Dark room</button>
+      <button id="tvBtn" type="button">Big screen</button>
+    </div>
+  </div>
+  <div class="status" id="status">Loading the clerk's report…</div>
+</header>
+<div class="notice" id="notice"></div>
+<main id="main"></main>
+<footer id="footer"></footer>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const fmt = new Intl.NumberFormat('en-US');
+  const pct = (x) => (x * 100).toFixed(1) + '%';
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  let lastGeneratedAt = null;
+  let lastCheck = null;
+  let pollMs = 30000;
+  let timer = null;
+
+  // Theme and big-screen mode, remembered per device.
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  try {
+    if (localStorage.getItem('theme') === 'dark') root.dataset.theme = 'dark';
+    if (localStorage.getItem('tv') === '1') document.body.classList.add('tv');
+  } catch (e) {}
+  if (params.has('dark')) root.dataset.theme = 'dark';
+  if (params.has('tv')) { document.body.classList.add('tv'); root.dataset.theme = 'dark'; }
+  $('#themeBtn').onclick = () => {
+    const dark = root.dataset.theme !== 'dark';
+    root.dataset.theme = dark ? 'dark' : '';
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+  };
+  $('#tvBtn').onclick = () => {
+    const on = document.body.classList.toggle('tv');
+    try { localStorage.setItem('tv', on ? '1' : '0'); } catch (e) {}
+  };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.classList.remove('tv'); try { localStorage.setItem('tv', '0'); } catch (x) {} } });
+
+  function raceCard(c) {
+    const cands = c.candidates.map((k) => `
+      <div class="cand ${k.leading && c.contested ? 'lead' : ''} ${k.ours ? 'ours' : ''}">
+        <span class="name">${esc(k.name)}</span>
+        <span class="votes">${fmt.format(k.votes)}</span>
+        <span class="pct">${c.candidateVotes ? pct(k.pct) : ''}</span>
+        <span class="bar"><i style="width:${(k.pct * 100).toFixed(1)}%"></i></span>
+      </div>`).join('');
+
+    let tail = '';
+    if (!c.contested) {
+      tail = `<div class="unopposed">Unopposed${c.voteFor > 1 ? ` (${c.voteFor} seats)` : ''}</div>`;
+    } else if (c.margin) {
+      const leader = c.candidates[c.voteFor - 1];
+      const chaser = c.candidates[c.voteFor];
+      if (c.candidateVotes === 0) tail = `<div class="margin">No votes counted yet</div>`;
+      else if (c.margin.votes === 0) tail = `<div class="margin"><b>Tied</b> between ${esc(leader.name)} and ${esc(chaser.name)}</div>`;
+      else tail = `<div class="margin"><b>${esc(leader.name)}</b> ${c.voteFor > 1 ? 'holds the last seat' : 'leads'} by <b>${fmt.format(c.margin.votes)}</b> (${pct(c.margin.pct)})</div>`;
+    }
+    const meta = [c.voteFor > 1 ? `Vote for ${c.voteFor}` : null, c.total != null ? `${fmt.format(c.total)} ballots in this race` : null].filter(Boolean).join(' · ');
+    return `<article class="race" data-id="${esc(c.id)}">
+      <h3>${esc(c.name)}</h3>
+      <div class="meta">${meta}</div>
+      ${c.note ? `<div class="note">${esc(c.note)}</div>` : ''}
+      ${cands}
+      ${tail}
+    </article>`;
+  }
+
+  function render(d) {
+    document.title = `${d.title} · results`;
+    $('#title').textContent = d.title;
+    $('#subtitle').textContent = d.subtitle || `${d.meta.jurisdiction || ''} ${d.meta.election || ''} ${d.meta.date ? '· ' + d.meta.date : ''}`.trim();
+
+    const featured = d.contests.filter((c) => c.featured);
+    const rest = d.contests.filter((c) => !c.featured);
+    const groups = new Map();
+    for (const c of rest) { if (!groups.has(c.tierLabel)) groups.set(c.tierLabel, []); groups.get(c.tierLabel).push(c); }
+
+    let html = '';
+    if (featured.length) html += `<section class="featured-section"><div class="grid featured">${featured.map(raceCard).join('')}</div></section>`;
+    for (const [label, list] of groups) html += `<section><h2>${esc(label)}</h2><div class="grid">${list.map(raceCard).join('')}</div></section>`;
+    if (!d.contests.length) html = `<p>Nothing to show yet. The report loaded but no contests matched the board's settings.</p>`;
+    $('#main').innerHTML = html;
+
+    const ballots = d.ballotsCast != null ? `<b>${fmt.format(d.ballotsCast)}</b> ballots cast` : '';
+    const turnout = d.turnout ? ` · ${esc(d.turnout)} turnout` : '';
+    $('#status').innerHTML = `${ballots}${turnout}<br>${esc((d.meta.status || '').toLowerCase().replace(/^\w/, (c) => c.toUpperCase()))}, clerk's report from <b>${esc(d.meta.generatedAt || 'unknown time')}</b><br><span class="live" id="dot"></span><span id="checked"></span>`;
+    $('#footer').innerHTML = `Numbers come straight from the Howard County Clerk's posted report (<a href="${esc(d.source)}" target="_blank" rel="noopener">source</a>), re-checked every ${Math.round(d.pollSeconds)} seconds. Showing ${d.shownCount} of ${d.contestCount} contests on the report.`;
+  }
+
+  function tickClock() {
+    const el = $('#checked');
+    if (!el || !lastCheck) return;
+    const s = Math.max(0, Math.round((Date.now() - lastCheck) / 1000));
+    el.textContent = s < 5 ? 'Checked just now' : `Checked ${s}s ago`;
+  }
+
+  async function load() {
+    try {
+      const r = await fetch('/api/results', { cache: 'no-store' });
+      const d = await r.json();
+      if (!r.ok || d.error && !d.contests) throw new Error(d.error || `HTTP ${r.status}`);
+      pollMs = (d.pollSeconds || 30) * 1000;
+      lastCheck = Date.now();
+      const changed = d.meta.generatedAt !== lastGeneratedAt;
+      if (changed) {
+        render(d);
+        if (lastGeneratedAt !== null) {
+          document.querySelectorAll('.race').forEach((el) => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); });
+        }
+        lastGeneratedAt = d.meta.generatedAt;
+      }
+      const n = $('#notice');
+      if (d.stale) { n.textContent = `The clerk's page didn't answer on the last check (${d.error}). Showing the last good numbers.`; n.classList.add('show'); }
+      else n.classList.remove('show');
+      const dot = $('#dot'); if (dot) dot.classList.remove('idle');
+    } catch (err) {
+      const n = $('#notice');
+      n.textContent = `Couldn't reach the results feed: ${err.message}. Will keep trying.`;
+      n.classList.add('show');
+      const dot = $('#dot'); if (dot) dot.classList.add('idle');
+    } finally {
+      tickClock();
+      clearTimeout(timer);
+      timer = setTimeout(load, pollMs);
+    }
+  }
+
+  setInterval(tickClock, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+  load();
+})();
+</script>
+</body>
+</html>
