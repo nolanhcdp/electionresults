@@ -13,7 +13,7 @@
 <main class="tv" id="tv"><div class="tv-loading">Loading results…</div></main>
 <div class="tv-tools" id="tools">
   <button type="button" id="fsBtn">Full screen</button>
-  <a href="/">Phone view</a>
+  <a href="/" id="phoneLink">Phone view</a>
 </div>
 <script src="/board.js"></script>
 <script>
@@ -22,6 +22,7 @@
   const el = document.getElementById('tv');
   const preview = new URLSearchParams(location.search).has('preview');
   if (preview) document.getElementById('tools').hidden = true;
+  document.getElementById('phoneLink').href = B.keep('/');
 
   let results = null, state = null;
   let page = 0, slideStart = Date.now(), slideTimer = null, lastTicker = '';
@@ -76,7 +77,7 @@
 
     el.innerHTML = `
       ${pos === 'top' ? tk : ''}
-      <header class="tv-head"><h1>Howard County Democrats</h1><div class="turn">${stats.join('')}</div></header>
+      <header class="tv-head"><h1>Howard County Democrats${B.SAMPLE ? '<span class="sample">Preview with made-up numbers</span>' : ''}</h1><div class="turn">${stats.join('')}</div></header>
       <section class="tv-body${L.wide ? ' wide' : ''}${L.none ? ' none' : ''}">
         <div class="pinned${L.wide ? ' two' : ''}" style="${pinRows}">${L.pinned.map((r) => B.tvCard(r, isFresh(r.id))).join('')}</div>
         <div class="rot">${rot}</div>
@@ -145,13 +146,13 @@
   async function pollResults() {
     let wait = 30;
     try {
-      const r = await B.getJSON('/api/results');
+      const r = await B.getJSON(B.api('/api/results'));
       wait = r.pollSeconds || 30;
       if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(false); }
     } catch (e) { /* keep showing what we have */ }
     setTimeout(pollResults, wait * 1000);
   }
-  Promise.all([B.getJSON('/api/state').then((s) => { state = s; lastRev = s.rev; }), B.getJSON('/api/results').then((r) => { results = r; lastBuilt = r.builtAt; })])
+  Promise.all([B.getJSON('/api/state').then((s) => { state = s; lastRev = s.rev; }), B.getJSON(B.api('/api/results')).then((r) => { results = r; lastBuilt = r.builtAt; })])
     .then(() => { noteChanges(); render(true); scheduleSlide(); })
     .catch((e) => { el.innerHTML = `<div class="tv-loading">Couldn't load results: ${B.esc(e.message)}. Retrying…</div>`; })
     .finally(() => { setTimeout(pollState, 5000); setTimeout(pollResults, 30000); });

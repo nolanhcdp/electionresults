@@ -92,5 +92,10 @@
     };
   }
 
-  window.Board = { LEVELS, fmt, esc, pct, pct0, timeOf, getJSON, allRaces, isBoard, stats, subLine, sig, tvCard, phoneCard, turnout };
+  // ?sample in the page address: preview November with made-up numbers.
+  const SAMPLE = new URLSearchParams(location.search).has('sample');
+  const api = (path) => (SAMPLE ? path + (path.includes('?') ? '&' : '?') + 'sample=1' : path);
+  const keep = (href) => (SAMPLE ? href + (href.includes('?') ? '&' : '?') + 'sample' : href);
+
+  window.Board = { SAMPLE, api, keep, LEVELS, fmt, esc, pct, pct0, timeOf, getJSON, allRaces, isBoard, stats, subLine, sig, tvCard, phoneCard, turnout };
 })();

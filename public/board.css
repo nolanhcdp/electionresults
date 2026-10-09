@@ -217,3 +217,7 @@ body.idle .tv-tools { opacity: 0; pointer-events: none; }
 .preview iframe { position: absolute; top: 0; left: 0; width: 1600px; height: 900px; border: 0; transform-origin: 0 0; }
 .login { max-width: 380px; margin: 12vh auto; }
 .warnbox { background: var(--surface); border: 1px solid var(--warn); color: var(--fg); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+
+/* November preview badge */
+.sample { display: inline-block; margin-left: 0.6em; padding: 0.15em 0.5em; border: 2px dashed var(--amber); color: var(--amber); font-family: var(--ui); font-size: 0.45em; font-weight: 600; vertical-align: middle; border-radius: 4px; }
+.ctl-top .sample { font-size: 14px; }

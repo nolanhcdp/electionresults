@@ -26,7 +26,7 @@
 <div id="app" hidden>
   <div class="ctl-top">
     <div><h1>Election night control</h1><p id="srcStatus">Loading…</p></div>
-    <nav><a href="/tv" target="_blank" rel="noopener">Open TV</a><a href="/" target="_blank" rel="noopener">Open phone view</a></nav>
+    <nav><a href="/tv" target="_blank" rel="noopener" id="tvLink">Open TV</a><a href="/" target="_blank" rel="noopener" id="phLink">Open phone view</a><a href="/control?sample" id="sampleLink">Preview November</a></nav>
   </div>
   <div class="ctl">
     <div class="col">
@@ -299,13 +299,21 @@
   });
 
   // ---------- data ----------
-  async function refreshResults() { try { results = await B.getJSON('/api/results'); renderAll(); } catch (e) {} }
+  async function refreshResults() { try { results = await B.getJSON(B.api('/api/results')); renderAll(); } catch (e) {} }
   let stateTimer, resultsTimer;
   async function pollState() {
     try { const s = await B.getJSON('/api/state'); if (!state || s.rev !== state.rev) { state = s; renderAll(); } } catch (e) {}
     stateTimer = setTimeout(pollState, 5000);
   }
   async function pollResults() { await refreshResults(); resultsTimer = setTimeout(pollResults, (results?.pollSeconds || 30) * 1000); }
+
+  // November preview: same controls, made-up numbers on the real November ballot.
+  if (B.SAMPLE) {
+    $('tvLink').href = '/tv?sample'; $('phLink').href = '/?sample';
+    $('sampleLink').href = '/control'; $('sampleLink').textContent = 'Back to the real board';
+    document.querySelector('#preview iframe').src = '/tv?preview&sample';
+    document.querySelector('.ctl-top h1').insertAdjacentHTML('beforeend', ' <span class="sample">Preview with made-up numbers</span>');
+  }
 
   // scale the TV preview to its box
   const frame = document.querySelector('#preview iframe');

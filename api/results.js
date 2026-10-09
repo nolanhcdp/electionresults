@@ -2,12 +2,15 @@
 // Cached at Vercel's edge for pollSeconds, so a room full of phones reaches the clerk and state at most once per interval.
 import { buildResults } from '../lib/races.js';
 import { getState, defaultState } from '../lib/db.js';
+import { previewResults } from '../lib/preview.js';
 
 export default async function handler(req, res) {
   let state;
   try { state = await getState(); } catch { state = defaultState(); }
   try {
-    const body = await buildResults(state);
+    // ?sample=1: the November ballot with made-up numbers, for previewing the board before election night.
+    const sample = new URL(req.url, 'http://x').searchParams.has('sample');
+    const body = sample ? previewResults(state) : await buildResults(state);
     res.setHeader('Cache-Control', `public, s-maxage=${body.pollSeconds}, stale-while-revalidate=120`);
     return res.status(200).json(body);
   } catch (err) {

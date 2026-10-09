@@ -56,7 +56,7 @@
   function render() {
     if (!results || !state) return;
     const t = B.turnout(results, state);
-    document.getElementById('rt').textContent = t.reportTime ? `Clerk's report from ${t.reportTime}` : "Waiting for the clerk's first report";
+    document.getElementById('rt').textContent = (B.SAMPLE ? 'Preview with made-up numbers. ' : '') + (t.reportTime ? `Clerk's report from ${t.reportTime}` : "Waiting for the clerk's first report");
 
     const banner = document.getElementById('banner');
     banner.hidden = !state.ticker;
@@ -142,13 +142,13 @@
   }
   async function pollResults() {
     let wait = 30;
-    try { const r = await B.getJSON('/api/results'); wait = r.pollSeconds || 30; if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(); } } catch (e) {}
+    try { const r = await B.getJSON(B.api('/api/results')); wait = r.pollSeconds || 30; if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(); } } catch (e) {}
     setTimeout(pollResults, wait * 1000);
   }
   // Statewide races load when someone opens Around Indiana or has starred one, then refresh every minute.
   async function pollIndiana() {
     clearTimeout(indianaTimer);
-    try { const j = await B.getJSON('/api/indiana'); if (j.builtAt !== lastIndiana) { indiana = j; lastIndiana = j.builtAt; noteChanges(); render(); } } catch (e) {}
+    try { const j = await B.getJSON(B.api('/api/indiana')); if (j.builtAt !== lastIndiana) { indiana = j; lastIndiana = j.builtAt; noteChanges(); render(); } } catch (e) {}
     indianaTimer = setTimeout(pollIndiana, 60000);
   }
   renderChips();

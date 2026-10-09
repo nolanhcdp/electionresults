@@ -7,12 +7,17 @@
 import config from '../lib/config.js';
 import { enrCategories, enrCategoryRaces, enrQuestions, seatKey } from '../lib/enr.js';
 import { BALLOT, isContested, GROUP_OF, officeName } from '../lib/ballot.js';
+import { previewIndiana } from '../lib/preview.js';
 
 const ORDER = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
 const STATE_OFFICES = /^(US Representative|United States Representative|State Senator|State Representative|Governor|Attorney General|Secretary of State|Treasurer of State|State Treasurer|Comptroller|State Comptroller|Auditor of State|US Senator|United States Senator)/i;
 const district = (seat) => Number(seat.replace(/^\D+/, '')) || 0;
 
 export default async function handler(req, res) {
+  if (new URL(req.url, 'http://x').searchParams.has('sample')) {
+    res.setHeader('Cache-Control', 'public, s-maxage=20');
+    return res.status(200).json(previewIndiana());
+  }
   try {
     let settings = null;
     try { ({ settings } = await enrCategories(config.enrBase)); } catch { /* state site down: fall back to the ballot list */ }
