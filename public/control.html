@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>HCDP Election Night · Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/board.css">
+</head>
+<body>
+<div class="ctl-wrap">
+
+<form class="panel login" id="login" hidden>
+  <h2>Election night control</h2>
+  <p>Enter the HQ code to change what's on the screens.</p>
+  <div class="stack">
+    <label for="code">Code<input id="code" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit">Log in</button>
+    <div class="err" id="loginErr" role="alert"></div>
+  </div>
+</form>
+
+<div id="app" hidden>
+  <div class="ctl-top">
+    <div><h1>Election night control</h1><p id="srcStatus">Loading…</p></div>
+    <nav><a href="/tv" target="_blank" rel="noopener">Open TV</a><a href="/" target="_blank" rel="noopener">Open phone view</a></nav>
+  </div>
+  <div class="ctl">
+    <div class="col">
+      <section class="panel">
+        <h2>Message on screens</h2>
+        <p>Shows on every TV and at the top of everyone's phone until you clear it.</p>
+        <textarea id="tickerText" maxlength="200" aria-label="Message text" placeholder="Early vote only so far."></textarea>
+        <div class="presets" id="presets">
+          <button type="button">Early vote only so far.</button>
+          <button type="button">All early vote and mail ballots are in. Election Day vote centers next.</button>
+          <button type="button">Next batch is coming from the vote centers.</button>
+          <button type="button">Clerk says the next update is about 20 minutes out.</button>
+        </div>
+        <div class="actions">
+          <label for="tickerPos" style="font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center">Show at
+            <select id="tickerPos"><option value="bottom">Bottom</option><option value="top">Top</option></select></label>
+          <button class="btn primary" id="tkPush" type="button">Push to screens</button>
+          <button class="btn" id="tkClear" type="button">Clear</button>
+        </div>
+        <div class="status" id="liveNow" role="status"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Pinned races</h2>
+        <p>Pinned races stay on the TV all night and lead everyone's phone. Up to three fit the narrow column; a fourth (or a township board, which takes two slots) switches the TV to a wider pinned block.</p>
+        <div class="err" id="pinErr" role="alert"></div>
+        <div id="raceList"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Add a race</h2>
+        <p>Pull in another race from the state's results, or type one in by hand when neither feed has it.</p>
+        <div class="stack">
+          <div class="seg" id="addMode" style="align-self:flex-start">
+            <button type="button" data-mode="state" aria-pressed="true">From state results</button>
+            <button type="button" data-mode="hand" aria-pressed="false">Enter by hand</button>
+          </div>
+          <div id="addState" class="stack">
+            <label for="catPick">Office<select id="catPick"><option value="">Loading…</option></select></label>
+            <label for="racePick">Race<select id="racePick" disabled><option value="">Pick an office first</option></select></label>
+            <label for="stateLevel">Show it under<select id="stateLevel"><option>Federal and state</option><option selected>Statehouse</option><option>County</option><option>Township and town</option></select></label>
+            <button class="btn primary" id="addStateBtn" type="button" style="align-self:flex-start" disabled>Add race</button>
+          </div>
+          <div id="addHand" class="stack" hidden>
+            <div class="row3">
+              <label for="hOffice">Office<input id="hOffice" maxlength="120" placeholder="Kokomo School Board, District 2"></label>
+              <label for="hLevel">Show it under<select id="hLevel"><option>Federal and state</option><option>Statehouse</option><option selected>County</option><option>Township and town</option></select></label>
+              <label for="hSeats">Seats<select id="hSeats"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+            </div>
+            <div class="stack" id="hCands" style="gap:6px"></div>
+            <button class="linkbtn" id="hAddCand" type="button" style="align-self:flex-start">Add another candidate</button>
+            <button class="btn primary" id="addHandBtn" type="button" style="align-self:flex-start">Add race</button>
+          </div>
+          <div class="err" id="addErr" role="alert"></div>
+        </div>
+        <div id="addedList"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel sticky">
+        <h2>TV right now</h2>
+        <p>Changes reach the TVs within about five seconds.</p>
+        <div class="preview" id="preview"><iframe src="/tv?preview" title="TV preview" tabindex="-1"></iframe></div>
+      </section>
+
+      <section class="panel">
+        <h2>Slides</h2>
+        <div class="fields">
+          <label for="slideSeconds">Seconds per slide<select id="slideSeconds"><option>8</option><option>10</option><option>12</option><option>15</option><option>20</option></select></label>
+          <label for="slideColumns">Slide width<select id="slideColumns"><option value="2">Two columns</option><option value="1">One column</option></select></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Ballots counted</h2>
+        <p>Feeds the turnout numbers at the top of the TV and phones.</p>
+        <div class="fields">
+          <label for="registered">Registered voters<input id="registered" inputmode="numeric" placeholder="From the clerk's report"></label>
+          <label for="expected">Ballots we expect in total<input id="expected" inputmode="numeric" placeholder="Your estimate"></label>
+        </div>
+        <div class="actions"><button class="btn" id="saveBallots" type="button">Save</button><span class="status" id="ballotStatus" style="margin:0"></span></div>
+        <p class="note" style="margin-top:10px">Turnout is ballots counted divided by registered voters. Leave registered voters blank to use the clerk's number when the report includes it. "Share of the vote in" only shows once you enter an expected total.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+</div>
+<script src="/board.js"></script>
+<script>
+(() => {
+  const B = window.Board;
+  const $ = (id) => document.getElementById(id);
+  let results = null, state = null;
+
+  async function change(body, errEl) {
+    if (errEl) errEl.textContent = '';
+    try {
+      state = await B.getJSON('/api/state', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      renderAll();
+      return true;
+    } catch (e) {
+      if (/Log in/.test(e.message)) { showLogin(); return false; }
+      if (errEl) errEl.textContent = e.message;
+      return false;
+    }
+  }
+
+  // ---------- login ----------
+  function showLogin() { $('app').hidden = true; $('login').hidden = false; $('code').focus(); }
+  $('login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('loginErr').textContent = '';
+    try {
+      await B.getJSON('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: $('code').value }) });
+      $('code').value = '';
+      start();
+    } catch (err) { $('loginErr').textContent = err.message; }
+  });
+
+  // ---------- rendering ----------
+  function renderAll() { renderStatus(); renderRaces(); renderTicker(); renderSettings(); renderAdded(); }
+
+  function renderStatus() {
+    if (!results) return;
+    const c = results.sources?.clerk || {};
+    const missing = results.sources?.state?.missing || [];
+    const bits = [];
+    bits.push(c.ok ? `Clerk's report from ${B.turnout(results, state).reportTime || 'unknown time'}` : `Clerk's page isn't answering${c.error ? ` (${c.error})` : ''}`);
+    bits.push(missing.length ? `${missing.length} state race${missing.length > 1 ? 's' : ''} not posted yet` : 'State results connected');
+    $('srcStatus').textContent = bits.join(' · ');
+  }
+
+  function renderRaces() {
+    const races = B.allRaces(results, state);
+    const pinned = new Set(state.pinned || []);
+    $('raceList').innerHTML = B.LEVELS.map((lv) => {
+      const list = races.filter((r) => r.level === lv);
+      if (!list.length) return '';
+      return `<div class="grouph">${lv}</div>` + list.map((r) => {
+        const { line } = B.stats(r);
+        const src = r.source === 'state' ? 'Whole district. ' : r.source === 'hand' ? 'Entered by hand. ' : '';
+        const on = pinned.has(r.id);
+        return `<div class="crow"><div><div class="o">${B.esc(r.office)}</div><div class="s">${src}${line.replace(/<\/?b>/g, '')}</div></div>
+          <button class="pinbtn" type="button" data-pin="${B.esc(r.id)}" aria-pressed="${on}">${on ? 'Pinned' : 'Pin'}</button></div>`;
+      }).join('');
+    }).join('') || '<p class="note">No races yet. Once the clerk or the state posts results they show up here.</p>';
+  }
+
+  function renderTicker() {
+    $('liveNow').innerHTML = state.ticker ? `On screens now: <b>${B.esc(state.ticker.text)}</b> (since ${B.timeOf(state.ticker.at)})` : 'No message on screens.';
+    if (document.activeElement !== $('tickerPos')) $('tickerPos').value = state.tickerPos || 'bottom';
+  }
+
+  function renderSettings() {
+    const act = document.activeElement;
+    if (act !== $('slideSeconds')) $('slideSeconds').value = String(state.slideSeconds || 12);
+    if (act !== $('slideColumns')) $('slideColumns').value = String(state.slideColumns || 2);
+    if (act !== $('registered')) $('registered').value = state.registered ? B.fmt.format(state.registered) : '';
+    if (act !== $('expected')) $('expected').value = state.expected ? B.fmt.format(state.expected) : '';
+  }
+
+  let addedRev = null;
+  function renderAdded() {
+    const box = $('addedList');
+    if (box.contains(document.activeElement)) return; // don't wipe a vote count mid-typing
+    const key = JSON.stringify([state.addedState, state.hand]);
+    if (key === addedRev) return;
+    addedRev = key;
+    const items = [
+      ...(state.addedState || []).map((a) => `<div class="added"><h3><span>${B.esc(a.name)}</span><button class="linkbtn" type="button" data-remove="${B.esc(a.id)}">Remove</button></h3><p class="note">From the state's results. Updates on its own.</p></div>`),
+      ...(state.hand || []).map((h) => `<div class="added" data-hand="${B.esc(h.id)}"><h3><span>${B.esc(h.office)}</span><button class="linkbtn" type="button" data-remove="${B.esc(h.id)}">Remove</button></h3>
+        <div class="stack" style="gap:6px">${h.cands.map((c, i) => `<div class="candrow"><input value="${B.esc(c.name)}" disabled aria-label="Candidate"><input value="${B.esc(c.party)}" disabled aria-label="Party"><input type="number" min="0" inputmode="numeric" id="hv-${B.esc(h.id)}-${i}" value="${c.votes}" aria-label="Votes for ${B.esc(c.name)}"></div>`).join('')}</div>
+        <div class="actions" style="margin-top:8px"><button class="btn" type="button" data-savehand="${B.esc(h.id)}">Save numbers</button><span class="note">Hand-entered numbers don't update on their own.</span></div></div>`),
+    ];
+    box.innerHTML = items.length ? `<h3 class="grouph" style="margin-top:20px">Races you added</h3>${items.join('')}` : '';
+  }
+
+  // ---------- events ----------
+  $('raceList').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pin]'); if (!b) return;
+    change({ op: 'pin', id: b.dataset.pin, on: b.getAttribute('aria-pressed') !== 'true' }, $('pinErr'));
+  });
+  $('presets').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) $('tickerText').value = b.textContent; });
+  $('tkPush').addEventListener('click', async () => {
+    if (await change({ op: 'ticker', text: $('tickerText').value })) $('tickerText').value = '';
+  });
+  $('tkClear').addEventListener('click', () => change({ op: 'ticker', text: '' }));
+  $('tickerPos').addEventListener('change', (e) => change({ op: 'settings', tickerPos: e.target.value }));
+  $('slideSeconds').addEventListener('change', (e) => change({ op: 'settings', slideSeconds: e.target.value }));
+  $('slideColumns').addEventListener('change', (e) => change({ op: 'settings', slideColumns: e.target.value }));
+  $('saveBallots').addEventListener('click', async () => {
+    const ok = await change({ op: 'settings', registered: $('registered').value, expected: $('expected').value }, $('ballotStatus'));
+    if (ok) { $('ballotStatus').textContent = 'Saved'; setTimeout(() => ($('ballotStatus').textContent = ''), 2500); }
+  });
+
+  // add a race
+  $('addMode').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mode]'); if (!b) return;
+    document.querySelectorAll('#addMode button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    $('addState').hidden = b.dataset.mode !== 'state';
+    $('addHand').hidden = b.dataset.mode !== 'hand';
+    $('addErr').textContent = '';
+  });
+  async function loadCats() {
+    try {
+      const j = await B.getJSON('/api/enr');
+      $('catPick').innerHTML = '<option value="">Pick an office</option>' + j.categories.map((c) => `<option value="${B.esc(c.id)}">${B.esc(c.name)}</option>`).join('');
+    } catch (e) { $('catPick').innerHTML = `<option value="">State results unavailable</option>`; }
+  }
+  $('catPick').addEventListener('change', async (e) => {
+    const cat = e.target.value;
+    $('racePick').disabled = true; $('addStateBtn').disabled = true;
+    if (!cat) { $('racePick').innerHTML = '<option value="">Pick an office first</option>'; return; }
+    $('racePick').innerHTML = '<option value="">Loading…</option>';
+    try {
+      const j = await B.getJSON('/api/enr?cat=' + encodeURIComponent(cat));
+      $('racePick').innerHTML = '<option value="">Pick a race</option>' + j.races.map((r) => `<option value="${B.esc(r.officeId)}">${B.esc(r.title)}</option>`).join('');
+      $('racePick').disabled = false;
+    } catch (err) { $('racePick').innerHTML = '<option value="">Couldn\'t load races</option>'; }
+  });
+  $('racePick').addEventListener('change', (e) => { $('addStateBtn').disabled = !e.target.value; });
+  $('addStateBtn').addEventListener('click', async () => {
+    const opt = $('racePick').selectedOptions[0];
+    if (await change({ op: 'addState', categoryId: $('catPick').value, officeId: $('racePick').value, name: opt.textContent, level: $('stateLevel').value }, $('addErr'))) {
+      refreshResults();
+    }
+  });
+
+  let seq = 0;
+  function addCandRow(party) {
+    const id = 'hc' + seq++;
+    const d = document.createElement('div');
+    d.className = 'candrow';
+    d.innerHTML = `<input id="${id}n" maxlength="80" placeholder="Candidate name" aria-label="Candidate name">
+      <select id="${id}p" aria-label="Party"><option>D</option><option>R</option><option>L</option><option>I</option></select>
+      <input id="${id}v" type="number" min="0" inputmode="numeric" placeholder="Votes" aria-label="Votes" value="0">`;
+    d.querySelector('select').value = party;
+    $('hCands').appendChild(d);
+  }
+  addCandRow('D'); addCandRow('R');
+  $('hAddCand').addEventListener('click', () => addCandRow('R'));
+  $('addHandBtn').addEventListener('click', async () => {
+    const cands = [...$('hCands').children].map((row) => ({ name: row.children[0].value, party: row.children[1].value, votes: row.children[2].value }));
+    const ok = await change({ op: 'addHand', office: $('hOffice').value, level: $('hLevel').value, voteFor: $('hSeats').value, cands }, $('addErr'));
+    if (ok) { $('hOffice').value = ''; $('hCands').innerHTML = ''; addCandRow('D'); addCandRow('R'); }
+  });
+  $('addedList').addEventListener('click', async (e) => {
+    const rm = e.target.closest('[data-remove]');
+    if (rm) {
+      if (rm.dataset.confirm !== '1') { rm.dataset.confirm = '1'; rm.textContent = 'Click again to remove'; setTimeout(() => { rm.dataset.confirm = ''; rm.textContent = 'Remove'; }, 4000); return; }
+      addedRev = null;
+      await change({ op: 'remove', id: rm.dataset.remove }, $('addErr'));
+      refreshResults();
+      return;
+    }
+    const sv = e.target.closest('[data-savehand]');
+    if (sv) {
+      const id = sv.dataset.savehand;
+      const box = sv.closest('[data-hand]');
+      const votes = [...box.querySelectorAll('input[type="number"]')].map((i) => i.value);
+      sv.disabled = true;
+      addedRev = null;
+      document.activeElement?.blur();
+      await change({ op: 'handVotes', id, votes }, $('addErr'));
+      sv.disabled = false;
+    }
+  });
+
+  // ---------- data ----------
+  async function refreshResults() { try { results = await B.getJSON('/api/results'); renderAll(); } catch (e) {} }
+  let stateTimer, resultsTimer;
+  async function pollState() {
+    try { const s = await B.getJSON('/api/state'); if (!state || s.rev !== state.rev) { state = s; renderAll(); } } catch (e) {}
+    stateTimer = setTimeout(pollState, 5000);
+  }
+  async function pollResults() { await refreshResults(); resultsTimer = setTimeout(pollResults, (results?.pollSeconds || 30) * 1000); }
+
+  // scale the TV preview to its box
+  const frame = document.querySelector('#preview iframe');
+  const scale = () => { const w = $('preview').clientWidth; frame.style.transform = `scale(${w / 1600})`; };
+  if (window.ResizeObserver) new ResizeObserver(scale).observe($('preview'));
+
+  async function start() {
+    $('login').hidden = true; $('app').hidden = false;
+    scale();
+    clearTimeout(stateTimer); clearTimeout(resultsTimer);
+    state = await B.getJSON('/api/state');
+    await pollResults();
+    renderAll();
+    pollState();
+    loadCats();
+  }
+
+  B.getJSON('/api/login').then((j) => (j.admin ? start() : showLogin())).catch(showLogin);
+})();
+</script>
+</body>
+</html>

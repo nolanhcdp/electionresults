@@ -1,11 +1,14 @@
 {
-  "name": "election-board",
-  "version": "0.1.0",
+  "name": "hcdp-election-night",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
+  "description": "Howard County Democratic Party election night results board (TV, phones, HQ control) on Vercel + Upstash",
   "scripts": {
-    "test": "node --test test/parse.test.js",
-    "fixture": "node test/build-fixture.mjs",
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.3"
   }
 }

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HCDP Election Night · TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/board.css">
+</head>
+<body class="tvpage">
+<main class="tv" id="tv"><div class="tv-loading">Loading results…</div></main>
+<div class="tv-tools" id="tools">
+  <button type="button" id="fsBtn">Full screen</button>
+  <a href="/">Phone view</a>
+</div>
+<script src="/board.js"></script>
+<script>
+(() => {
+  const B = window.Board;
+  const el = document.getElementById('tv');
+  const preview = new URLSearchParams(location.search).has('preview');
+  if (preview) document.getElementById('tools').hidden = true;
+
+  let results = null, state = null;
+  let page = 0, slideStart = Date.now(), slideTimer = null, lastTicker = '';
+  const prevSig = new Map();
+  const fresh = new Map(); // id -> time it changed
+
+  // ---------- layout ----------
+  function layout() {
+    const races = B.allRaces(results, state);
+    const byId = new Map(races.map((r) => [r.id, r]));
+    const pinned = (state?.pinned || []).map((id) => byId.get(id)).filter(Boolean);
+    const units = pinned.reduce((a, r) => a + (B.isBoard(r) ? 2 : 1), 0);
+    const none = pinned.length === 0, wide = units >= 4;
+    const two = (state?.slideColumns ?? 2) === 2;
+    const per = none ? (two ? 3 : 2) : wide ? 1 : two ? 2 : 1;
+
+    const pool = races.filter((r) => !pinned.includes(r));
+    const cols = []; let half = null;
+    for (const r of pool) {
+      if (B.isBoard(r)) cols.push({ tall: true, list: [r] });
+      else if (half) { half.list.push(r); half = null; }
+      else { half = { tall: false, list: [r] }; cols.push(half); }
+    }
+    const pages = [];
+    for (let i = 0; i < cols.length; i += per) pages.push(cols.slice(i, i + per));
+    return { pinned, none, wide, pages };
+  }
+
+  const isFresh = (id) => fresh.has(id) && Date.now() - fresh.get(id) < 4000;
+
+  function render(animate) {
+    if (!results || !state) return;
+    const L = layout();
+    if (page >= L.pages.length) page = 0;
+    const t = B.turnout(results, state);
+    const stats = [];
+    if (t.turnout != null) stats.push(`<div class="stat"><span class="big">${B.pct(t.turnout)}</span><span class="lbl">turnout so far<br>${B.fmt.format(t.ballots)} of ${B.fmt.format(t.registered)} registered</span></div>`);
+    else if (t.ballots != null) stats.push(`<div class="stat"><span class="big">${B.fmt.format(t.ballots)}</span><span class="lbl">ballots counted</span></div>`);
+    if (t.share != null) stats.push(`<div class="stat"><span class="big">${B.pct0(t.share)}</span><span class="lbl">of the expected vote is in</span><span class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></span></div>`);
+    const clerkOk = results.sources?.clerk?.ok !== false;
+    stats.push(`<div class="rt">Clerk's report<br>${t.reportTime ? `from <b>${B.esc(t.reportTime)}</b>` : 'not posted yet'}${clerkOk ? '' : '<br><span class="warn">Clerk\'s page not answering</span>'}</div>`);
+
+    const tkKey = state.ticker ? state.ticker.at + state.ticker.text : '';
+    const tkNew = tkKey !== lastTicker; lastTicker = tkKey;
+    const tk = state.ticker ? `<div class="ticker${tkNew ? '' : ' still'}"><p>${B.esc(state.ticker.text)}</p><span>From HQ, ${B.timeOf(state.ticker.at)}</span></div>` : '';
+    const pos = state.tickerPos === 'top' ? 'top' : 'bottom';
+    const pg = L.pages[page];
+    const rot = pg
+      ? `<div class="rot-page ${animate ? '' : 'still'}" style="grid-template-columns:repeat(${pg.length},1fr)">${pg.map((col) => `<div class="rcol ${col.tall ? 'tall' : ''}">${col.list.map((r) => B.tvCard(r, isFresh(r.id))).join('')}</div>`).join('')}</div>`
+      : `<div class="rot-empty">Every race on the board is pinned.</div>`;
+    const pinRows = L.wide ? '' : `grid-template-rows:${L.pinned.map((r) => (B.isBoard(r) ? '2fr' : '1fr')).join(' ')}`;
+
+    el.innerHTML = `
+      ${pos === 'top' ? tk : ''}
+      <header class="tv-head"><h1>Howard County Democrats</h1><div class="turn">${stats.join('')}</div></header>
+      <section class="tv-body${L.wide ? ' wide' : ''}${L.none ? ' none' : ''}">
+        <div class="pinned${L.wide ? ' two' : ''}" style="${pinRows}">${L.pinned.map((r) => B.tvCard(r, isFresh(r.id))).join('')}</div>
+        <div class="rot">${rot}</div>
+      </section>
+      <footer class="tv-foot${L.wide ? ' wide' : ''}${L.none ? ' none' : ''}"><span>Pinned by HQ</span>
+        <div class="pg">${L.pages.length > 1 ? `<span>Slide ${page + 1} of ${L.pages.length}</span><div class="dots">${L.pages.map((_, i) => `<i class="${i === page ? 'on' : ''}"></i>`).join('')}</div><div class="prog"><i></i></div>` : ''}</div>
+      </footer>
+      ${pos === 'bottom' ? tk : ''}`;
+    fit();
+    const bar = el.querySelector('.prog i');
+    if (bar && bar.animate) {
+      const secs = state.slideSeconds || 12, done = (Date.now() - slideStart) / 1000;
+      bar.animate([{ width: `${Math.min(100, (done / secs) * 100)}%` }, { width: '100%' }], { duration: Math.max(0, (secs - done) * 1000), fill: 'forwards' });
+    }
+  }
+
+  // ---------- auto-fit: largest text that keeps every card unclipped ----------
+  function fitGroup(cards, max) {
+    if (!cards.length) return;
+    let k = max;
+    const set = (v) => cards.forEach((c) => c.style.setProperty('--k', v.toFixed(2)));
+    const over = () => cards.some((c) => c.scrollHeight > c.clientHeight + 1);
+    set(k);
+    while (over() && k > 0.45) { k -= 0.04; set(k); }
+  }
+  function fit() {
+    el.querySelectorAll('.pinned .tcard').forEach((c) => fitGroup([c], 1.6));
+    fitGroup([...el.querySelectorAll('.rot .tcard')], 1.35);
+  }
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(el);
+  if (document.fonts?.ready) document.fonts.ready.then(fit);
+
+  // ---------- slides ----------
+  function scheduleSlide() {
+    clearTimeout(slideTimer);
+    const secs = state?.slideSeconds || 12;
+    slideTimer = setTimeout(() => {
+      const n = layout().pages.length || 1;
+      page = (page + 1) % n;
+      slideStart = Date.now();
+      render(true);
+      scheduleSlide();
+    }, Math.max(1000, secs * 1000 - (Date.now() - slideStart)));
+  }
+
+  // ---------- data ----------
+  function noteChanges() {
+    for (const r of B.allRaces(results, state)) {
+      const s = B.sig(r);
+      if (prevSig.has(r.id) && prevSig.get(r.id) !== s) fresh.set(r.id, Date.now());
+      prevSig.set(r.id, s);
+    }
+  }
+  let lastRev = null, lastBuilt = null;
+  async function pollState() {
+    try {
+      const s = await B.getJSON('/api/state');
+      const changed = s.rev !== lastRev;
+      const secsChanged = state && s.slideSeconds !== state.slideSeconds;
+      state = s; lastRev = s.rev;
+      if (changed) { noteChanges(); render(false); }
+      if (secsChanged) scheduleSlide();
+    } catch (e) { /* keep showing what we have */ }
+    setTimeout(pollState, 5000);
+  }
+  async function pollResults() {
+    let wait = 30;
+    try {
+      const r = await B.getJSON('/api/results');
+      wait = r.pollSeconds || 30;
+      if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(false); }
+    } catch (e) { /* keep showing what we have */ }
+    setTimeout(pollResults, wait * 1000);
+  }
+  Promise.all([B.getJSON('/api/state').then((s) => { state = s; lastRev = s.rev; }), B.getJSON('/api/results').then((r) => { results = r; lastBuilt = r.builtAt; })])
+    .then(() => { noteChanges(); render(true); scheduleSlide(); })
+    .catch((e) => { el.innerHTML = `<div class="tv-loading">Couldn't load results: ${B.esc(e.message)}. Retrying…</div>`; })
+    .finally(() => { setTimeout(pollState, 5000); setTimeout(pollResults, 30000); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) render(false); });
+
+  // ---------- TV niceties ----------
+  if (!preview) {
+    const fsBtn = document.getElementById('fsBtn');
+    fsBtn.onclick = () => { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); };
+    let idle;
+    const wake = () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 3000); };
+    ['mousemove', 'keydown', 'touchstart'].forEach((ev) => addEventListener(ev, wake, { passive: true }));
+    wake();
+    const lock = async () => { try { await navigator.wakeLock?.request('screen'); } catch (e) {} };
+    lock(); document.addEventListener('visibilitychange', () => { if (!document.hidden) lock(); });
+  }
+})();
+</script>
+</body>
+</html>

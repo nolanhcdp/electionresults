@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D3557">
+<title>Howard County Election Night Results</title>
+<meta name="description" content="Live election night results for Howard County, Indiana, from the Howard County Democratic Party.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/board.css">
+</head>
+<body>
+<div class="ph">
+  <header class="ph-head"><h1>Howard County results</h1><div class="rt" id="rt">Loading…</div></header>
+  <div class="ph-banner" id="banner" hidden></div>
+  <div class="ph-turn" id="turn" hidden></div>
+  <div class="ph-tools">
+    <input id="q" type="search" placeholder="Search a race or candidate" aria-label="Search races" autocomplete="off">
+    <div class="chips" id="chips">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="star" aria-pressed="false">My races</button>
+      <button type="button" data-f="Federal and state" aria-pressed="false">Federal and state</button>
+      <button type="button" data-f="Statehouse" aria-pressed="false">Statehouse</button>
+      <button type="button" data-f="County" aria-pressed="false">County</button>
+      <button type="button" data-f="Township and town" aria-pressed="false">Township</button>
+    </div>
+  </div>
+  <main class="ph-list" id="list"></main>
+  <p class="foot">Unofficial results from the Howard County Clerk and the Indiana Secretary of State, updated automatically. Paid for by Howard County Democratic Party.</p>
+</div>
+<script src="/board.js"></script>
+<script>
+(() => {
+  const B = window.Board;
+  let results = null, state = null, filter = 'all', q = '';
+  const stars = new Set();
+  try { JSON.parse(localStorage.getItem('hcdp-stars') || '[]').forEach((s) => stars.add(s)); } catch (e) {}
+  const prevSig = new Map(), fresh = new Map();
+  const isFresh = (id) => fresh.has(id) && Date.now() - fresh.get(id) < 6000;
+
+  function render() {
+    if (!results || !state) return;
+    const t = B.turnout(results, state);
+    document.getElementById('rt').textContent = t.reportTime ? `Clerk's report from ${t.reportTime}` : "Waiting for the clerk's first report";
+
+    const banner = document.getElementById('banner');
+    banner.hidden = !state.ticker;
+    if (state.ticker) banner.innerHTML = `${B.esc(state.ticker.text)}<span>From HQ, ${B.timeOf(state.ticker.at)}</span>`;
+
+    const turn = document.getElementById('turn');
+    const cells = [];
+    if (t.turnout != null) cells.push(`<div><div class="big">${B.pct(t.turnout)}</div><div class="lbl">turnout so far, ${B.fmt.format(t.ballots)} ballots</div></div>`);
+    else if (t.ballots != null) cells.push(`<div><div class="big">${B.fmt.format(t.ballots)}</div><div class="lbl">ballots counted</div></div>`);
+    if (t.share != null) cells.push(`<div><div class="big">${B.pct0(t.share)}</div><div class="lbl">of the expected vote is in</div><div class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></div></div>`);
+    turn.hidden = !cells.length;
+    turn.innerHTML = cells.join('');
+
+    const races = B.allRaces(results, state);
+    const byId = new Map(races.map((r) => [r.id, r]));
+    const needle = q.trim().toLowerCase();
+    const match = (r) => !needle || r.office.toLowerCase().includes(needle) || r.cands.some((c) => c.name.toLowerCase().includes(needle));
+    const card = (r) => B.phoneCard(r, stars.has(r.id), isFresh(r.id));
+    const sec = (title, arr) => (arr.length ? `<h2 class="ph-sec">${B.esc(title)}</h2>${arr.map(card).join('')}` : '');
+    let html = '';
+    if (filter === 'all' && !needle) {
+      const pins = (state.pinned || []).map((id) => byId.get(id)).filter(Boolean);
+      const mine = races.filter((r) => stars.has(r.id) && !pins.includes(r));
+      const rest = races.filter((r) => !pins.includes(r) && !stars.has(r.id));
+      html = sec('Pinned by HQ', pins) + sec('My races', mine) + B.LEVELS.map((lv) => sec(lv, rest.filter((r) => r.level === lv))).join('');
+    } else {
+      let list = races.filter(match);
+      if (filter === 'star') list = list.filter((r) => stars.has(r.id));
+      else if (filter !== 'all') list = list.filter((r) => r.level === filter);
+      html = list.map(card).join('');
+    }
+    if (!html) html = `<p class="empty">${filter === 'star' ? 'Tap the star on any race to keep it here.' : races.length ? 'No races match that search.' : 'No results posted yet.'}</p>`;
+    document.getElementById('list').innerHTML = html;
+  }
+
+  function noteChanges() {
+    for (const r of B.allRaces(results, state)) {
+      const s = B.sig(r);
+      if (prevSig.has(r.id) && prevSig.get(r.id) !== s) fresh.set(r.id, Date.now());
+      prevSig.set(r.id, s);
+    }
+  }
+
+  document.getElementById('q').addEventListener('input', (e) => { q = e.target.value; render(); });
+  document.getElementById('chips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-f]'); if (!b) return;
+    filter = b.dataset.f;
+    document.querySelectorAll('#chips button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    render();
+  });
+  document.getElementById('list').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-star]'); if (!b) return;
+    const id = b.dataset.star;
+    stars.has(id) ? stars.delete(id) : stars.add(id);
+    try { localStorage.setItem('hcdp-stars', JSON.stringify([...stars])); } catch (x) {}
+    render();
+  });
+
+  let lastRev = null, lastBuilt = null;
+  async function pollState() {
+    try { const s = await B.getJSON('/api/state'); if (s.rev !== lastRev) { state = s; lastRev = s.rev; noteChanges(); render(); } } catch (e) {}
+    setTimeout(pollState, 10000);
+  }
+  async function pollResults() {
+    let wait = 30;
+    try { const r = await B.getJSON('/api/results'); wait = r.pollSeconds || 30; if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(); } } catch (e) {}
+    setTimeout(pollResults, wait * 1000);
+  }
+  pollState(); pollResults();
+})();
+</script>
+</body>
+</html>
