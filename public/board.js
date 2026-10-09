@@ -67,12 +67,12 @@
   }
 
   function phoneCard(r, starred, fresh) {
-    const { sorted, line } = stats(r);
+    const { sorted, line, total } = stats(r);
     const sub = subLine(r);
     return `<article class="pcard ${fresh ? 'fresh' : ''}">
       <div class="pc-top"><div><h3>${esc(r.office)}</h3>${sub ? `<div class="psub">${sub}</div>` : ''}</div>
         <button class="star" data-star="${esc(r.id)}" aria-pressed="${starred}" aria-label="${starred ? 'Remove from' : 'Add to'} my races">${starred ? '★' : '☆'}</button></div>
-      ${sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="pseat">Top ${r.voteFor} win seats</div>` : '') + `<div class="prow ${c.lead ? 'lead' : ''}"><span class="n">${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}</span><span class="p">${pct(c.pct)}</span><span class="v">${fmt.format(c.votes)}</span>
+      ${!total ? `<p class="pnames">${r.cands.map((c) => `${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}`).join('<br>')}</p>` : sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="pseat">Top ${r.voteFor} win seats</div>` : '') + `<div class="prow ${c.lead ? 'lead' : ''}"><span class="n">${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}</span><span class="p">${pct(c.pct)}</span><span class="v">${fmt.format(c.votes)}</span>
         <span class="pbar"><i class="${partyClass(c.party)}" style="width:${(c.pct * 100).toFixed(1)}%"></i></span></div>`).join('')}
       <div class="pcall">${line}</div>${r.detail ? `<details class="pdetail"><summary>Read the question</summary><p>${esc(r.detail)}</p></details>` : ''}</article>`;
   }

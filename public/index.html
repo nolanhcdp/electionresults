@@ -45,8 +45,8 @@
   // Statewide races, minus the ones already on the Howard County board (same race, same state id).
   function indianaRaces() {
     if (!indiana) return [];
-    const onBoard = new Set(B.allRaces(results, state).map((r) => r.stateKey).filter(Boolean));
-    return indiana.races.filter((r) => !onBoard.has(r.stateKey));
+    const onBoard = new Set(B.allRaces(results, state).map((r) => r.seat).filter(Boolean));
+    return indiana.races.filter((r) => !onBoard.has(r.seat));
   }
 
   function renderChips() {
@@ -99,7 +99,7 @@
         if (filter !== 'all') list = list.filter((r) => r.group === filter);
         html = needle || filter !== 'all' ? list.map(card).join('') : GROUPS.map((g) => sec(g, list.filter((r) => r.group === g))).join('');
         if (!html) html = `<p class="empty">${indiana.races.length ? 'No races match that search.' : 'The state hasn\'t posted these races yet.'}</p>`;
-        else if (!needle && filter === 'all') html = '<p class="note" style="margin:14px 0 0">Every contested statewide, U.S. House, State Senate, and State House race in Indiana, plus statewide ballot questions, from the Secretary of State. Unopposed races are left off. Races on the Howard County tab aren\'t repeated here.</p>' + html;
+        else if (!needle && filter === 'all') html = `<p class="note" style="margin:14px 0 0">${indiana.live ? '' : 'Results start on election night. Until then, this is who is on the ballot. '}Every statewide, U.S. House, State Senate, and State House race in Indiana with both a Democrat and a Republican on the ballot, plus statewide ballot questions. Races on the Howard County tab aren't repeated here.</p>` + html;
       }
     }
     document.getElementById('list').innerHTML = html;
@@ -153,7 +153,7 @@
   }
   renderChips();
   pollState(); pollResults();
-  if ([...stars].some((s) => /^(state:\d+:|question:)/.test(s))) pollIndiana();
+  if ([...stars].some((s) => /^(seat:|question:)/.test(s))) pollIndiana();
 })();
 </script>
 </body>

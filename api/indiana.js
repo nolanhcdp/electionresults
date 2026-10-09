@@ -1,65 +1,80 @@
-// GET /api/indiana — every contested statewide office, U.S. House, State Senate, and State House race in Indiana,
-// plus statewide ballot questions, district-wide from the
-// Secretary of State's feed. Phones show these on the "Around Indiana" tab; HQ can pull any of them onto the TV
-// from /control. Cached at Vercel's edge for a minute; the state refreshes every two.
+// GET /api/indiana — the "Around Indiana" tab: every statewide, U.S. House, State Senate, and State House race
+// that is contested in November (a Democrat and a Republican both on the ballot), plus statewide ballot questions.
+//
+// Which races: the Election Division's general-election candidate list (lib/ballot.js), which already reflects
+// nominees picked by caucus after the primary. Once the state's results site switches to the general election,
+// the numbers come from there; until then each race shows its candidates with no votes yet.
 import config from '../lib/config.js';
-import { enrCategories, enrCategoryRaces, enrQuestions } from '../lib/enr.js';
+import { enrCategories, enrCategoryRaces, enrQuestions, seatKey } from '../lib/enr.js';
+import { BALLOT, isContested } from '../lib/ballot.js';
 
-const GROUPS = [
-  { group: 'Statewide', re: /^(Governor|Attorney General|Secretary of State|Treasurer of State|State Treasurer|Comptroller|State Comptroller|Auditor of State|Superintendent|US Senator|United States Senator)/i, label: null },
-  { group: 'Congress', re: /^US Representative|United States Representative/i, label: 'U.S. House' },
-  { group: 'State Senate', re: /^State Senator/i, label: 'State Senate' },
-  { group: 'State House', re: /^State Representative/i, label: 'State House' },
-];
-const ORD = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9 };
-const PARTY_LETTER = { DEM: 'D', REP: 'R', LIB: 'L', IND: 'I' };
+const GROUP_OF = (seat) => (/^CD/.test(seat) ? 'Congress' : /^SD/.test(seat) ? 'State Senate' : /^HD/.test(seat) ? 'State House' : 'Statewide');
+const ORDER = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
+const STATEWIDE_NAMES = { SOS: 'Secretary of State', TRE: 'State Treasurer', COMP: 'State Comptroller', GOV: 'Governor', AG: 'Attorney General', USSEN: 'U.S. Senate' };
+const STATE_OFFICES = /^(US Representative|United States Representative|State Senator|State Representative|Governor|Attorney General|Secretary of State|Treasurer of State|State Treasurer|Comptroller|State Comptroller|Auditor of State|US Senator|United States Senator)/i;
 
-function districtOf(title) {
-  const m = title.match(/District 0*(\d+)/i) || title.match(/\((\d+)\)/);
-  if (m) return Number(m[1]);
-  const w = title.match(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth)\s+District/i);
-  return w ? ORD[w[1].toLowerCase()] : null;
+function officeName(seat) {
+  const n = seat.replace(/^\D+/, '');
+  if (/^CD/.test(seat)) return `U.S. House, District ${n}`;
+  if (/^SD/.test(seat)) return `State Senate, District ${n}`;
+  if (/^HD/.test(seat)) return `State House, District ${n}`;
+  return STATEWIDE_NAMES[seat] || seat;
 }
+const district = (seat) => Number(seat.replace(/^\D+/, '')) || 0;
 
 export default async function handler(req, res) {
   try {
-    const { settings, cats } = await enrCategories(config.enrBase);
-    const keep = (config.primaryParties || []).map((p) => PARTY_LETTER[p] || p);
-    const races = [];
-    for (const g of GROUPS) {
-      for (const cat of cats.filter((c) => g.re.test(c.name))) {
-        const { races: list } = await enrCategoryRaces(config.enrBase, cat.id);
-        for (const r of list) {
-          const cands = settings.electionType === 'P' ? r.cands.filter((c) => keep.includes(c.party)) : r.cands;
-          if (cands.length <= r.seats) continue; // unopposed: never shown
-          const n = districtOf(r.title);
-          races.push({
-            id: `state:${cat.id}:${r.officeId}`,
-            stateKey: `${cat.id}:${r.officeId}`,
-            categoryId: cat.id,
-            officeId: r.officeId,
-            source: 'state',
-            group: g.group,
-            district: n,
-            office: g.label && n ? `${g.label}, District ${n}` : r.title,
-            scope: g.group === 'Statewide' ? 'statewide' : 'district',
-            voteFor: r.seats,
-            cands: cands.map((c) => ({ name: c.name, party: c.party, votes: c.votes })),
-          });
-        }
+    let settings = null;
+    try { ({ settings } = await enrCategories(config.enrBase)); } catch { /* state site down: fall back to the ballot list */ }
+    const live = settings && settings.electionType === 'G' && settings.election === config.electionDate;
+
+    // Seat -> election-night results, when the state has them.
+    const results = new Map();
+    let questions = [];
+    if (live) {
+      const { cats } = await enrCategories(config.enrBase);
+      for (const cat of cats.filter((c) => STATE_OFFICES.test(c.name))) {
+        const { races } = await enrCategoryRaces(config.enrBase, cat.id);
+        for (const r of races) results.set(seatKey(r.title), { ...r, categoryId: cat.id });
       }
+      questions = await enrQuestions(config.enrBase);
     }
-    for (const q of await enrQuestions(config.enrBase)) {
+
+    const races = [];
+    const seen = new Set();
+    // Every seat with a Democrat and a Republican on the November ballot.
+    for (const b of BALLOT) {
+      if (!isContested(b.cands)) continue;
+      seen.add(b.seat);
+      const r = results.get(b.seat);
       races.push({
-        id: `question:${q.id}`, stateKey: `question:${q.id}`, source: 'state', group: 'Ballot questions', scope: 'statewide',
+        id: 'seat:' + b.seat,
+        seat: b.seat,
+        source: 'state',
+        scope: GROUP_OF(b.seat) === 'Statewide' ? 'statewide' : 'district',
+        group: GROUP_OF(b.seat),
+        office: officeName(b.seat),
+        voteFor: r?.seats || 1,
+        cands: r ? r.cands : b.cands.map((c) => ({ ...c, votes: 0 })),
+        ...(r ? { stateKey: `${r.categoryId}:${r.officeId}` } : {}),
+      });
+    }
+    // On election night, anything the state reports as D vs R that the candidate list missed.
+    for (const [seat, r] of results) {
+      if (seen.has(seat) || !isContested(r.cands)) continue;
+      races.push({ id: 'seat:' + seat, seat, source: 'state', scope: GROUP_OF(seat) === 'Statewide' ? 'statewide' : 'district', group: GROUP_OF(seat), office: officeName(seat), voteFor: r.seats, cands: r.cands, stateKey: `${r.categoryId}:${r.officeId}` });
+    }
+    for (const q of questions) {
+      races.push({
+        id: `question:${q.id}`, seat: `Q${q.id}`, source: 'state', group: 'Ballot questions', scope: 'statewide',
         office: q.title, detail: q.text, voteFor: 1,
         cands: [{ name: 'Yes', party: '', votes: q.yes }, { name: 'No', party: '', votes: q.no }],
       });
     }
-    const ORDER = [...GROUPS.map((g) => g.group), 'Ballot questions'];
-    races.sort((a, b) => ORDER.indexOf(a.group) - ORDER.indexOf(b.group) || (a.district ?? 999) - (b.district ?? 999));
+    races.sort((a, b) => ORDER.indexOf(a.group) - ORDER.indexOf(b.group) || district(a.seat) - district(b.seat));
+
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=180');
-    return res.status(200).json({ election: settings.election, electionType: settings.electionType, races, builtAt: new Date().toISOString() });
+    return res.status(200).json({ live, election: settings?.election || null, races, builtAt: new Date().toISOString() });
   } catch (err) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(502).json({ error: String(err.message || err) });
