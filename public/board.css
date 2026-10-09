@@ -131,6 +131,10 @@ body.idle .tv-tools { opacity: 0; pointer-events: none; }
 .ph-turn .lbl { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 .ph-turn .meter { height: 5px; background: var(--track); margin-top: 6px; }
 .ph-turn .meter i { display: block; height: 100%; background: var(--amber); }
+.ph-tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border-bottom: 1px solid var(--line); }
+.ph-tabs button { font: 600 15px var(--ui); padding: 12px 8px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--muted); cursor: pointer; }
+.ph-tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--amber); }
+.ph-list .note { font-size: 13px; color: var(--muted); }
 .ph-tools { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .ph-tools input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 16px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -159,6 +163,9 @@ body.idle .tv-tools { opacity: 0; pointer-events: none; }
 .pcall { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .pcall b { color: var(--fg); }
 .empty { color: var(--muted); padding: 20px 0; }
+.pdetail { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.pdetail summary { cursor: pointer; color: var(--fg); font-weight: 600; }
+.pdetail p { margin: 6px 0 0; }
 .foot { color: var(--muted); font-size: 12.5px; padding: 0 16px 30px; }
 
 /* ============================ Control ============================ */

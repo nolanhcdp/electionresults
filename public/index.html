@@ -16,16 +16,13 @@
   <header class="ph-head"><h1>Howard County results</h1><div class="rt" id="rt">Loading…</div></header>
   <div class="ph-banner" id="banner" hidden></div>
   <div class="ph-turn" id="turn" hidden></div>
+  <div class="ph-tabs" role="tablist" aria-label="Which results">
+    <button type="button" role="tab" id="tab-howard" data-tab="howard" aria-selected="true">Howard County</button>
+    <button type="button" role="tab" id="tab-indiana" data-tab="indiana" aria-selected="false">Around Indiana</button>
+  </div>
   <div class="ph-tools">
     <input id="q" type="search" placeholder="Search a race or candidate" aria-label="Search races" autocomplete="off">
-    <div class="chips" id="chips">
-      <button type="button" data-f="all" aria-pressed="true">All</button>
-      <button type="button" data-f="star" aria-pressed="false">My races</button>
-      <button type="button" data-f="Federal and state" aria-pressed="false">Federal and state</button>
-      <button type="button" data-f="Statehouse" aria-pressed="false">Statehouse</button>
-      <button type="button" data-f="County" aria-pressed="false">County</button>
-      <button type="button" data-f="Township and town" aria-pressed="false">Township</button>
-    </div>
+    <div class="chips" id="chips"></div>
   </div>
   <main class="ph-list" id="list"></main>
   <p class="foot">Unofficial results from the Howard County Clerk and the Indiana Secretary of State, updated automatically. Paid for by Howard County Democratic Party.</p>
@@ -34,11 +31,27 @@
 <script>
 (() => {
   const B = window.Board;
-  let results = null, state = null, filter = 'all', q = '';
+  const CHIPS = {
+    howard: [['all', 'All'], ['star', 'My races'], ['Federal and state', 'Federal and state'], ['Statehouse', 'Statehouse'], ['County', 'County'], ['Township and town', 'Township']],
+    indiana: [['all', 'All'], ['Statewide', 'Statewide'], ['Congress', 'Congress'], ['State Senate', 'State Senate'], ['State House', 'State House'], ['Ballot questions', 'Ballot questions']],
+  };
+  const GROUPS = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
+  let results = null, state = null, indiana = null, tab = 'howard', filter = 'all', q = '';
   const stars = new Set();
   try { JSON.parse(localStorage.getItem('hcdp-stars') || '[]').forEach((s) => stars.add(s)); } catch (e) {}
   const prevSig = new Map(), fresh = new Map();
   const isFresh = (id) => fresh.has(id) && Date.now() - fresh.get(id) < 6000;
+
+  // Statewide races, minus the ones already on the Howard County board (same race, same state id).
+  function indianaRaces() {
+    if (!indiana) return [];
+    const onBoard = new Set(B.allRaces(results, state).map((r) => r.stateKey).filter(Boolean));
+    return indiana.races.filter((r) => !onBoard.has(r.stateKey));
+  }
+
+  function renderChips() {
+    document.getElementById('chips').innerHTML = CHIPS[tab].map(([f, label]) => `<button type="button" data-f="${f}" aria-pressed="${f === filter}">${label}</button>`).join('');
+  }
 
   function render() {
     if (!results || !state) return;
@@ -51,48 +64,68 @@
 
     const turn = document.getElementById('turn');
     const cells = [];
-    if (t.turnout != null) cells.push(`<div><div class="big">${B.pct(t.turnout)}</div><div class="lbl">turnout so far, ${B.fmt.format(t.ballots)} ballots</div></div>`);
-    else if (t.ballots != null) cells.push(`<div><div class="big">${B.fmt.format(t.ballots)}</div><div class="lbl">ballots counted</div></div>`);
-    if (t.share != null) cells.push(`<div><div class="big">${B.pct0(t.share)}</div><div class="lbl">of the expected vote is in</div><div class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></div></div>`);
-    turn.hidden = !cells.length;
+    if (t.turnout != null) cells.push(`<div><div class="big">${B.pct(t.turnout)}</div><div class="lbl">Howard turnout so far, ${B.fmt.format(t.ballots)} ballots</div></div>`);
+    else if (t.ballots != null) cells.push(`<div><div class="big">${B.fmt.format(t.ballots)}</div><div class="lbl">Howard ballots counted</div></div>`);
+    if (t.share != null) cells.push(`<div><div class="big">${B.pct0(t.share)}</div><div class="lbl">of the expected Howard vote is in</div><div class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></div></div>`);
+    turn.hidden = !cells.length || tab !== 'howard';
     turn.innerHTML = cells.join('');
 
-    const races = B.allRaces(results, state);
-    const byId = new Map(races.map((r) => [r.id, r]));
     const needle = q.trim().toLowerCase();
     const match = (r) => !needle || r.office.toLowerCase().includes(needle) || r.cands.some((c) => c.name.toLowerCase().includes(needle));
     const card = (r) => B.phoneCard(r, stars.has(r.id), isFresh(r.id));
     const sec = (title, arr) => (arr.length ? `<h2 class="ph-sec">${B.esc(title)}</h2>${arr.map(card).join('')}` : '');
     let html = '';
-    if (filter === 'all' && !needle) {
-      const pins = (state.pinned || []).map((id) => byId.get(id)).filter(Boolean);
-      const mine = races.filter((r) => stars.has(r.id) && !pins.includes(r));
-      const rest = races.filter((r) => !pins.includes(r) && !stars.has(r.id));
-      html = sec('Pinned by HQ', pins) + sec('My races', mine) + B.LEVELS.map((lv) => sec(lv, rest.filter((r) => r.level === lv))).join('');
+
+    if (tab === 'howard') {
+      const races = B.allRaces(results, state);
+      const byId = new Map(races.map((r) => [r.id, r]));
+      const starredIndiana = indianaRaces().filter((r) => stars.has(r.id));
+      if (filter === 'all' && !needle) {
+        const pins = (state.pinned || []).map((id) => byId.get(id)).filter(Boolean);
+        const mine = [...races.filter((r) => stars.has(r.id) && !pins.includes(r)), ...starredIndiana];
+        const rest = races.filter((r) => !pins.includes(r) && !stars.has(r.id));
+        html = sec('Pinned by HQ', pins) + sec('My races', mine) + B.LEVELS.map((lv) => sec(lv, rest.filter((r) => r.level === lv))).join('');
+      } else {
+        let list = races.filter(match);
+        if (filter === 'star') list = [...list.filter((r) => stars.has(r.id)), ...starredIndiana.filter(match)];
+        else if (filter !== 'all') list = list.filter((r) => r.level === filter);
+        html = list.map(card).join('');
+      }
+      if (!html) html = `<p class="empty">${filter === 'star' ? 'Tap the star on any race to keep it here, including races from Around Indiana.' : races.length ? 'No races match that search.' : 'No results posted yet.'}</p>`;
     } else {
-      let list = races.filter(match);
-      if (filter === 'star') list = list.filter((r) => stars.has(r.id));
-      else if (filter !== 'all') list = list.filter((r) => r.level === filter);
-      html = list.map(card).join('');
+      if (!indiana) html = '<p class="empty">Loading races from the Secretary of State…</p>';
+      else {
+        let list = indianaRaces().filter(match);
+        if (filter !== 'all') list = list.filter((r) => r.group === filter);
+        html = needle || filter !== 'all' ? list.map(card).join('') : GROUPS.map((g) => sec(g, list.filter((r) => r.group === g))).join('');
+        if (!html) html = `<p class="empty">${indiana.races.length ? 'No races match that search.' : 'The state hasn\'t posted these races yet.'}</p>`;
+        else if (!needle && filter === 'all') html = '<p class="note" style="margin:14px 0 0">Every contested statewide, U.S. House, State Senate, and State House race in Indiana, plus statewide ballot questions, from the Secretary of State. Unopposed races are left off. Races on the Howard County tab aren\'t repeated here.</p>' + html;
+      }
     }
-    if (!html) html = `<p class="empty">${filter === 'star' ? 'Tap the star on any race to keep it here.' : races.length ? 'No races match that search.' : 'No results posted yet.'}</p>`;
     document.getElementById('list').innerHTML = html;
   }
 
   function noteChanges() {
-    for (const r of B.allRaces(results, state)) {
+    const all = [...B.allRaces(results, state), ...(indiana?.races || [])];
+    for (const r of all) {
       const s = B.sig(r);
       if (prevSig.has(r.id) && prevSig.get(r.id) !== s) fresh.set(r.id, Date.now());
       prevSig.set(r.id, s);
     }
   }
 
+  document.querySelector('.ph-tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tab]'); if (!b || b.dataset.tab === tab) return;
+    tab = b.dataset.tab; filter = 'all';
+    document.querySelectorAll('.ph-tabs button').forEach((x) => x.setAttribute('aria-selected', x === b));
+    renderChips(); render();
+    if (tab === 'indiana' && !indiana) pollIndiana();
+  });
   document.getElementById('q').addEventListener('input', (e) => { q = e.target.value; render(); });
   document.getElementById('chips').addEventListener('click', (e) => {
     const b = e.target.closest('[data-f]'); if (!b) return;
     filter = b.dataset.f;
-    document.querySelectorAll('#chips button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    render();
+    renderChips(); render();
   });
   document.getElementById('list').addEventListener('click', (e) => {
     const b = e.target.closest('[data-star]'); if (!b) return;
@@ -102,7 +135,7 @@
     render();
   });
 
-  let lastRev = null, lastBuilt = null;
+  let lastRev = null, lastBuilt = null, lastIndiana = null, indianaTimer = null;
   async function pollState() {
     try { const s = await B.getJSON('/api/state'); if (s.rev !== lastRev) { state = s; lastRev = s.rev; noteChanges(); render(); } } catch (e) {}
     setTimeout(pollState, 10000);
@@ -112,7 +145,15 @@
     try { const r = await B.getJSON('/api/results'); wait = r.pollSeconds || 30; if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(); } } catch (e) {}
     setTimeout(pollResults, wait * 1000);
   }
+  // Statewide races load when someone opens Around Indiana or has starred one, then refresh every minute.
+  async function pollIndiana() {
+    clearTimeout(indianaTimer);
+    try { const j = await B.getJSON('/api/indiana'); if (j.builtAt !== lastIndiana) { indiana = j; lastIndiana = j.builtAt; noteChanges(); render(); } } catch (e) {}
+    indianaTimer = setTimeout(pollIndiana, 60000);
+  }
+  renderChips();
   pollState(); pollResults();
+  if ([...stars].some((s) => /^(state:\d+:|question:)/.test(s))) pollIndiana();
 })();
 </script>
 </body>

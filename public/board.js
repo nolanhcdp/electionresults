@@ -41,8 +41,9 @@
 
   function subLine(r) {
     const bits = [];
-    if (r.source === 'state') bits.push('Whole district');
+    if (r.source === 'state') bits.push(r.scope === 'statewide' ? 'Statewide' : 'Whole district');
     if (r.source === 'hand') bits.push('Entered by HQ');
+    if (r.source === 'clerk' && r.partial) bits.push('Howard County only');
     if (r.voteFor > 1) bits.push(`Vote for ${r.voteFor}`);
     return bits.join(' · ');
   }
@@ -73,7 +74,7 @@
         <button class="star" data-star="${esc(r.id)}" aria-pressed="${starred}" aria-label="${starred ? 'Remove from' : 'Add to'} my races">${starred ? '★' : '☆'}</button></div>
       ${sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="pseat">Top ${r.voteFor} win seats</div>` : '') + `<div class="prow ${c.lead ? 'lead' : ''}"><span class="n">${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}</span><span class="p">${pct(c.pct)}</span><span class="v">${fmt.format(c.votes)}</span>
         <span class="pbar"><i class="${partyClass(c.party)}" style="width:${(c.pct * 100).toFixed(1)}%"></i></span></div>`).join('')}
-      <div class="pcall">${line}</div></article>`;
+      <div class="pcall">${line}</div>${r.detail ? `<details class="pdetail"><summary>Read the question</summary><p>${esc(r.detail)}</p></details>` : ''}</article>`;
   }
 
   // Ballots counted, turnout (needs registered voters), and share of the expected vote (needs HQ's estimate).

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parseReport, clerkRaces, clerkMeta } from '../lib/clerk.js';
+import { parseReport, clerkRaces, clerkMeta, districtSpec } from '../lib/clerk.js';
 import config from '../lib/config.js';
 
 const html = readFileSync(new URL('./fixtures/primary-2026.html', import.meta.url), 'utf8');
@@ -18,8 +18,12 @@ test('parses the May 2026 primary report', () => {
 });
 
 test('builds board races: our party only, no unopposed, state races removed', () => {
-  const races = clerkRaces(parseReport(html), config);
+  const races = clerkRaces(parseReport(html), { ...config, hide: config.hide.filter((h) => !/DIST #4/.test(h)) });
   assert.ok(races.length > 0);
+  const cd4 = races.find((r) => r.id === 'clerk:DEM US REPRESENTATIVE DIST #4');
+  assert.equal(cd4.partial, true, 'multi-county race from the clerk is marked Howard-only');
+  assert.deepEqual(districtSpec(cd4.rawOffice).category, '^US Representative|United States Representative');
+  assert.equal(districtSpec('COUNTY COUNCIL DIST 3'), null);
   assert.ok(races.every((r) => r.cands.length > r.voteFor));
   assert.ok(!races.some((r) => /STATE SENATOR DIST #21|US REPRESENTATIVE DIST #5/.test(r.id)));
   assert.ok(!races.some((r) => /^clerk:REP /.test(r.id)));

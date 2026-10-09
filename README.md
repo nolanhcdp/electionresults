@@ -5,12 +5,12 @@ Live results board for the Howard County Democratic Party's election night HQ: a
 **Live:** (fill in after first deploy) · **TV:** `/tv` · **Control:** `/control`
 
 ## Pages
-- `/` — phone view. Pinned races first, then each person's starred races (kept on their phone), then everything by level. Search and filters.
+- `/` — phone view with two tabs. **Howard County**: pinned races first, then each person's starred races (kept on their phone), then everything by level. **Around Indiana**: every contested statewide office, U.S. House, State Senate, and State House race in the state, plus statewide ballot questions. Search, filters, and stars work on both.
 - `/tv` — the TV. Pinned races stay put on the left; every other race rotates through slides on the right. Text sizes itself so nothing clips. Four or more pinned slots (a township board counts as two) switches to a wider pinned block; nothing pinned gives the rotation the whole screen. Hit "Full screen" once; the buttons and cursor hide after a few seconds.
 - `/control` — HQ only (code login). Pin and unpin races, push a message to every screen, set slide timing and width, enter registered voters and expected ballots, add a race from the state's results or type one in by hand, and update hand-entered numbers. Includes a live TV preview.
 
 ## Where the numbers come from
-- **Howard County Clerk** (`lib/clerk.js`): the Electionware summary report. Parsed from its print-layout HTML. Handles the primary layout (party in the contest title, one TOTAL column) and the general layout (party beside each candidate, several columns). Unopposed races and precinct committee / convention delegate races never show.
+- **Howard County Clerk** (`lib/clerk.js`): the Electionware summary report. Parsed from its print-layout HTML. Handles the primary layout (party in the contest title, one TOTAL column) and the general layout (party beside each candidate, several columns). Unopposed races and precinct committee / convention delegate races never show. Any U.S. House, State Senate, or State House race on the clerk's report is swapped for its whole-district version from the state; if the state hasn't posted it yet, the clerk's numbers show labeled "Howard County only".
 - **Indiana Secretary of State** (`lib/enr.js`): the JSON behind enr.indianavoters.in.gov. Used for whole-district totals on the races listed in `stateRaces` in `lib/config.js` (CD5, SD21, HD30, HD38, Secretary of State, Treasurer, Comptroller), plus anything added from /control. Races are found by name each time because the state renumbers its categories every election. Until the state posts a race, the clerk's Howard-only numbers stay up.
 - **HQ** (`/control`): pins, the message bar, slide settings, ballots, added races. Stored in Upstash under `KV_PREFIX:state`.
 
@@ -20,6 +20,7 @@ If either site stops answering, the board keeps showing the last good numbers.
 - `public/` — `index.html` (phone), `tv.html`, `control.html`, shared `board.js` and `board.css`.
 - `api/results.js` — every race with live totals. Cached at Vercel's edge for 30 seconds.
 - `api/state.js` — GET (public) the HQ settings; POST (control login) changes them.
+- `api/indiana.js` — the Around Indiana list (cached for a minute).
 - `api/login.js`, `api/enr.js` — control login; the state's office/race lists for "Add a race".
 - `lib/config.js` — clerk URL, which races come from the state, display names, spelling fixes, defaults.
 
