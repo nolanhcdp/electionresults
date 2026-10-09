@@ -58,14 +58,14 @@
 
       <section class="panel">
         <h2>Add a race</h2>
-        <p>Pull in another race from the state's results, or type one in by hand when neither feed has it.</p>
+        <p>Pull in any race from around Indiana that has a Democrat and a Republican on the November ballot, or type one in by hand. Races from the state show whole-district results on election night.</p>
         <div class="stack">
           <div class="seg" id="addMode" style="align-self:flex-start">
             <button type="button" data-mode="state" aria-pressed="true">From state results</button>
             <button type="button" data-mode="hand" aria-pressed="false">Enter by hand</button>
           </div>
           <div id="addState" class="stack">
-            <label for="catPick">Office<select id="catPick"><option value="">Loading…</option></select></label>
+            <label for="catPick">Kind of race<select id="catPick"><option value="">Loading…</option></select></label>
             <label for="racePick">Race<select id="racePick" disabled><option value="">Pick an office first</option></select></label>
             <label for="stateLevel">Show it under<select id="stateLevel"><option>Federal and state</option><option selected>Statehouse</option><option>County</option><option>Township and town</option></select></label>
             <button class="btn primary" id="addStateBtn" type="button" style="align-self:flex-start" disabled>Add race</button>
@@ -245,14 +245,15 @@
     $('racePick').innerHTML = '<option value="">Loading…</option>';
     try {
       const j = await B.getJSON('/api/enr?cat=' + encodeURIComponent(cat));
-      $('racePick').innerHTML = '<option value="">Pick a race</option>' + j.races.map((r) => `<option value="${B.esc(r.officeId)}">${B.esc(r.title)}</option>`).join('');
+      $('racePick').innerHTML = '<option value="">Pick a race</option>' + j.races.map((r) => `<option value="${B.esc(r.seat)}" title="${B.esc(r.candidates)}">${B.esc(r.title)}</option>`).join('');
+      $('stateLevel').value = cat === 'Statewide' || cat === 'Congress' ? 'Federal and state' : 'Statehouse';
       $('racePick').disabled = false;
     } catch (err) { $('racePick').innerHTML = '<option value="">Couldn\'t load races</option>'; }
   });
   $('racePick').addEventListener('change', (e) => { $('addStateBtn').disabled = !e.target.value; });
   $('addStateBtn').addEventListener('click', async () => {
     const opt = $('racePick').selectedOptions[0];
-    if (await change({ op: 'addState', categoryId: $('catPick').value, officeId: $('racePick').value, name: opt.textContent, level: $('stateLevel').value }, $('addErr'))) {
+    if (await change({ op: 'addState', seat: $('racePick').value, name: opt.textContent, level: $('stateLevel').value }, $('addErr'))) {
       refreshResults();
     }
   });

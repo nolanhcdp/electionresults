@@ -31,10 +31,10 @@ function apply(s, b) {
       return;
     }
     case 'addState': {
-      const categoryId = str(b.categoryId, 20), officeId = str(b.officeId, 20);
-      if (!categoryId || !officeId) throw new Error('Pick a race from the list.');
-      const id = `state:${categoryId}:${officeId}`;
-      if (!s.addedState.some((a) => a.id === id)) s.addedState.push({ id, categoryId, officeId, name: str(b.name, 120) || 'Added race', level: LEVELS.includes(b.level) ? b.level : 'Statehouse' });
+      const seat = str(b.seat, 10).toUpperCase();
+      if (!/^[A-Z]{2,5}\d{0,3}$/.test(seat)) throw new Error('Pick a race from the list.');
+      const id = `state:seat:${seat}`;
+      if (!s.addedState.some((x) => x.id === id)) s.addedState.push({ id, seat, name: str(b.name, 120) || seat, level: LEVELS.includes(b.level) ? b.level : 'Statehouse' });
       return;
     }
     case 'addHand': {

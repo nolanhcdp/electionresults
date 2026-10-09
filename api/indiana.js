@@ -6,20 +6,10 @@
 // the numbers come from there; until then each race shows its candidates with no votes yet.
 import config from '../lib/config.js';
 import { enrCategories, enrCategoryRaces, enrQuestions, seatKey } from '../lib/enr.js';
-import { BALLOT, isContested } from '../lib/ballot.js';
+import { BALLOT, isContested, GROUP_OF, officeName } from '../lib/ballot.js';
 
-const GROUP_OF = (seat) => (/^CD/.test(seat) ? 'Congress' : /^SD/.test(seat) ? 'State Senate' : /^HD/.test(seat) ? 'State House' : 'Statewide');
 const ORDER = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
-const STATEWIDE_NAMES = { SOS: 'Secretary of State', TRE: 'State Treasurer', COMP: 'State Comptroller', GOV: 'Governor', AG: 'Attorney General', USSEN: 'U.S. Senate' };
 const STATE_OFFICES = /^(US Representative|United States Representative|State Senator|State Representative|Governor|Attorney General|Secretary of State|Treasurer of State|State Treasurer|Comptroller|State Comptroller|Auditor of State|US Senator|United States Senator)/i;
-
-function officeName(seat) {
-  const n = seat.replace(/^\D+/, '');
-  if (/^CD/.test(seat)) return `U.S. House, District ${n}`;
-  if (/^SD/.test(seat)) return `State Senate, District ${n}`;
-  if (/^HD/.test(seat)) return `State House, District ${n}`;
-  return STATEWIDE_NAMES[seat] || seat;
-}
 const district = (seat) => Number(seat.replace(/^\D+/, '')) || 0;
 
 export default async function handler(req, res) {
