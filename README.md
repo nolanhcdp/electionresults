@@ -7,6 +7,7 @@ Live results board for the Howard County Democratic Party's election night HQ: a
 ## Pages
 - `/` — phone view with two tabs. **Howard County**: pinned races first, then each person's starred races (kept on their phone), then everything by level. **Around Indiana**: every contested statewide office, U.S. House, State Senate, and State House race in the state, plus statewide ballot questions. Search, filters, and stars work on both.
 - `/tv` — the TV. Pinned races stay put on the left; every other race rotates through slides on the right. Text sizes itself so nothing clips. Four or more pinned slots (a township board counts as two) switches to a wider pinned block; nothing pinned gives the rotation the whole screen. Hit "Full screen" once; the buttons and cursor hide after a few seconds.
+- `/early-vote` — Howard County early vote tracker. A static, self-contained page (data built in) rebuilt from the daily VAN report by Claude and dropped into `public/early-vote.html`; redeploy to publish. Not indexed by search engines; linked from the home page footer.
 - `/control` — HQ only (code login). Pin and unpin races, push a message to every screen, set slide timing and width, enter registered voters and expected ballots, add a race from the state's results or type one in by hand, and update hand-entered numbers. Includes a live TV preview.
 
 ## Where the numbers come from
