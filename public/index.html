@@ -47,11 +47,9 @@ h1 { font-family: var(--display); font-weight: 600; font-size: clamp(38px, 7vw, 
 .choice.local h2 { font-size: 31px }
 @media (prefers-color-scheme: dark) { .choice.local { background: #1f3a63; border-color: #2c4c7c } }
 
-.hq { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 14.5px }
-.hq form { display: flex; gap: 8px; flex-wrap: wrap }
-.hq input { font: 15px var(--ui); padding: 8px 10px; width: 170px; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg) }
-.hq button, .hq a.btn { font: 600 14px var(--ui); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; text-decoration: none }
-.hq .err { color: var(--brick); font-size: 14px; width: 100% }
+.hq { margin: 0; border-top: 1px solid var(--line); padding-top: 16px; font-size: 14.5px }
+.hq a { color: var(--muted); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor }
+.hq a:hover { color: var(--fg) }
 .foot { color: var(--muted); font-size: 12.5px; margin: 0 }
 
 @media (max-width: 820px) { .choices { grid-template-columns: 1fr } .choice { min-height: 0 } }
@@ -84,35 +82,10 @@ h1 { font-family: var(--display); font-weight: 600; font-size: clamp(38px, 7vw, 
     </a>
   </nav>
 
-  <section class="hq" aria-label="HQ control">
-    <span id="hqLabel">HQ control</span>
-    <form id="login" hidden>
-      <input id="code" type="password" autocomplete="current-password" placeholder="Code" aria-label="Control code">
-      <button type="submit">Open Control</button>
-    </form>
-    <a class="btn" id="openCtl" href="/control" hidden>Open Control</a>
-    <span class="err" id="err" role="alert"></span>
-  </section>
+  <p class="hq"><a href="/control">HQ control</a></p>
 
   <p class="foot">Unofficial results from the Howard County Clerk, the Indiana Secretary of State, and civicAPI, updated automatically. Paid for by Howard County Democratic Party.</p>
 </main>
 
-<script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const show = (admin) => { $('login').hidden = admin; $('openCtl').hidden = !admin; };
-  fetch('/api/login', { cache: 'no-store', credentials: 'same-origin' }).then((r) => r.json()).then((j) => show(!!j.admin)).catch(() => show(false));
-  $('login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    $('err').textContent = '';
-    try {
-      const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ code: $('code').value }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.admin) throw new Error(j.error || "That code didn't match.");
-      location.href = '/control';
-    } catch (err) { $('err').textContent = err.message; }
-  });
-})();
-</script>
 </body>
 </html>
