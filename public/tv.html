@@ -13,7 +13,7 @@
 <main class="tv" id="tv"><div class="tv-loading">Loading results…</div></main>
 <div class="tv-tools" id="tools">
   <button type="button" id="fsBtn">Full screen</button>
-  <a href="/" id="phoneLink">Phone view</a>
+  <a href="/howard" id="phoneLink">Phone view</a>
 </div>
 <script src="/board.js"></script>
 <script>
@@ -22,7 +22,7 @@
   const el = document.getElementById('tv');
   const preview = new URLSearchParams(location.search).has('preview');
   if (preview) document.getElementById('tools').hidden = true;
-  document.getElementById('phoneLink').href = B.keep('/');
+  document.getElementById('phoneLink').href = B.keep('/howard');
 
   let results = null, state = null;
   let page = 0, slideStart = Date.now(), slideTimer = null, lastTicker = '';

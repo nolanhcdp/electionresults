@@ -26,7 +26,7 @@
 <div id="app" hidden>
   <div class="ctl-top">
     <div><h1>Election night control</h1><p id="srcStatus">Loading…</p></div>
-    <nav><a href="/tv" target="_blank" rel="noopener" id="tvLink">Open TV</a><a href="/" target="_blank" rel="noopener" id="phLink">Open phone view</a><a href="/control?sample" id="sampleLink">Preview November</a></nav>
+    <nav><a href="/tv" target="_blank" rel="noopener" id="tvLink">Open TV</a><a href="/howard" target="_blank" rel="noopener" id="phLink">Open phone view</a><a href="/national" target="_blank" rel="noopener">Open U.S. House &amp; Senate</a><a href="/">Home</a><a href="/control?sample" id="sampleLink">Preview November</a></nav>
   </div>
   <div class="ctl">
     <div class="col">
@@ -309,7 +309,7 @@
 
   // November preview: same controls, made-up numbers on the real November ballot.
   if (B.SAMPLE) {
-    $('tvLink').href = '/tv?sample'; $('phLink').href = '/?sample';
+    $('tvLink').href = '/tv?sample'; $('phLink').href = '/howard?sample';
     $('sampleLink').href = '/control'; $('sampleLink').textContent = 'Back to the real board';
     document.querySelector('#preview iframe').src = '/tv?preview&sample';
     document.querySelector('.ctl-top h1').insertAdjacentHTML('beforeend', ' <span class="sample">Preview with made-up numbers</span>');

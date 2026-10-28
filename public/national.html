@@ -35,6 +35,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* sticky strip */
 .strip { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line) }
 .strip-in { max-width: 1440px; margin: 0 auto; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: auto 1.2fr 1.2fr 1fr; gap: 12px 28px; align-items: center }
+.brand .home { display: inline-block; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none; border-bottom: 1px solid currentColor; margin-bottom: 4px }
 .brand h1 { font-family: var(--num); font-size: 24px; margin: 0; line-height: 1 }
 .brand p { margin: 3px 0 0; font-size: 12px; color: var(--muted) }
 .mock { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--hot) }
@@ -259,7 +260,7 @@ function strip() {
   const pool = house.filter((x) => x.res && x.res.pct >= 25);
   const swing = pool.reduce((a, x) => a + (x.res.margin - mg(x.m24)), 0) / (pool.length || 1);
   document.getElementById('strip').innerHTML = `
-    <div class="brand"><h1>Midterm Watch</h1><p>${DATA.anyResults ? 'Results checked' : 'Checked'} ${new Date(DATA.source.checkedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET</p>${DATA.showTest ? '<span class="mock">Test data, not real results</span>' : ''}</div>
+    <div class="brand"><a class="home" href="/">All results</a><h1>Midterm Watch</h1><p>${DATA.anyResults ? 'Results checked' : 'Checked'} ${new Date(DATA.source.checkedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET</p>${DATA.showTest ? '<span class="mock">Test data, not real results</span>' : ''}</div>
     <div class="meter"><h2>Senate <span>51 for control</span></h2>
       <div class="seatline"><span class="D">D ${sd}</span><span class="R">R ${sr}</span><small>${left} not called</small></div>
       <div class="track"><i style="width:${sd}%"></i><u style="width:${sr}%"></u><span class="mark" style="left:50.5%"></span></div></div>
@@ -356,7 +357,7 @@ function render() {
   if (!DATA) return;
   const ban = [];
   if (DATA.showTest) ban.push('Showing civicAPI test data. These are not real results.');
-  if (!DATA.source.ok) ban.push(`civicAPI isn't answering right now (${esc(DATA.source.error)}). Showing the last results we had.`);
+  if (DATA.source.stale) ban.push(`civicAPI hasn't answered for a few minutes. Showing the last results we had.`);
   document.getElementById('banner').hidden = !ban.length;
   document.getElementById('banner').innerHTML = ban.map((b) => `<div>${b}</div>`).join('');
   strip(); tiles(); left();

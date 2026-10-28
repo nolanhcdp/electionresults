@@ -4,157 +4,114 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D3557">
-<title>Howard County Election Night Results</title>
-<meta name="description" content="Live election night results for Howard County, Indiana, from the Howard County Democratic Party.">
+<title>Election Night 2026 · Howard County Democrats</title>
+<meta name="description" content="Election night results from the Howard County Democratic Party: Howard County and Indiana races, U.S. House and Senate, and the watch party display.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/board.css">
+<style>
+/* HCDP brand: Logo Navy, Cream, Harvest Amber; Newsreader (Tiempos stand-in) + Public Sans. */
+:root {
+  --navy: #1D3557; --cream: #F4F1EA; --amber: #C68A3A; --brick: #A4473A;
+  --bg: #F4F1EA; --fg: #1D3557; --muted: #5d6878; --surface: #ffffff; --line: #ddd6c8;
+  --display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --ui: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #101c2e; --fg: #F4F1EA; --muted: #a9b3c1; --surface: #182a44; --line: #2b4062; color-scheme: dark }
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 16px; line-height: 1.45 }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px }
+
+.top { background: var(--navy); color: var(--cream) }
+.top-in, .main { max-width: 980px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)) }
+.top-in { padding-block: max(28px, env(safe-area-inset-top, 0px)) 30px; display: grid; gap: 6px }
+.party { font-family: var(--display); font-size: 19px; font-weight: 500; margin: 0; opacity: .9 }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(38px, 7vw, 60px); line-height: 1.02; margin: 0; letter-spacing: -.01em; text-wrap: balance }
+.when { margin: 6px 0 0; font-size: 16px; opacity: .88 }
+.when b { color: var(--amber); font-weight: 600 }
+
+.main { padding-block: 28px 40px; display: grid; gap: 28px }
+.choices { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 14px }
+.choice { display: grid; align-content: start; gap: 8px; text-decoration: none; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px 20px 20px; min-height: 180px; transition: border-color .15s }
+.choice:hover { border-color: var(--amber) }
+.choice h2 { font-family: var(--display); font-size: 27px; font-weight: 600; line-height: 1.08; margin: 0; text-wrap: balance }
+.choice p { margin: 0; color: var(--muted); font-size: 15px }
+.choice .go { margin-top: auto; padding-top: 10px; font-weight: 600; font-size: 14.5px; color: var(--fg); border-top: 1px solid var(--line) }
+.choice.local { background: var(--navy); border-color: var(--navy); color: var(--cream) }
+.choice.local p { color: var(--cream); opacity: .85 }
+.choice.local .go { color: var(--amber); border-color: rgba(244, 241, 234, .25) }
+.choice.local h2 { font-size: 31px }
+@media (prefers-color-scheme: dark) { .choice.local { background: #1f3a63; border-color: #2c4c7c } }
+
+.hq { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 14.5px }
+.hq form { display: flex; gap: 8px; flex-wrap: wrap }
+.hq input { font: 15px var(--ui); padding: 8px 10px; width: 170px; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg) }
+.hq button, .hq a.btn { font: 600 14px var(--ui); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; text-decoration: none }
+.hq .err { color: var(--brick); font-size: 14px; width: 100% }
+.foot { color: var(--muted); font-size: 12.5px; margin: 0 }
+
+@media (max-width: 820px) { .choices { grid-template-columns: 1fr } .choice { min-height: 0 } }
+@media (prefers-reduced-motion: reduce) { .choice { transition: none } }
+</style>
 </head>
 <body>
-<div class="ph">
-  <header class="ph-head"><h1>Howard County results</h1><div class="rt" id="rt">Loading…</div></header>
-  <div class="ph-banner" id="banner" hidden></div>
-  <div class="ph-turn" id="turn" hidden></div>
-  <div class="ph-tabs" role="tablist" aria-label="Which results">
-    <button type="button" role="tab" id="tab-howard" data-tab="howard" aria-selected="true">Howard County</button>
-    <button type="button" role="tab" id="tab-indiana" data-tab="indiana" aria-selected="false">Around Indiana</button>
-  </div>
-  <div class="ph-tools">
-    <input id="q" type="search" placeholder="Search a race or candidate" aria-label="Search races" autocomplete="off">
-    <div class="chips" id="chips"></div>
-  </div>
-  <main class="ph-list" id="list"></main>
-  <p class="foot">Unofficial results from the Howard County Clerk and the Indiana Secretary of State, updated automatically. Paid for by Howard County Democratic Party.</p>
-</div>
-<script src="/board.js"></script>
+<header class="top"><div class="top-in">
+  <p class="party">Howard County Democrats</p>
+  <h1>Election Night 2026</h1>
+  <p class="when">Tuesday, November 3 · Polls close at <b>6 p.m.</b> in Howard County</p>
+</div></header>
+
+<main class="main">
+  <nav class="choices" aria-label="Choose results">
+    <a class="choice local" href="/howard">
+      <h2>Howard County &amp; Indiana</h2>
+      <p>County, township, town, and school board races, plus statewide offices, Congress, and the legislature around Indiana.</p>
+      <span class="go">See local results</span>
+    </a>
+    <a class="choice" href="/national">
+      <h2>U.S. House &amp; Senate</h2>
+      <p>Every competitive race in the country, with the forecast, live counts, and calls.</p>
+      <span class="go">See national results</span>
+    </a>
+    <a class="choice" href="/tv">
+      <h2>Watch Party Display</h2>
+      <p>The big-screen board for the TVs at the watch party.</p>
+      <span class="go">Open the display</span>
+    </a>
+  </nav>
+
+  <section class="hq" aria-label="HQ control">
+    <span id="hqLabel">HQ control</span>
+    <form id="login" hidden>
+      <input id="code" type="password" autocomplete="current-password" placeholder="Code" aria-label="Control code">
+      <button type="submit">Open Control</button>
+    </form>
+    <a class="btn" id="openCtl" href="/control" hidden>Open Control</a>
+    <span class="err" id="err" role="alert"></span>
+  </section>
+
+  <p class="foot">Unofficial results from the Howard County Clerk, the Indiana Secretary of State, and civicAPI, updated automatically. Paid for by Howard County Democratic Party.</p>
+</main>
+
 <script>
 (() => {
-  const B = window.Board;
-  const CHIPS = {
-    howard: [['all', 'All'], ['star', 'My races'], ['Federal and state', 'Federal and state'], ['Statehouse', 'Statehouse'], ['County', 'County'], ['Township and town', 'Township']],
-    indiana: [['all', 'All'], ['Statewide', 'Statewide'], ['Congress', 'Congress'], ['State Senate', 'State Senate'], ['State House', 'State House'], ['Ballot questions', 'Ballot questions']],
-  };
-  const GROUPS = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
-  let results = null, state = null, indiana = null, tab = 'howard', filter = 'all', q = '';
-  const stars = new Set();
-  try { JSON.parse(localStorage.getItem('hcdp-stars') || '[]').forEach((s) => stars.add(s)); } catch (e) {}
-  const prevSig = new Map(), fresh = new Map();
-  const isFresh = (id) => fresh.has(id) && Date.now() - fresh.get(id) < 6000;
-
-  // Statewide races, minus the ones already on the Howard County board (same race, same state id).
-  function indianaRaces() {
-    if (!indiana) return [];
-    const onBoard = new Set(B.allRaces(results, state).map((r) => r.seat).filter(Boolean));
-    return indiana.races.filter((r) => !onBoard.has(r.seat));
-  }
-
-  function renderChips() {
-    document.getElementById('chips').innerHTML = CHIPS[tab].map(([f, label]) => `<button type="button" data-f="${f}" aria-pressed="${f === filter}">${label}</button>`).join('');
-  }
-
-  function render() {
-    if (!results || !state) return;
-    const t = B.turnout(results, state);
-    document.getElementById('rt').textContent = (B.SAMPLE ? 'Preview with made-up numbers. ' : '') + (t.reportTime ? `Clerk's report from ${t.reportTime}` : "Waiting for the clerk's first report");
-
-    const banner = document.getElementById('banner');
-    banner.hidden = !state.ticker;
-    if (state.ticker) banner.innerHTML = `${B.esc(state.ticker.text)}<span>From HQ, ${B.timeOf(state.ticker.at)}</span>`;
-
-    const turn = document.getElementById('turn');
-    const cells = [];
-    if (t.turnout != null) cells.push(`<div><div class="big">${B.pct(t.turnout)}</div><div class="lbl">Howard turnout so far, ${B.fmt.format(t.ballots)} ballots</div></div>`);
-    else if (t.ballots != null) cells.push(`<div><div class="big">${B.fmt.format(t.ballots)}</div><div class="lbl">Howard ballots counted</div></div>`);
-    if (t.precincts) cells.push(`<div><div class="big">${t.precincts.n} of ${t.precincts.of}</div><div class="lbl">Election Day precincts in</div><div class="meter"><i style="width:${((t.precincts.n / t.precincts.of) * 100).toFixed(1)}%"></i></div></div>`);
-    if (t.share != null) cells.push(`<div><div class="big">${B.pct0(t.share)}</div><div class="lbl">of the expected Howard vote is in</div><div class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></div></div>`);
-    turn.hidden = !cells.length || tab !== 'howard';
-    turn.innerHTML = cells.join('');
-
-    const needle = q.trim().toLowerCase();
-    const match = (r) => !needle || r.office.toLowerCase().includes(needle) || r.cands.some((c) => c.name.toLowerCase().includes(needle));
-    const card = (r) => B.phoneCard(r, stars.has(r.id), isFresh(r.id));
-    const sec = (title, arr) => (arr.length ? `<h2 class="ph-sec">${B.esc(title)}</h2>${arr.map(card).join('')}` : '');
-    let html = '';
-
-    if (tab === 'howard') {
-      const races = B.allRaces(results, state);
-      const byId = new Map(races.map((r) => [r.id, r]));
-      const starredIndiana = indianaRaces().filter((r) => stars.has(r.id));
-      if (filter === 'all' && !needle) {
-        const pins = (state.pinned || []).map((id) => byId.get(id)).filter(Boolean);
-        const mine = [...races.filter((r) => stars.has(r.id) && !pins.includes(r)), ...starredIndiana];
-        const rest = races.filter((r) => !pins.includes(r) && !stars.has(r.id));
-        html = sec('Pinned by HQ', pins) + sec('My races', mine) + B.LEVELS.map((lv) => sec(lv, rest.filter((r) => r.level === lv))).join('');
-      } else {
-        let list = races.filter(match);
-        if (filter === 'star') list = [...list.filter((r) => stars.has(r.id)), ...starredIndiana.filter(match)];
-        else if (filter !== 'all') list = list.filter((r) => r.level === filter);
-        html = list.map(card).join('');
-      }
-      if (!html) html = `<p class="empty">${filter === 'star' ? 'Tap the star on any race to keep it here, including races from Around Indiana.' : races.length ? 'No races match that search.' : 'No results posted yet.'}</p>`;
-    } else {
-      if (!indiana) html = '<p class="empty">Loading races from the Secretary of State…</p>';
-      else {
-        let list = indianaRaces().filter(match);
-        if (filter !== 'all') list = list.filter((r) => r.group === filter);
-        html = needle || filter !== 'all' ? list.map(card).join('') : GROUPS.map((g) => sec(g, list.filter((r) => r.group === g))).join('');
-        if (!html) html = `<p class="empty">${indiana.races.length ? 'No races match that search.' : 'The state hasn\'t posted these races yet.'}</p>`;
-        else if (!needle && filter === 'all') html = `<p class="note" style="margin:14px 0 0">${indiana.live ? '' : 'Results start on election night. Until then, this is who is on the ballot. '}Every statewide, U.S. House, State Senate, and State House race in Indiana with both a Democrat and a Republican on the ballot, plus statewide ballot questions. Races on the Howard County tab aren't repeated here.</p>` + html;
-      }
-    }
-    document.getElementById('list').innerHTML = html;
-  }
-
-  function noteChanges() {
-    const all = [...B.allRaces(results, state), ...(indiana?.races || [])];
-    for (const r of all) {
-      const s = B.sig(r);
-      if (prevSig.has(r.id) && prevSig.get(r.id) !== s) fresh.set(r.id, Date.now());
-      prevSig.set(r.id, s);
-    }
-  }
-
-  document.querySelector('.ph-tabs').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-tab]'); if (!b || b.dataset.tab === tab) return;
-    tab = b.dataset.tab; filter = 'all';
-    document.querySelectorAll('.ph-tabs button').forEach((x) => x.setAttribute('aria-selected', x === b));
-    renderChips(); render();
-    if (tab === 'indiana' && !indiana) pollIndiana();
+  const $ = (id) => document.getElementById(id);
+  const show = (admin) => { $('login').hidden = admin; $('openCtl').hidden = !admin; };
+  fetch('/api/login', { cache: 'no-store', credentials: 'same-origin' }).then((r) => r.json()).then((j) => show(!!j.admin)).catch(() => show(false));
+  $('login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('err').textContent = '';
+    try {
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ code: $('code').value }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.admin) throw new Error(j.error || "That code didn't match.");
+      location.href = '/control';
+    } catch (err) { $('err').textContent = err.message; }
   });
-  document.getElementById('q').addEventListener('input', (e) => { q = e.target.value; render(); });
-  document.getElementById('chips').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-f]'); if (!b) return;
-    filter = b.dataset.f;
-    renderChips(); render();
-  });
-  document.getElementById('list').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-star]'); if (!b) return;
-    const id = b.dataset.star;
-    stars.has(id) ? stars.delete(id) : stars.add(id);
-    try { localStorage.setItem('hcdp-stars', JSON.stringify([...stars])); } catch (x) {}
-    render();
-  });
-
-  let lastRev = null, lastBuilt = null, lastIndiana = null, indianaTimer = null;
-  async function pollState() {
-    try { const s = await B.getJSON('/api/state'); if (s.rev !== lastRev) { state = s; lastRev = s.rev; noteChanges(); render(); } } catch (e) {}
-    setTimeout(pollState, 10000);
-  }
-  async function pollResults() {
-    let wait = 30;
-    try { const r = await B.getJSON(B.api('/api/results')); wait = r.pollSeconds || 30; if (r.builtAt !== lastBuilt) { results = r; lastBuilt = r.builtAt; noteChanges(); render(); } } catch (e) {}
-    setTimeout(pollResults, wait * 1000);
-  }
-  // Statewide races load when someone opens Around Indiana or has starred one, then refresh every minute.
-  async function pollIndiana() {
-    clearTimeout(indianaTimer);
-    try { const j = await B.getJSON(B.api('/api/indiana')); if (j.builtAt !== lastIndiana) { indiana = j; lastIndiana = j.builtAt; noteChanges(); render(); } } catch (e) {}
-    indianaTimer = setTimeout(pollIndiana, 60000);
-  }
-  renderChips();
-  pollState(); pollResults();
-  if ([...stars].some((s) => /^(seat:|question:)/.test(s))) pollIndiana();
 })();
 </script>
 </body>

@@ -3,17 +3,17 @@
 // ?test=1 (or NATIONAL_SHOW_TEST=1) shows civicAPI's test data, clearly labeled, to check the page before Nov. 3.
 import { FORECAST, loadCivic, shape } from '../lib/civic.js';
 
-let cache = null; // { at, map, missing, error }
+let cache = null; // { at, goodAt, map, missing, error }
 const FRESH_MS = 45_000;
 
 async function civic() {
   if (cache && Date.now() - cache.at < FRESH_MS) return cache;
   try {
     const { map, missing } = await loadCivic();
-    cache = { at: Date.now(), map, missing, error: null };
+    cache = { at: Date.now(), goodAt: Date.now(), map, missing, error: null };
   } catch (err) {
     // Keep the last good results if civicAPI hiccups.
-    cache = { at: Date.now(), map: cache?.map || new Map(), missing: cache?.missing || [], error: String(err.message || err) };
+    cache = { at: Date.now(), goodAt: cache?.goodAt || null, map: cache?.map || new Map(), missing: cache?.missing || [], error: String(err.message || err) };
   }
   return cache;
 }
@@ -39,6 +39,6 @@ export default async function handler(req, res) {
     senate,
     showTest,
     anyResults: all.some((x) => x.res),
-    source: { ok: !c.error, error: c.error, checkedAt: new Date(c.at).toISOString(), matched: c.map.size, missing: c.missing },
+    source: { ok: !c.error, error: c.error, checkedAt: new Date(c.goodAt || c.at).toISOString(), stale: !!c.error && (!c.goodAt || Date.now() - c.goodAt > 3 * 60_000), matched: c.map.size, missing: c.missing },
   });
 }
