@@ -19,13 +19,15 @@
   <div class="ph-tabs" role="tablist" aria-label="Which results">
     <button type="button" role="tab" id="tab-howard" data-tab="howard" aria-selected="true">Howard County</button>
     <button type="button" role="tab" id="tab-indiana" data-tab="indiana" aria-selected="false">Around Indiana</button>
+    <button type="button" role="tab" id="tab-county" data-tab="county" aria-selected="false">Other counties</button>
   </div>
   <div class="ph-tools">
+    <select id="county" aria-label="County" hidden></select>
     <input id="q" type="search" placeholder="Search a race or candidate" aria-label="Search races" autocomplete="off">
     <div class="chips" id="chips"></div>
   </div>
   <main class="ph-list" id="list"></main>
-  <p class="foot">Unofficial results from the Howard County Clerk and the Indiana Secretary of State, updated automatically. Paid for by Howard County Democratic Party.</p>
+  <p class="foot">Unofficial results from the Howard County Clerk and the Indiana Secretary of State, updated automatically, with backup counts, county breakdowns, and other counties from <a href="https://civicapi.org" target="_blank" rel="noopener" style="color:inherit">civicAPI</a>. Paid for by Howard County Democratic Party.</p>
 </div>
 <script src="/board.js"></script>
 <script>
@@ -33,9 +35,16 @@
   const B = window.Board;
   const CHIPS = {
     howard: [['all', 'All'], ['star', 'My races'], ['Federal and state', 'Federal and state'], ['Statehouse', 'Statehouse'], ['County', 'County'], ['Township and town', 'Township']],
+    county: [['all', 'All'], ['County', 'County'], ['Townships', 'Townships'], ['School boards', 'School boards'], ['Cities and towns', 'Cities and towns'], ['Courts', 'Courts'], ['Questions', 'Questions']],
     indiana: [['all', 'All'], ['Statewide', 'Statewide'], ['Congress', 'Congress'], ['State Senate', 'State Senate'], ['State House', 'State House'], ['Ballot questions', 'Ballot questions']],
   };
   const GROUPS = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
+  const COUNTY_GROUPS = ['County', 'Courts', 'Cities and towns', 'Townships', 'School boards', 'Questions', 'Other'];
+  const COUNTIES = ['Adams', 'Allen', 'Bartholomew', 'Benton', 'Blackford', 'Boone', 'Brown', 'Carroll', 'Cass', 'Clark', 'Clay', 'Clinton', 'Crawford', 'Daviess', 'Dearborn', 'Decatur', 'DeKalb', 'Delaware', 'Dubois', 'Elkhart', 'Fayette', 'Floyd', 'Fountain', 'Franklin', 'Fulton', 'Gibson', 'Grant', 'Greene', 'Hamilton', 'Hancock', 'Harrison', 'Hendricks', 'Henry', 'Huntington', 'Jackson', 'Jasper', 'Jay', 'Jefferson', 'Jennings', 'Johnson', 'Knox', 'Kosciusko', 'LaGrange', 'Lake', 'LaPorte', 'Lawrence', 'Madison', 'Marion', 'Marshall', 'Martin', 'Miami', 'Monroe', 'Montgomery', 'Morgan', 'Newton', 'Noble', 'Ohio', 'Orange', 'Owen', 'Parke', 'Perry', 'Pike', 'Porter', 'Posey', 'Pulaski', 'Putnam', 'Randolph', 'Ripley', 'Rush', 'St. Joseph', 'Scott', 'Shelby', 'Spencer', 'Starke', 'Steuben', 'Sullivan', 'Switzerland', 'Tippecanoe', 'Tipton', 'Union', 'Vanderburgh', 'Vermillion', 'Vigo', 'Wabash', 'Warren', 'Warrick', 'Washington', 'Wayne', 'Wells', 'White', 'Whitley'];
+  let county = null, countyData = null, countyTimer = null;
+  try { county = localStorage.getItem('hcdp-county') || null; } catch (e) {}
+  const sel = document.getElementById('county');
+  sel.innerHTML = `<option value="">Pick a county…</option>` + COUNTIES.map((c) => `<option${c === county ? ' selected' : ''}>${c}</option>`).join('');
   let results = null, state = null, indiana = null, tab = 'howard', filter = 'all', q = '';
   const stars = new Set();
   try { JSON.parse(localStorage.getItem('hcdp-stars') || '[]').forEach((s) => stars.add(s)); } catch (e) {}
@@ -93,6 +102,17 @@
         html = list.map(card).join('');
       }
       if (!html) html = `<p class="empty">${filter === 'star' ? 'Tap the star on any race to keep it here, including races from Around Indiana.' : races.length ? 'No races match that search.' : 'No results posted yet.'}</p>`;
+    } else if (tab === 'county') {
+      if (!county) html = '<p class="empty">Pick a county to see its contested local races: county offices, townships, towns, school boards, and local questions.</p>';
+      else if (!countyData || countyData.county !== county) html = `<p class="empty">Loading ${B.esc(county)} County…</p>`;
+      else if (countyData.error) html = `<p class="empty">${B.esc(countyData.error)}</p>`;
+      else {
+        let list = countyData.races.filter(match);
+        if (filter !== 'all') list = list.filter((r) => r.group === filter);
+        html = needle || filter !== 'all' ? list.map(card).join('') : COUNTY_GROUPS.map((g) => sec(g, list.filter((r) => r.group === g))).join('');
+        if (!html) html = `<p class="empty">${countyData.races.length ? 'No races match.' : `No contested races in ${B.esc(county)} County this year.`}</p>`;
+        else if (!needle && filter === 'all') html = `<p class="note" style="margin:14px 0 0">${countyData.test ? 'Practice numbers from civicAPI, not real results. ' : countyData.live ? '' : 'Results start after polls close on election night. '}Contested races in ${B.esc(county)} County, from civicAPI. The county clerk's official count may be ahead of these numbers.</p>` + html;
+      }
     } else {
       if (!indiana) html = '<p class="empty">Loading races from the Secretary of State…</p>';
       else {
@@ -107,7 +127,7 @@
   }
 
   function noteChanges() {
-    const all = [...B.allRaces(results, state), ...(indiana?.races || [])];
+    const all = [...B.allRaces(results, state), ...(indiana?.races || []), ...(countyData?.races || [])];
     for (const r of all) {
       const s = B.sig(r);
       if (prevSig.has(r.id) && prevSig.get(r.id) !== s) fresh.set(r.id, Date.now());
@@ -119,8 +139,15 @@
     const b = e.target.closest('[data-tab]'); if (!b || b.dataset.tab === tab) return;
     tab = b.dataset.tab; filter = 'all';
     document.querySelectorAll('.ph-tabs button').forEach((x) => x.setAttribute('aria-selected', x === b));
+    sel.hidden = tab !== 'county';
     renderChips(); render();
     if (tab === 'indiana' && !indiana) pollIndiana();
+    if (tab === 'county') pollCounty();
+  });
+  sel.addEventListener('change', () => {
+    county = sel.value || null; countyData = null; filter = 'all';
+    try { county ? localStorage.setItem('hcdp-county', county) : localStorage.removeItem('hcdp-county'); } catch (e) {}
+    renderChips(); render(); pollCounty();
   });
   document.getElementById('q').addEventListener('input', (e) => { q = e.target.value; render(); });
   document.getElementById('chips').addEventListener('click', (e) => {
@@ -129,6 +156,7 @@
     renderChips(); render();
   });
   document.getElementById('list').addEventListener('click', (e) => {
+    const pb = e.target.closest('[data-panel]'); if (pb) return B.togglePanel(pb, render);
     const b = e.target.closest('[data-star]'); if (!b) return;
     const id = b.dataset.star;
     stars.has(id) ? stars.delete(id) : stars.add(id);
@@ -151,6 +179,17 @@
     clearTimeout(indianaTimer);
     try { const j = await B.getJSON(B.api('/api/indiana')); if (j.builtAt !== lastIndiana) { indiana = j; lastIndiana = j.builtAt; noteChanges(); render(); } } catch (e) {}
     indianaTimer = setTimeout(pollIndiana, 60000);
+  }
+  // A county's races load when that tab is open, then refresh every minute while it stays open.
+  async function pollCounty() {
+    clearTimeout(countyTimer);
+    if (tab !== 'county' || !county) return;
+    const want = county;
+    try {
+      const j = await fetch(`/api/county?c=${encodeURIComponent(want)}${B.SAMPLE ? '&test=1' : ''}`, { cache: 'no-store' }).then(async (r) => (r.ok ? r.json() : { county: want, error: (await r.json().catch(() => ({}))).error || "Couldn't load that county." }));
+      if (want === county) { countyData = j; noteChanges(); render(); }
+    } catch (e) { if (want === county) { countyData = { county: want, error: "Couldn't load that county. Trying again shortly." }; render(); } }
+    countyTimer = setTimeout(pollCounty, 60000);
   }
   renderChips();
   pollState(); pollResults();

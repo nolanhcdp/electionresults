@@ -1,8 +1,8 @@
 {
-"asOf": "Oct. 27, 2026",
+"asOf": "Oct. 28, 2026",
 "source": "FLIPR Deluxe, Silver Bulletin",
 "control": {
-"senate": 74.9,
+"senate": 76.2,
 "house": 95
 },
 "senateHoldover": {
@@ -1018,7 +1018,7 @@
 {
 "id": "AK",
 "state": "Alaska",
-"p": 62.7,
+"p": 62.4,
 "d": "Mary Peltola",
 "r": "Daniel S. Sullivan",
 "rating": "Lean D",
@@ -1045,7 +1045,7 @@
 {
 "id": "DE",
 "state": "Delaware",
-"p": 99.9,
+"p": 100.0,
 "d": "Chris Coons",
 "r": "Michael Katz",
 "rating": "Solid D",
@@ -1054,7 +1054,7 @@
 {
 "id": "FL",
 "state": "Florida",
-"p": 14.3,
+"p": 14.1,
 "d": "Angela Nixon",
 "r": "Ashley B. Moody",
 "rating": "Likely R",
@@ -1063,7 +1063,7 @@
 {
 "id": "GA",
 "state": "Georgia",
-"p": 96.6,
+"p": 97.8,
 "d": "Jon Ossoff",
 "r": "Mike Collins",
 "rating": "Solid D",
@@ -1090,7 +1090,7 @@
 {
 "id": "IA",
 "state": "Iowa",
-"p": 57.6,
+"p": 57.4,
 "d": "Josh Turek",
 "r": "Ashley Hinson",
 "rating": "Toss-up",
@@ -1099,7 +1099,7 @@
 {
 "id": "KS",
 "state": "Kansas",
-"p": 49.8,
+"p": 49.1,
 "d": "Adam Hamilton",
 "r": "Roger Marshall",
 "rating": "Toss-up",
@@ -1117,7 +1117,7 @@
 {
 "id": "LA",
 "state": "Louisiana",
-"p": 4.7,
+"p": 4.4,
 "d": "Jamie Davis",
 "r": "Julia Letlow",
 "rating": "Solid R",
@@ -1126,7 +1126,7 @@
 {
 "id": "ME",
 "state": "Maine",
-"p": 69.3,
+"p": 71.2,
 "d": "Troy Jackson",
 "r": "Susan M. Collins",
 "rating": "Lean D",
@@ -1144,7 +1144,7 @@
 {
 "id": "MI",
 "state": "Michigan",
-"p": 80.9,
+"p": 80.7,
 "d": "Abdul El-Sayed",
 "r": "Mike Rogers",
 "rating": "Likely D",
@@ -1153,7 +1153,7 @@
 {
 "id": "MN",
 "state": "Minnesota",
-"p": 88.7,
+"p": 92.3,
 "d": "Peggy Flanagan",
 "r": "Michele Tafoya",
 "rating": "Likely D",
@@ -1162,7 +1162,7 @@
 {
 "id": "MS",
 "state": "Mississippi",
-"p": 3.8,
+"p": 3.6,
 "d": "Scott Colom",
 "r": "Cindy Hyde-Smith",
 "rating": "Solid R",
@@ -1171,7 +1171,7 @@
 {
 "id": "MT",
 "state": "Montana",
-"p": 16.9,
+"p": 16.7,
 "d": "Alani Bankhead",
 "r": "Kurt Alme",
 "rating": "Likely R",
@@ -1182,7 +1182,7 @@
 {
 "id": "NE",
 "state": "Nebraska",
-"p": 33.8,
+"p": 34.6,
 "d": "Dan Osborn (I)",
 "r": "Pete Ricketts",
 "rating": "Lean R",
@@ -1219,7 +1219,7 @@
 {
 "id": "NC",
 "state": "North Carolina",
-"p": 95.5,
+"p": 95.7,
 "d": "Roy A. Cooper III",
 "r": "Michael Whatley",
 "rating": "Solid D",
@@ -1228,7 +1228,7 @@
 {
 "id": "OH",
 "state": "Ohio",
-"p": 70.7,
+"p": 69.5,
 "d": "Sherrod Brown",
 "r": "Jon Husted",
 "rating": "Lean D",
@@ -1264,7 +1264,7 @@
 {
 "id": "SC",
 "state": "South Carolina",
-"p": 28.1,
+"p": 31.2,
 "d": "Annie Andrews",
 "r": "Darline Graham",
 "rating": "Lean R",
@@ -1291,7 +1291,7 @@
 {
 "id": "TX",
 "state": "Texas",
-"p": 70.2,
+"p": 70.8,
 "d": "James Talarico",
 "r": "Ken Paxton",
 "rating": "Lean D",
@@ -1324,5 +1324,332 @@
 "rating": "Solid R",
 "held": "R"
 }
-]
+],
+"governors": [
+{
+"id": "AL",
+"state": "Alabama",
+"p": 1.9,
+"d": "Doug Jones",
+"r": "Tommy Tuberville",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "AK",
+"state": "Alaska",
+"p": 96.3,
+"d": "Jonathan Kreiss-Tomkins",
+"r": "Bernadette Wilson",
+"rating": "Solid D",
+"held": "R"
+},
+{
+"id": "AZ",
+"state": "Arizona",
+"p": 95.8,
+"d": "Katie Hobbs",
+"r": "Andy Biggs",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "AR",
+"state": "Arkansas",
+"p": 0.2,
+"d": "Fredrick Love",
+"r": "Sarah Huckabee Sanders",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "CA",
+"state": "California",
+"p": 100.0,
+"d": "Xavier Becerra",
+"r": "Steve Hilton",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "CO",
+"state": "Colorado",
+"p": 99.8,
+"d": "Phil Weiser",
+"r": "Victor Marx",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "CT",
+"state": "Connecticut",
+"p": 99.9,
+"d": "Ned Lamont",
+"r": "Ryan Fazio",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "FL",
+"state": "Florida",
+"p": 21.3,
+"d": "David Jolly",
+"r": "Byron Donalds",
+"rating": "Likely R",
+"held": "R"
+},
+{
+"id": "GA",
+"state": "Georgia",
+"p": 61.7,
+"d": "Keisha Bottoms",
+"r": "Rick Jackson",
+"rating": "Lean D",
+"held": "R"
+},
+{
+"id": "HI",
+"state": "Hawaii",
+"p": 100.0,
+"d": "Joshua Green",
+"r": "Gary Cordery",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "ID",
+"state": "Idaho",
+"p": 0.1,
+"d": "Terri Pickens",
+"r": "Brad Little",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "IL",
+"state": "Illinois",
+"p": 99.9,
+"d": "J.B. Pritzker",
+"r": "Darren Bailey",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "IA",
+"state": "Iowa",
+"p": 92.2,
+"d": "Rob Sand",
+"r": "Zach Lahn",
+"rating": "Likely D",
+"held": "R"
+},
+{
+"id": "KS",
+"state": "Kansas",
+"p": 30.6,
+"d": "Cindy Holscher",
+"r": "Ty Masterson",
+"rating": "Lean R",
+"held": "D"
+},
+{
+"id": "ME",
+"state": "Maine",
+"p": 97.8,
+"d": "Hannah Pingree",
+"r": "Bobby Charles",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "MD",
+"state": "Maryland",
+"p": 100.0,
+"d": "Wes Moore",
+"r": "Dan Cox",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "MA",
+"state": "Massachusetts",
+"p": 100.0,
+"d": "Maura Healey",
+"r": "Michael Minogue",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "MI",
+"state": "Michigan",
+"p": 94.2,
+"d": "Jocelyn Benson",
+"r": "John James",
+"rating": "Likely D",
+"held": "D"
+},
+{
+"id": "MN",
+"state": "Minnesota",
+"p": 99.4,
+"d": "Amy Klobuchar",
+"r": "Lisa Demuth",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "NE",
+"state": "Nebraska",
+"p": 19.8,
+"d": "Lynne Walz",
+"r": "Jim Pillen",
+"rating": "Likely R",
+"held": "R"
+},
+{
+"id": "NV",
+"state": "Nevada",
+"p": 47.1,
+"d": "Aaron Ford",
+"r": "Joe Lombardo",
+"rating": "Toss-up",
+"held": "R"
+},
+{
+"id": "NH",
+"state": "New Hampshire",
+"p": 4.8,
+"d": "Cinde Warmington",
+"r": "Kelly Ayotte",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "NM",
+"state": "New Mexico",
+"p": 97.4,
+"d": "Debra Haaland",
+"r": "Gregg Hull",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "NY",
+"state": "New York",
+"p": 99.3,
+"d": "Kathy Hochul",
+"r": "Bruce Blakeman",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "OH",
+"state": "Ohio",
+"p": 76.7,
+"d": "Amy Acton",
+"r": "Vivek Ramaswamy",
+"rating": "Likely D",
+"held": "R"
+},
+{
+"id": "OK",
+"state": "Oklahoma",
+"p": 7.2,
+"d": "Cyndi Munson",
+"r": "Mike Mazzei",
+"rating": "Likely R",
+"held": "R"
+},
+{
+"id": "OR",
+"state": "Oregon",
+"p": 84.6,
+"d": "Tina Kotek",
+"r": "Christine Drazan",
+"rating": "Likely D",
+"held": "D"
+},
+{
+"id": "PA",
+"state": "Pennsylvania",
+"p": 100.0,
+"d": "Josh Shapiro",
+"r": "Stacy Garrity",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "RI",
+"state": "Rhode Island",
+"p": 99.9,
+"d": "Helena Foulkes",
+"r": "Aaron Guckian",
+"rating": "Solid D",
+"held": "D"
+},
+{
+"id": "SC",
+"state": "South Carolina",
+"p": 2.1,
+"d": "Jermaine Johnson",
+"r": "Alan Wilson",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "SD",
+"state": "South Dakota",
+"p": 0.1,
+"d": "Dan Ahlers",
+"r": "Larry Rhoden",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "TN",
+"state": "Tennessee",
+"p": 0.8,
+"d": "Jerri Green",
+"r": "Marsha Blackburn",
+"rating": "Solid R",
+"held": "R"
+},
+{
+"id": "TX",
+"state": "Texas",
+"p": 27.1,
+"d": "Gina Hinojosa",
+"r": "Greg Abbott",
+"rating": "Lean R",
+"held": "R"
+},
+{
+"id": "VT",
+"state": "Vermont",
+"p": 28.0,
+"d": "Amanda Janoo",
+"r": "Phil Scott",
+"rating": "Lean R",
+"held": "R"
+},
+{
+"id": "WI",
+"state": "Wisconsin",
+"p": 69.0,
+"d": "David Crowley",
+"r": "Tom Tiffany",
+"rating": "Lean D",
+"held": "D"
+},
+{
+"id": "WY",
+"state": "Wyoming",
+"p": 0.0,
+"d": "Ken Casner",
+"r": "Eric Barlow",
+"rating": "Solid R",
+"held": "R"
+}
+],
+"asOfNote": "Senate and governors as of Oct. 28; House as of Oct. 27."
 }

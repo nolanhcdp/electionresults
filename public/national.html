@@ -27,6 +27,17 @@
   --hot: #f0a64a; --hot-soft: #3a2a12; --star: #f0bd3a; --oth: #444c59; color-scheme: dark }
 * { box-sizing: border-box }
 [hidden] { display: none !important }
+.extras { display: grid; grid-template-columns: minmax(0, 160px) minmax(0, 1fr); gap: 10px; align-items: center; margin-top: 4px }
+.extras:has(> div:only-child) { grid-template-columns: 1fr }
+.nmap { width: 100%; max-height: 140px; object-fit: contain }
+.tl { width: 100%; height: 64px } .tl .z { stroke: var(--line); stroke-dasharray: 3 3 } .tl .l { stroke: var(--fg); stroke-width: 2 } .tl .d { fill: var(--hot) }
+.tlnote { margin: 2px 0 0; font-size: 12px; color: var(--muted) }
+.mrow { padding: 8px 10px; display: grid; gap: 6px }
+.mhead .flag { font-size: 12px; font-weight: 700; white-space: nowrap } .mhead .flag.D { color: var(--dem) } .mhead .flag.R { color: var(--rep) } .mhead .flag.m { color: var(--muted); font-weight: 600 }
+.mhead { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 8px; align-items: baseline }
+.mname { font-size: 13px; min-width: 0; overflow-wrap: anywhere }
+.yn { display: flex; gap: 8px; align-items: baseline; font-family: var(--num); font-size: 15px; white-space: nowrap } .yn .of { font-family: var(--body); font-size: 12px; color: var(--muted) }
+.mini.seats { position: relative } .mini.seats .mk { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg) }
 body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14px; line-height: 1.4 }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel) }
 .num { font-family: var(--num); font-variant-numeric: tabular-nums }
@@ -154,12 +165,15 @@ html, body { margin: 0 }
         <button type="button" data-view="watch">Watch now</button>
         <button type="button" data-view="senate">Senate</button>
         <button type="button" data-view="house">House</button>
+        <button type="button" data-view="gov">Governors</button>
+        <button type="button" data-view="measures">Ballot measures</button>
+        <button type="button" data-view="legs">Legislatures</button>
       </div>
       <input id="q" type="search" placeholder="Search state, district, or candidate" autocomplete="off">
       <select id="sort" aria-label="Sort"><option value="close">Closest margin</option><option value="left">Most vote still out</option><option value="polls">Poll closing time</option><option value="rating">Forecast rating</option></select>
     </div>
     <div id="list"></div>
-    <p class="foot">Forecast: FLIPR Deluxe (Silver Bulletin), Oct. 27. Results: <a href="https://civicapi.org" target="_blank" rel="noopener" style="color:inherit">civicAPI</a>, checked every minute; compare close races with another source. The Senate shows Likely, Lean, and Toss-up races plus any Solid race that flips; seat counts include every race. Close means no call yet and a lead under 3 points. National swing compares Democrats' current House margins with the 2024 presidential margin in the same districts, counting races at least a quarter in. Times are Eastern.</p>
+    <p class="foot">Forecast: FLIPR Deluxe (Silver Bulletin); Senate and governors as of Oct. 28, House as of Oct. 27. Results: <a href="https://civicapi.org" target="_blank" rel="noopener" style="color:inherit">civicAPI</a>, checked every minute; compare close races with another source. The Senate shows Likely, Lean, and Toss-up races plus any Solid race that flips; seat counts include every race. Close means no call yet and a lead under 3 points. National swing compares Democrats' current House margins with the 2024 presidential margin in the same districts, counting races at least a quarter in. Times are Eastern.</p>
   </main>
 </div>
 
@@ -178,13 +192,13 @@ const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? 
 const mg = (s) => (/^D\+/.test(s) ? +s.slice(2) : /^R\+/.test(s) ? -s.slice(2) : 0); // D-positive
 
 // ---------- live data ----------
-let senate = [], house = [], ALL = [], DATA = null;
+let senate = [], house = [], governors = [], ALL = [], DATA = null;
 const prevLead = new Map(); // key -> leader at the last check
 const changedAt = new Map(); // key -> when the lead last changed (hours)
 const firstWon = new Map(); // key -> when we first saw a call, if civicAPI has no call time
 try { const s = JSON.parse(sessionStorage.getItem('mw-track') || '{}'); Object.entries(s.p || {}).forEach(([k, v]) => prevLead.set(k, v)); Object.entries(s.c || {}).forEach(([k, v]) => changedAt.set(k, v)); } catch {}
 function prep(x, kind) {
-  x.kind = kind; x.st = kind === 'S' ? x.id : x.id.split('-')[0];
+  x.kind = kind; x.st = kind === 'H' ? x.id.split('-')[0] : x.id;
   x.close = x.pollsClose ? hrs(x.pollsClose) : (CLOSE[x.st] ?? 21);
   const r = x.res;
   if (r) {
@@ -206,7 +220,8 @@ function ingest(d) {
   F = { senateHoldover: d.senateHoldover, houseNow: d.houseNow };
   senate = d.senate.map((x) => prep(x, 'S'));
   house = d.house.map((x) => prep(x, 'H'));
-  ALL = [...senate, ...house];
+  governors = (d.governors || []).map((x) => prep(x, 'G'));
+  ALL = [...senate, ...house, ...governors];
   try { sessionStorage.setItem('mw-track', JSON.stringify({ p: Object.fromEntries(prevLead), c: Object.fromEntries(changedAt) })); } catch {}
 }
 
@@ -218,7 +233,7 @@ const justCalled = (x) => won(x) && NOW - x.res.calledAt >= 0 && NOW - x.res.cal
 const counting = (x) => x.res && !won(x);
 const voteLeft = (x) => (x.res ? (x.res.total / Math.max(1, x.res.pct)) * (100 - x.res.pct) : Infinity);
 const flipped = (x) => won(x) && won(x) !== x.held;
-const name = (x) => (x.kind === 'S' ? x.st : x.id);
+const name = (x) => (x.kind === 'H' ? x.id : x.st);
 // Senate: only Likely, Lean, and Toss-up races, plus any Solid race that flips. House list is already flips and competitive seats.
 const shown = (x) => x.kind === 'H' || !/^Solid/.test(x.rating) || flipped(x);
 const SEN = () => senate.filter(shown);
@@ -238,7 +253,7 @@ function showPop() {
   tileEl.classList.add('sel');
   const on = stars.has(popKey);
   const status = won(x) ? `<span class="flag ${won(x)}" style="font-weight:700">${won(x)} ✓${flipped(x) ? ' · Flip' : ''}</span>` : isClose(x) ? '<span style="color:var(--hot);font-weight:700">Close</span>' : x.res ? `<span style="color:var(--muted)">${x.res.pct}% in</span>` : '';
-  pop.innerHTML = `<div class="ph"><b>${esc(x.kind === 'S' ? x.state : x.id)}</b><span class="rt" style="font-size:12px;font-weight:600">${esc(x.rating)}</span>${status}
+  pop.innerHTML = `<div class="ph"><b>${esc(x.kind === 'H' ? x.id : x.state)}</b><span class="rt" style="font-size:12px;font-weight:600">${esc(x.rating)}</span>${status}
     <button type="button" class="star" data-star="${popKey}" aria-pressed="${on}" aria-label="${on ? 'Unstar' : 'Star'}">${on ? '★' : '☆'}</button>
     <button type="button" class="x" data-popclose aria-label="Close">×</button></div>${detail(x)}`;
   pop.hidden = false;
@@ -312,7 +327,65 @@ function detail(x) {
         : `<div class="cand"><span class="n">${esc(x.d || 'No Democrat')}</span><span class="p D">${x.p.toFixed(1)}%</span><span class="v">win chance</span></div>
            <div class="cand"><span class="n">${esc(x.r)}</span><span class="p R">${(100 - x.p).toFixed(1)}%</span><span class="v">win chance</span></div>`}
     <div class="facts">${r ? `<span>FLIPR <strong>D ${x.p.toFixed(1)}%</strong></span><span><strong>${r.pct}%</strong> reporting</span><span>About <strong>${fmt.format(Math.round(voteLeft(x) / 1000) * 1000)}</strong> votes still out</span>` : ''}
-      <span>Held by <strong>${x.held === 'D' ? 'Dems' : 'GOP'}</strong></span>${x.kind === 'H' ? `<span>Projected <strong>${esc(x.proj)}</strong></span><span>2024 pres. <strong>${esc(x.m24)}</strong></span>` : ''}<span>Polls close <strong>${clock(x.close)}</strong></span>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>`;
+      <span>Held by <strong>${x.held === 'D' ? (x.kind === 'G' ? 'a Democrat' : 'Dems') : (x.kind === 'G' ? 'a Republican' : 'GOP')}</strong></span>${x.kind === 'H' ? `<span>Projected <strong>${esc(x.proj)}</strong></span><span>2024 pres. <strong>${esc(x.m24)}</strong></span>` : ''}<span>Polls close <strong>${clock(x.close)}</strong></span>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>${r && x.civicId ? extras(x) : ''}`;
+}
+
+// County map and the count over the night, from civicAPI, inside an opened race.
+const TL = new Map(); // civicId -> { at, d, pending }
+function loadTL(id) {
+  const hit = TL.get(id);
+  if (hit && (hit.pending || Date.now() - hit.at < 60_000)) return;
+  TL.set(id, { ...(hit || {}), pending: true });
+  fetch(`/api/timeline?id=${encodeURIComponent(id)}`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ points: [] }))
+    .then((d) => { TL.set(id, { at: Date.now(), d, pending: false }); render(); });
+}
+function spark(x, d) {
+  const pts = (d.points || []).map((p) => {
+    const sideV = (s) => Math.max(0, ...p.cands.filter((c) => c.party === s).map((c) => c.votes));
+    const tot = p.cands.reduce((a, c) => a + c.votes, 0);
+    return { t: Date.parse(p.t), pct: p.pct, tot, m: tot ? ((sideV('D') - sideV('R')) / tot) * 100 : 0 };
+  }).filter((p) => p.tot > 0);
+  if (pts.length < 2) return '<p class="tlnote">The count over the night shows here once updates come in.</p>';
+  const W = 320, H = 64, pad = 4, t0 = pts[0].t, t1 = pts[pts.length - 1].t, lim = Math.max(5, ...pts.map((p) => Math.abs(p.m)));
+  const X = (t) => pad + ((t - t0) / (t1 - t0 || 1)) * (W - 2 * pad), Y = (m) => H / 2 - (m / lim) * (H / 2 - pad);
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.t).toFixed(1)},${Y(p.m).toFixed(1)}`).join('');
+  const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+  const tm = (t) => new Date(t).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+  return `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img" aria-label="Lead over the night"><line x1="0" x2="${W}" y1="${H / 2}" y2="${H / 2}" class="z"/><path d="${path}" class="l" fill="none"/><circle cx="${X(last.t).toFixed(1)}" cy="${Y(last.m).toFixed(1)}" r="3" class="d"/></svg>
+    <p class="tlnote">Lead from ${tm(t0)} to ${tm(t1)} ET (D above the line, R below). Last update ${tm(last.t)} added ${fmt.format(Math.max(0, last.tot - prev.tot))} votes.</p>`;
+}
+function extras(x) {
+  const hit = TL.get(x.civicId);
+  if (!hit || (!hit.pending && Date.now() - hit.at > 60_000)) loadTL(x.civicId);
+  const tl = hit?.d ? spark(x, hit.d) : '<p class="tlnote">Loading the count over the night…</p>';
+  const map = `<img class="nmap" src="/api/breakdown?id=${encodeURIComponent(x.civicId)}&map=1${TEST ? '&test=1' : ''}" alt="Map of ${esc(x.state || x.id)} results by county" loading="lazy" onerror="this.remove()">`;
+  return `<div class="extras">${map}<div>${tl}</div></div>`;
+}
+
+// Ballot measures and legislatures: their own simple lists.
+function measuresHtml(t) {
+  const list = (DATA.measures || []).filter((m) => !t || [m.state, m.name].some((v) => v.toLowerCase().includes(t)));
+  if (!list.length) return '<p class="empty">No statewide ballot measures match.</p>';
+  const row = (m) => {
+    const tot = m.yes + m.no, y = tot ? (m.yes / tot) * 100 : 0, n = tot ? 100 - y : 0;
+    const status = m.winner ? `<span class="flag ${/^yes$/i.test(m.winner) ? 'D' : 'R'}">${/^yes$/i.test(m.winner) ? 'Passed' : 'Failed'} ✓</span>` : tot ? `<span class="flag m">${m.pct}% in</span>` : '<span class="flag m">No votes yet</span>';
+    return `<div class="row mrow"><div class="mhead"><span class="rid">${esc(m.state)}</span><span class="mname">${esc(m.name.replace(new RegExp('^' + m.state + '\\s+', 'i'), ''))}</span>${status}
+      <span class="yn">${tot ? `<b class="D">Yes ${y.toFixed(1)}%</b><b class="R">No ${n.toFixed(1)}%</b>` : ''}</span></div>
+      ${tot ? `<span class="mini yn-bar"><i style="width:${y}%"></i><u style="width:${n}%"></u></span>` : ''}</div>`;
+  };
+  return `<section class="sec"><h3>Statewide ballot measures<span>${list.length}</span></h3><div class="rows">${list.map(row).join('')}</div></section>`;
+}
+function legsHtml(t) {
+  const list = (DATA.legislatures || []).filter((l) => !t || [l.state, l.name].some((v) => v.toLowerCase().includes(t)));
+  if (!list.length) return '<p class="empty">No legislative chambers match.</p>';
+  const row = (l) => {
+    const maj = Math.floor(l.seats / 2) + 1, known = l.d != null;
+    const ctl = !known ? '' : l.d >= maj ? '<span class="flag D">D majority</span>' : l.r >= maj ? '<span class="flag R">R majority</span>' : '<span class="flag m">No majority yet</span>';
+    return `<div class="row mrow"><div class="mhead"><span class="rid">${esc(l.state)}</span><span class="mname">${esc(l.name.replace(new RegExp('^' + l.state + '\\s+', 'i'), ''))}</span>${ctl}
+      <span class="yn">${known ? `<b class="D">D ${l.d}</b><b class="R">R ${l.r}</b><span class="of">of ${l.seats}</span>` : '<span class="of">' + l.seats + ' seats</span>'}</span></div>
+      ${known ? `<span class="mini seats"><i style="width:${(l.d / l.seats) * 100}%"></i><u style="width:${(l.r / l.seats) * 100}%"></u><span class="mk" style="left:${(maj / l.seats) * 100}%"></span></span>` : ''}</div>`;
+  };
+  return `<section class="sec"><h3>State legislatures<span>seats held after this election, counting seats not on the ballot; the tick marks a majority</span></h3><div class="rows">${list.map(row).join('')}</div></section>`;
 }
 
 function rowHtml(x) {
@@ -340,7 +413,7 @@ function rowHtml(x) {
     <div class="rhead" data-open="${k}" role="button" tabindex="0" aria-expanded="${isOpen}">
       <button type="button" class="star" data-star="${k}" aria-pressed="${on}" aria-label="${on ? 'Unstar' : 'Star'} ${esc(name(x))}">${on ? '★' : '☆'}</button>
       <span class="rid">${esc(name(x))}</span>
-      <span class="rmid"><span class="rt" style="${rs}">${x.kind === 'S' ? 'Senate · ' : ''}${esc(x.rating)}</span>${flag}</span>
+      <span class="rmid"><span class="rt" style="${rs}">${x.kind === 'S' ? 'Senate · ' : x.kind === 'G' ? 'Governor · ' : ''}${esc(x.rating)}</span>${flag}</span>
       ${lead}${bar}${pin}
     </div>${body}</div>`;
 }
@@ -362,9 +435,9 @@ function render() {
   document.getElementById('banner').innerHTML = ban.map((b) => `<div>${b}</div>`).join('');
   strip(); tiles(); left();
   document.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === view));
-  document.getElementById('sort').disabled = view === 'watch';
+  document.getElementById('sort').disabled = ['watch', 'measures', 'legs'].includes(view);
   const t = document.getElementById('q').value.trim().toLowerCase();
-  const pool = (view === 'senate' ? senate : view === 'house' ? house : ALL).filter(shown).filter((x) => !t || [x.id, x.state, x.d, x.r].some((v) => v && v.toLowerCase().includes(t)));
+  const pool = (view === 'senate' ? senate : view === 'house' ? house : view === 'gov' ? governors : ALL).filter(shown).filter((x) => !t || [x.id, x.state, x.d, x.r].some((v) => v && v.toLowerCase().includes(t)));
   let html = '';
   if (view === 'watch') {
     const used = new Set();
@@ -383,11 +456,15 @@ function render() {
       + sec('Polls closing soon', 'next 90 minutes', soon)
       + sec(NOW < 6 ? 'Not started' : 'Polls still open', NOW < 6 ? 'polls open Nov. 3' : '', later)
       + (called.length ? `<section class="sec"><h3>Called<span>${called.length} races, ${called.filter(flipped).length} flips</span><button type="button" data-toggle-called>${showCalled ? 'Hide' : 'Show'}</button></h3>${showCalled ? `<div class="rows">${called.map(rowHtml).join('')}</div>` : ''}</section>` : '');
+  } else if (view === 'measures') {
+    html = measuresHtml(t);
+  } else if (view === 'legs') {
+    html = legsHtml(t);
   } else {
     const sort = sorters[document.getElementById('sort').value];
-    html = sec(view === 'senate' ? 'Competitive Senate races' : 'House races', '', [...pool].sort(sort));
-    if (view === 'senate') {
-      const safe = senate.filter((x) => !shown(x)).filter((x) => !t || [x.id, x.state, x.d, x.r].some((v) => v && v.toLowerCase().includes(t))).sort(sort);
+    html = sec(view === 'senate' ? 'Competitive Senate races' : view === 'gov' ? 'Competitive governor races' : 'House races', '', [...pool].sort(sort));
+    if (view === 'senate' || view === 'gov') {
+      const safe = (view === 'gov' ? governors : senate).filter((x) => !shown(x)).filter((x) => !t || [x.id, x.state, x.d, x.r].some((v) => v && v.toLowerCase().includes(t))).sort(sort);
       const sd = safe.filter((x) => x.p > 50).length;
       if (safe.length) html += `<section class="sec"><h3>Safe seats<span>${safe.length} races (${sd} D, ${safe.length - sd} R), counted in the totals</span><button type="button" data-toggle-safe>${showSafe ? 'Hide' : 'Show'}</button></h3>${showSafe ? `<div class="rows">${safe.map(rowHtml).join('')}</div>` : ''}</section>`;
     }

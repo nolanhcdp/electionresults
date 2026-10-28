@@ -179,6 +179,12 @@
     const bits = [];
     bits.push(c.ok ? `Clerk's report from ${B.turnout(results, state).reportTime || 'unknown time'}` : `Clerk's page isn't answering${c.error ? ` (${c.error})` : ''}`);
     bits.push(missing.length ? `${missing.length} state race${missing.length > 1 ? 's' : ''} not posted yet` : 'State results connected');
+    const cv = results.sources?.civic;
+    if (cv) {
+      if (!cv.ok) bits.push(`civicAPI backup not answering${cv.error ? ` (${cv.error})` : ''}`);
+      else if (cv.used) bits.push(`civicAPI filling ${cv.used} race${cv.used > 1 ? 's' : ''} the clerk or state hasn't posted`);
+      if (cv.disagree?.length) bits.push(`Clerk and civicAPI differ on ${cv.disagree.map((d) => `${d.office} (${B.fmt.format(d.clerk)} vs ${B.fmt.format(d.civic)} votes)`).join(', ')}`);
+    }
     $('srcStatus').textContent = bits.join(' · ');
   }
 
