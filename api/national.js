@@ -1,7 +1,6 @@
 // GET /api/national — the FLIPR forecast for every tracked House and Senate race plus live results from civicAPI.
-// Behind a code (the Control code, or NATIONAL_CODE if set) because the forecast is from a paid newsletter.
+// Public: no code needed.
 // ?test=1 (or NATIONAL_SHOW_TEST=1) shows civicAPI's test data, clearly labeled, to check the page before Nov. 3.
-import { canSeeNational } from '../lib/auth.js';
 import { FORECAST, loadCivic, shape } from '../lib/civic.js';
 
 let cache = null; // { at, map, missing, error }
@@ -20,8 +19,7 @@ async function civic() {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 'private, no-store');
-  if (!canSeeNational(req)) return res.status(401).json({ error: 'Enter the code to see this page.' });
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=30');
 
   const url = new URL(req.url, 'http://x');
   const showTest = url.searchParams.get('test') === '1' || process.env.NATIONAL_SHOW_TEST === '1';

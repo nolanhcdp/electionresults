@@ -128,25 +128,12 @@ aside { display: grid; gap: 16px; position: sticky; top: calc(env(safe-area-inse
 @media (max-width: 1100px) { .strip-in { grid-template-columns: 1fr 1fr } .brand { grid-column: 1 / -1 } }
 @media (max-width: 900px) { .page { grid-template-columns: minmax(0, 1fr) } aside { position: static } }
 @media (max-width: 520px) { .strip-in { grid-template-columns: 1fr } .rows { grid-template-columns: minmax(0, 1fr) } .rows { grid-template-columns: minmax(0, 1fr) !important } .rhead { grid-template-columns: 18px 48px minmax(84px, 1fr) auto 44px 32px; gap: 6px } }
-.login { max-width: 420px; margin: 60px auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px }
-.login h1 { font-family: var(--num); font-size: 26px; margin: 0 }
-.login p { margin: 0 }
-.login input { font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg) }
-.login button { justify-self: start; font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 0; background: var(--fg); color: var(--bg); cursor: pointer }
-.err { color: var(--rep); font-size: 14px; min-height: 1.2em }
 .banner { max-width: 1440px; margin: 10px auto 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
 .banner div { background: var(--hot-soft); color: var(--fg); border: 1px solid var(--hot); border-radius: 8px; padding: 8px 12px; font-weight: 500 }
 html, body { margin: 0 }
 </style>
 </head>
 <body>
-<form class="login" id="login" hidden>
-  <h1>Midterm Watch</h1>
-  <p>Enter the code to see this page.</p>
-  <input id="code" type="password" autocomplete="current-password" aria-label="Code">
-  <button type="submit">Open</button>
-  <div class="err" id="loginErr"></div>
-</form>
 <div id="app" hidden>
 
 <div class="pop" id="pop" hidden role="dialog" aria-label="Race details"></div>
@@ -426,10 +413,9 @@ const TEST = new URLSearchParams(location.search).get('test') === '1';
 let timer;
 async function load() {
   const r = await fetch('/api/national' + (TEST ? '?test=1' : ''), { cache: 'no-store', credentials: 'same-origin' });
-  if (r.status === 401) { document.getElementById('app').hidden = true; document.getElementById('login').hidden = false; return false; }
   if (!r.ok) throw new Error('HTTP ' + r.status);
   ingest(await r.json());
-  document.getElementById('login').hidden = true; document.getElementById('app').hidden = false;
+  document.getElementById('app').hidden = false;
   render();
   return true;
 }
@@ -439,17 +425,6 @@ async function poll() {
   try { ok = await load(); } catch (err) { console.error(err); /* keep what we have */ }
   if (ok) timer = setTimeout(poll, 60_000);
 }
-document.getElementById('login').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  document.getElementById('loginErr').textContent = '';
-  try {
-    const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ code: document.getElementById('code').value, scope: 'national' }) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error || "That code didn't match.");
-    document.getElementById('code').value = '';
-    poll();
-  } catch (err) { document.getElementById('loginErr').textContent = err.message; }
-});
 document.addEventListener('visibilitychange', () => { if (!document.hidden && DATA) poll(); });
 poll();
 </script>
