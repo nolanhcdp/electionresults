@@ -1,0 +1,17 @@
+{"search":{"count":7,"races":[
+{"id":86996,"type":"House of Representatives","province":"CA","district":"CA-45","percent_reporting":100,"candidates":[{"name":"Derek Tran","party":"Democratic","votes":136235,"percent":52.65,"winner":true},{"name":"Chuong Vo","party":"Republican","votes":122513,"percent":47.35,"winner":false}]},
+{"id":87247,"type":"US Senate","province":"MT","district":null,"percent_reporting":100,"candidates":[{"name":"Kurt Alme","party":"Republican","votes":252114,"winner":true},{"name":"Alani Bankhead","party":"Democratic","votes":139021,"winner":false},{"name":"Seth Bodnar","party":"Independent","votes":3525,"winner":false}]},
+{"id":87254,"type":"US Senate","province":"NE","district":null,"percent_reporting":64,"candidates":[{"name":"Pete  Ricketts","party":"Republican","votes":310448,"winner":false},{"name":"Dan  Osborn","party":"Independent","votes":287548,"winner":false},{"name":"Mike  Marvin","party":"Legal Marijuana Now","votes":13382,"winner":false}]},
+{"id":86915,"type":"House of Representatives","province":"AK","district":"AK-AL","percent_reporting":100,"candidates":[{"name":"Nick Begich III","party":"Republican","votes":138586,"winner":true},{"name":"Eric Hafner","party":"Democratic","votes":106690,"winner":false}]},
+{"id":87358,"type":"House of Representatives","province":"OH","district":"OH-09","percent_reporting":100,"candidates":[{"name":"Derek Merrin","party":"Republican","votes":125385,"winner":true},{"name":"Marcy Kaptur","party":"Democratic","votes":124355,"winner":false}]},
+{"id":87151,"type":"US Senate","province":"IA","district":null,"percent_reporting":100,"candidates":[{"name":"Ashley Hinson","party":"Republican","votes":527904,"winner":true},{"name":"Josh Turek","party":"Democratic","votes":511197,"winner":false}]},
+{"id":99999,"type":"House of Representatives","province":"IN","district":"IN-04","percent_reporting":100,"candidates":[{"name":"Jim Baird","party":"Republican","votes":1,"winner":true}]}
+]},
+"details":{
+"86996":{"test_data":false,"last_updated":"2026-11-04T03:00:00Z","called_at":"2026-11-04T03:10:00Z"},
+"87247":{"test_data":false},
+"87254":{"test_data":false},
+"86915":{"test_data":false},
+"87358":{"test_data":false},
+"87151":{"test_data":true}
+}}

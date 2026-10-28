@@ -18,7 +18,7 @@ test('parses the May 2026 primary report', () => {
 });
 
 test('builds board races: our party only, no unopposed, state races removed', () => {
-  const races = clerkRaces(parseReport(html), { ...config, hide: config.hide.filter((h) => !/DIST #4/.test(h)) });
+  const races = clerkRaces(parseReport(html), { ...config, replaceSeats: ['SD21', 'CD5'], hide: config.hide.filter((h) => !/ST.*4/.test(h)) });
   assert.ok(races.length > 0);
   const cd4 = races.find((r) => r.id === 'clerk:DEM US REPRESENTATIVE DIST #4');
   assert.equal(cd4.partial, true, 'multi-county race from the clerk is marked Howard-only');
@@ -51,4 +51,35 @@ test('handles a multi-column general-election style report with party beside eac
   assert.equal(races[0].office, 'County Council, District 3');
   assert.deepEqual(races[0].cands.map((c) => [c.name, c.party, c.votes]), [['Cathy Stover', 'D', 2510], ['Somebody Else', 'R', 2380]]);
   assert.equal(clerkMeta(p).reportTime, '11/03/2026 9:14 PM');
+});
+
+test('reads the November 2024 general report the way it will look on election night', () => {
+  const g = parseReport(readFileSync(new URL('./fixtures/general-2024.html', import.meta.url), 'utf8'));
+  const meta = clerkMeta(g);
+  assert.equal(meta.election, 'General Election');
+  assert.equal(meta.registered, 61323);
+  assert.equal(meta.ballotsCast, 38218);
+  assert.deepEqual(meta.precincts, { n: 78, of: 78 });
+  for (const c of g.contests) {
+    assert.ok(!c.candidates.some((k) => /Total Votes Cast|Write-In Totals/i.test(k.name)), c.id);
+    const sum = c.candidates.reduce((a, k) => a + k.votes, 0) + c.overvotes + c.undervotes;
+    const writeIns = c.total - sum; // write-in totals are counted in the contest but not shown as a candidate
+    assert.ok(writeIns >= 0 && writeIns < 200, `${c.id}: off by ${writeIns}`);
+  }
+  const races = clerkRaces(g, config);
+  const byOffice = Object.fromEntries(races.map((r) => [r.office, r]));
+  assert.ok(!races.some((r) => /Straight Party|Retain/i.test(r.office)));
+  assert.ok(!races.some((r) => r.seat === 'CD4'));
+  const cd5 = races.find((r) => r.seat === 'CD5');
+  assert.equal(cd5.office, 'U.S. House, District 5');
+  assert.equal(cd5.partial, true);
+  assert.deepEqual(cd5.cands.map((c) => [c.name, c.party]).slice(0, 2), [['Victoria Spartz', 'R'], ['Deborah A Pickett', 'D']]);
+  assert.equal(byOffice['State House, District 30'].seat, 'HD30');
+  assert.equal(byOffice['County Treasurer'].cands.length, 2);
+  assert.equal(byOffice['County Council, At Large'].voteFor, 3);
+  assert.ok(byOffice['Kokomo Center School Board, District 3']);
+  assert.ok(!byOffice['State Senate, District 18'], 'unopposed is dropped');
+  // Once the state has the district-wide versions, the clerk's Howard-only copies drop out.
+  const withState = clerkRaces(g, { ...config, replaceSeats: ['CD5', 'HD30', 'HD38'] });
+  assert.ok(!withState.some((r) => ['CD5', 'HD30', 'HD38'].includes(r.seat)));
 });

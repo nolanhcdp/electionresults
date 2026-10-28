@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Midterm Watch 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* One phone-width column: control odds and live seat counts, then a searchable race list grouped by rating. */
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --fg: #1b2230; --muted: #5d6677; --line: #dde1e8;
+  --dem: #2457c5; --dem-soft: #dbe5fb; --rep: #c8352b; --rep-soft: #f8dcd9; --toss: #9a6b00; --star: #c98a00;
+  --warn-bg: #fff4d6; --warn-fg: #6b4a00; --oth: #c9ced8;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --num: "Barlow Semi Condensed", "Public Sans", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #11151c; --panel: #19202a; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2b3441;
+  --dem: #6f9bff; --dem-soft: #1f2f52; --rep: #ff7b70; --rep-soft: #4a2423; --toss: #e0b04a; --star: #f0bd3a;
+  --warn-bg: #3a2f12; --warn-fg: #f3d58a; --oth: #48505e; color-scheme: dark } }
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: max(20px, env(safe-area-inset-top, 0px)) 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px }
+h1 { font-family: var(--num); font-weight: 700; font-size: 30px; line-height: 1.1; margin: 0; text-wrap: balance }
+.src { color: var(--muted); font-size: 13px; margin: 4px 0 0 }
+.src a { color: inherit }
+.banner { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: 500 }
+.odds { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.odd { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; min-width: 0 }
+.odd h2 { font-size: 14px; font-weight: 600; margin: 0 }
+.odd .big { font-family: var(--num); font-weight: 700; font-size: 34px; line-height: 1; color: var(--dem); font-variant-numeric: tabular-nums }
+.odd .big small { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 4px }
+.odd p { margin: 0; font-size: 13px; color: var(--muted) }
+.live { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; display: grid; gap: 4px }
+.live .seats { font-family: var(--num); font-size: 22px; font-weight: 700; display: flex; gap: 10px; flex-wrap: wrap; font-variant-numeric: tabular-nums }
+.live .seats .D { color: var(--dem) } .live .seats .R { color: var(--rep) }
+.split { height: 8px; border-radius: 4px; background: var(--rep); overflow: hidden } .split i { display: block; height: 100%; background: var(--dem) }
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line) }
+.tabs button { font: 600 15px var(--body); background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 8px 10px 9px; cursor: pointer }
+.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--fg) }
+.tools { display: grid; gap: 10px }
+input[type=search], input[type=password] { width: 100%; font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg) }
+.filters { display: flex; flex-wrap: wrap; gap: 6px }
+.filters button, .btn { font: 500 13px var(--body); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer }
+.filters button[aria-pressed="true"], .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg) }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--dem); outline-offset: 2px }
+.math { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px }
+.math summary { font-weight: 600; cursor: pointer }
+.math table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px }
+.math td { padding: 6px 0; border-top: 1px solid var(--line); vertical-align: top }
+.math td:last-child { text-align: right; font-family: var(--num); font-weight: 700; font-size: 17px; white-space: nowrap; padding-left: 10px }
+.group { display: grid; gap: 8px }
+.group h3 { margin: 10px 0 0; font-size: 16px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline }
+.group h3 span { font-size: 13px; color: var(--muted); font-weight: 500 }
+.side { font-family: var(--num); font-size: 22px; font-weight: 700; margin: 14px 0 0 }
+.side + p { margin: 0; color: var(--muted); font-size: 13px }
+.race { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px }
+.race.won-D { border-left: 4px solid var(--dem) } .race.won-R { border-left: 4px solid var(--rep) }
+.top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0 }
+.id { font-family: var(--num); font-weight: 700; font-size: 19px; white-space: nowrap }
+.rt { font-size: 13px; font-weight: 600 }
+.rt.D { color: var(--dem) } .rt.R { color: var(--rep) } .rt.T { color: var(--toss) }
+.tag { font-size: 12.5px; font-weight: 700 }
+.tag.D { color: var(--dem) } .tag.R { color: var(--rep) } .tag.N { color: var(--muted); font-weight: 600 }
+.star { margin-left: auto; background: none; border: 0; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; padding: 2px 4px }
+.star[aria-pressed="true"] { color: var(--star) }
+.cands { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; font-size: 14px }
+.cands .r { text-align: right }
+.cands b { display: block; font-family: var(--num); font-size: 24px; line-height: 1.05; font-variant-numeric: tabular-nums }
+.cands .d b { color: var(--dem) } .cands .r b { color: var(--rep) }
+.cands .nm { min-width: 0; overflow-wrap: anywhere }
+.cands .v { display: block; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums }
+.bar { height: 8px; border-radius: 4px; background: var(--oth); overflow: hidden; display: flex }
+.bar i { background: var(--dem) } .bar u { background: var(--rep); margin-left: auto }
+.bar.odds { background: var(--rep-soft) }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted) }
+.meta strong { color: var(--fg); font-weight: 600 }
+.empty { color: var(--muted); padding: 16px 0 }
+.foot { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 12px }
+.foot a { color: inherit }
+.login { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; max-width: 420px }
+.login p { margin: 0 }
+.err { color: var(--rep); font-size: 14px; min-height: 1.2em }
+@media (max-width: 420px) { .odd .big { font-size: 30px } .cands b { font-size: 21px } }
+@media (max-width: 360px) { .odds { grid-template-columns: 1fr } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Midterm Watch 2026</h1>
+    <p class="src" id="src">FLIPR Deluxe forecast from Silver Bulletin. Live results from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>.</p>
+  </header>
+
+  <form class="login" id="login" hidden>
+    <p>Enter the code to see this page.</p>
+    <input id="code" type="password" autocomplete="current-password" aria-label="Code">
+    <div><button class="btn primary" type="submit">Open</button></div>
+    <div class="err" id="loginErr"></div>
+  </form>
+
+  <div id="app" hidden>
+    <div class="banner" id="banner" hidden></div>
+    <section class="odds" aria-label="Control of Congress" id="odds"></section>
+
+    <nav class="tabs" role="tablist" style="margin-top:18px">
+      <button type="button" role="tab" id="tab-senate" data-tab="senate">Senate</button>
+      <button type="button" role="tab" id="tab-house" data-tab="house">House</button>
+    </nav>
+
+    <div class="tools" style="margin-top:14px">
+      <input id="q" type="search" placeholder="Search a state, district, or candidate" autocomplete="off">
+      <div class="filters" id="filters"></div>
+    </div>
+
+    <details class="math" id="math" hidden style="margin-top:14px">
+      <summary>How many Republican seats Dems need to flip</summary>
+      <table>
+        <tr><td><b>Great night.</b> Dems lose only their 4 Likely R and Solid R seats.</td><td>7 flips</td></tr>
+        <tr><td><b>Good night.</b> Dems win their toss-ups and every Lean D or better, but none of their Lean R seats.</td><td>9 flips</td></tr>
+        <tr><td><b>Mildly disappointing.</b> Dems lose their toss-ups and 2 of their 3 Lean D seats.</td><td>13 flips</td></tr>
+        <tr><td><b>Very disappointing.</b> Dems lose every Lean D and their first four Likely D seats.</td><td>18 flips</td></tr>
+      </table>
+    </details>
+
+    <main id="list"></main>
+
+    <p class="foot" id="foot">Forecast win chances are for the Democratic side vs. the Republican. Ratings: Solid means over 95%, Likely 75–95%, Lean 60–75%, Toss-up when neither side reaches 60%. On election night, vote shares replace the odds in the big numbers and a check marks the winner once a race is called. Results from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>; compare close races with another source. Stars are saved on this device only.</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ORDER = ['Solid D', 'Likely D', 'Lean D', 'Toss-up', 'Lean R', 'Likely R', 'Solid R'];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = new Intl.NumberFormat('en-US');
+  const side = (r) => (r === 'Toss-up' ? 'T' : r.endsWith('D') ? 'D' : 'R');
+  const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+  const $ = (id) => document.getElementById(id);
+  const TEST = new URLSearchParams(location.search).get('test') === '1';
+
+  let data = null;
+  let tab = store.get('mw-tab', 'senate');
+  let filter = 'all';
+  let stars = new Set(store.get('mw-stars', []));
+
+  const favoredFlip = (x) => (x.held === 'R' && x.p > 50) || (x.held === 'D' && x.p < 50);
+  const won = (x) => x.res?.winner || null;
+  const flipped = (x) => won(x) && won(x) !== 'O' && won(x) !== x.held;
+  const upset = (x) => (won(x) === 'D' && x.p < 50) || (won(x) === 'R' && x.p > 50);
+
+  function filters() {
+    const f = [['all', 'All'], ['star', '★ Starred'], ['flip', 'Favored to flip'], ['close', 'Toss-up and Lean']];
+    if (data?.anyResults) f.push(['called', 'Called'], ['flipped', 'Flipped'], ['upset', 'Upsets']);
+    return f;
+  }
+  function matches(x) {
+    const t = $('q').value.trim().toLowerCase();
+    const names = [x.id, x.state, x.d, x.r, x.res?.d?.name, x.res?.r?.name];
+    if (t && !names.some((v) => v && String(v).toLowerCase().includes(t))) return false;
+    switch (filter) {
+      case 'star': return stars.has(tab + ':' + x.id);
+      case 'flip': return favoredFlip(x);
+      case 'close': return /Toss-up|Lean/.test(x.rating);
+      case 'called': return !!won(x);
+      case 'flipped': return flipped(x);
+      case 'upset': return upset(x);
+      default: return true;
+    }
+  }
+
+  function card(x) {
+    const key = tab + ':' + x.id, on = stars.has(key), s = side(x.rating), r = x.res;
+    const pd = x.p, pr = +(100 - x.p).toFixed(1);
+    const title = tab === 'senate' ? esc(x.state) : esc(x.id);
+    const heldTxt = `Held by <strong>${x.held === 'D' ? 'Dems' : 'GOP'}</strong>`;
+    const tags = [];
+    let cls = '';
+    if (r && r.winner) {
+      const w = r.winner === 'O' ? 'N' : r.winner;
+      tags.push(`<span class="tag ${w}">${r.winner === 'O' ? 'Other' : r.winner} win ✓</span>`);
+      if (flipped(x)) tags.push(`<span class="tag ${w}">Flip</span>`);
+      if (upset(x)) tags.push(`<span class="tag N">Upset vs. forecast</span>`);
+      cls = r.winner === 'O' ? '' : 'won-' + r.winner;
+    } else if (r) {
+      tags.push(`<span class="tag N">${Math.round(r.pct)}% in</span>`);
+    } else if (favoredFlip(x)) {
+      tags.push(`<span class="tag N">${x.held === 'R' ? 'D' : 'R'} favored to flip</span>`);
+    }
+
+    let body;
+    if (r && r.total > 0) {
+      const dp = r.d?.pct || 0, rp = r.r?.pct || 0;
+      const nm = (c, fallback, isW) => `${esc(c?.name || fallback || '—')}${isW ? ' ✓' : ''}`;
+      body = `<div class="cands"><div class="d nm"><b>${dp.toFixed(1)}%</b>${nm(r.d, x.d, r.winner === 'D')}<span class="v">${fmt.format(r.d?.votes || 0)} votes</span></div>
+        <div class="r nm"><b>${rp.toFixed(1)}%</b>${nm(r.r, x.r, r.winner === 'R')}<span class="v">${fmt.format(r.r?.votes || 0)} votes</span></div></div>
+        <div class="bar" aria-hidden="true"><i style="width:${dp}%"></i><u style="width:${rp}%"></u></div>`;
+    } else {
+      body = `<div class="cands"><div class="d nm"><b>${pd.toFixed(1)}%</b>${esc(x.d || 'No Democrat')}</div><div class="r nm"><b>${pr.toFixed(1)}%</b>${esc(x.r)}</div></div>
+        <div class="bar odds" aria-hidden="true"><i style="width:${pd}%"></i><u style="width:${pr}%"></u></div>`;
+    }
+    const meta = [];
+    if (r && r.total > 0) meta.push(`<span>FLIPR <strong>D ${pd.toFixed(1)}%</strong></span>`, `<span><strong>${Math.round(r.pct)}%</strong> reporting</span>`);
+    meta.push(`<span>${heldTxt}</span>`);
+    if (tab === 'house') meta.push(`<span>Projected <strong>${esc(x.proj)}</strong></span>`, `<span>2024 pres. <strong>${esc(x.m24)}</strong></span>`);
+    if (!r && tab === 'house') meta.push(`<span>${x.polls} poll${x.polls === 1 ? '' : 's'}</span>`);
+    if (x.note) meta.push(`<span>${esc(x.note)}</span>`);
+
+    return `<article class="race ${cls}">
+      <div class="top"><span class="id">${title}</span><span class="rt ${s}">${esc(x.rating)}</span>${tags.join('')}
+        <button type="button" class="star" data-k="${esc(key)}" aria-pressed="${on}" aria-label="${on ? 'Unstar' : 'Star'} ${esc(x.id)}">${on ? '★' : '☆'}</button></div>
+      ${body}<div class="meta">${meta.join('')}</div></article>`;
+  }
+
+  function groups(list) {
+    return ORDER.map((rt) => {
+      const rows = list.filter((x) => x.rating === rt).sort((a, b) => b.p - a.p);
+      if (!rows.length) return '';
+      return `<section class="group"><h3>${rt}<span>${rows.length} race${rows.length === 1 ? '' : 's'}</span></h3>${rows.map(card).join('')}</section>`;
+    }).join('');
+  }
+
+  function odds() {
+    const c = data.control;
+    let senLive = '', houLive = '';
+    if (data.anyResults) {
+      const sw = (p) => data.senate.filter((x) => won(x) === p).length;
+      const sd = data.senateHoldover.D + sw('D'), sr = data.senateHoldover.R + sw('R'), open = data.senate.filter((x) => !won(x)).length;
+      senLive = `<div class="live"><div class="seats"><span class="D">D ${sd}</span><span class="R">R ${sr}</span></div><p>Seats so far, counting those not up this year. ${open} race${open === 1 ? '' : 's'} not called.</p></div>`;
+      const gain = data.house.filter((x) => x.held === 'R' && won(x) === 'D').length;
+      const lost = data.house.filter((x) => x.held === 'D' && won(x) === 'R').length;
+      const net = gain - lost, proj = data.houseNow.D + net;
+      houLive = `<div class="live"><div class="seats"><span class="D">D ${proj}</span></div><p>Dems flipped ${gain}, lost ${lost} (net ${net >= 0 ? '+' : ''}${net}). That's where they land if every seat not yet called stays with its party.</p></div>`;
+    }
+    $('odds').innerHTML = `
+      <div class="odd"><h2>Senate</h2><div class="big">${c.senate}%<small>chance of D control</small></div><div class="split"><i style="width:${c.senate}%"></i></div><p>Need 51 seats. Dems hold ${data.senateHoldover.D} not up this year, so they need 17 of the 35 races: keep their 13 and flip 4.</p>${senLive}</div>
+      <div class="odd"><h2>House</h2><div class="big">${c.house}%<small>chance of D control</small></div><div class="split"><i style="width:${c.house}%"></i></div><p>Need 218. Dems hold ${data.houseNow.D} now. FLIPR's average outcome: 239 D, 196 R.</p>${houLive}</div>`;
+  }
+
+  function render() {
+    if (!data) return;
+    document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
+    if (!filters().some(([k]) => k === filter)) filter = 'all';
+    $('filters').innerHTML = filters().map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join('');
+    $('math').hidden = tab !== 'house';
+    odds();
+    const checked = data.source.checkedAt ? new Date(data.source.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+    $('src').innerHTML = `FLIPR Deluxe forecast from Silver Bulletin, as of ${esc(data.asOf)}. Live results from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>${checked ? `, checked ${checked}` : ''}.`;
+    const ban = [];
+    if (data.showTest) ban.push('Showing civicAPI test data. These are not real results.');
+    if (!data.source.ok) ban.push(`civicAPI isn't answering right now (${esc(data.source.error)}). Showing the last results we had.`);
+    $('banner').hidden = !ban.length; $('banner').innerHTML = ban.join('<br>');
+
+    const list = data[tab].filter(matches);
+    let html;
+    if (!list.length) html = `<p class="empty">${filter === 'star' ? 'No starred races yet. Tap ☆ on any race to keep it here.' : 'No races match.'}</p>`;
+    else if (tab === 'house') {
+      const rh = list.filter((x) => x.held === 'R'), dh = list.filter((x) => x.held === 'D');
+      html = (rh.length ? `<h2 class="side">Republican seats Dems could flip</h2><p>${rh.length} of 69 seats</p>${groups(rh)}` : '')
+           + (dh.length ? `<h2 class="side">Democratic seats Republicans could flip</h2><p>${dh.length} of 21 seats</p>${groups(dh)}` : '');
+    } else html = groups(list);
+    $('list').innerHTML = html;
+  }
+
+  async function load() {
+    const r = await fetch('/api/national' + (TEST ? '?test=1' : ''), { cache: 'no-store', credentials: 'same-origin' });
+    if (r.status === 401) { $('app').hidden = true; $('login').hidden = false; return false; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    data = await r.json();
+    $('login').hidden = true; $('app').hidden = false;
+    render();
+    return true;
+  }
+  let timer;
+  async function poll() {
+    clearTimeout(timer);
+    let ok = true;
+    try { ok = await load(); } catch { /* keep what we have */ }
+    if (ok) timer = setTimeout(poll, 60_000);
+  }
+
+  $('login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('loginErr').textContent = '';
+    try {
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ code: $('code').value, scope: 'national' }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "That code didn't match.");
+      $('code').value = '';
+      poll();
+    } catch (err) { $('loginErr').textContent = err.message; }
+  });
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('button'); if (!t || t.closest('form')) return;
+    if (t.dataset.tab) { tab = t.dataset.tab; store.set('mw-tab', tab); render(); }
+    else if (t.dataset.f) { filter = t.dataset.f; render(); }
+    else if (t.dataset.k) { const k = t.dataset.k; stars.has(k) ? stars.delete(k) : stars.add(k); store.set('mw-stars', [...stars]); render(); }
+  });
+  $('q').addEventListener('input', render);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && data) poll(); });
+  poll();
+})();
+</script>
+</body>
+</html>

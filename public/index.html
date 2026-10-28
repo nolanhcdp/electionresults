@@ -66,6 +66,7 @@
     const cells = [];
     if (t.turnout != null) cells.push(`<div><div class="big">${B.pct(t.turnout)}</div><div class="lbl">Howard turnout so far, ${B.fmt.format(t.ballots)} ballots</div></div>`);
     else if (t.ballots != null) cells.push(`<div><div class="big">${B.fmt.format(t.ballots)}</div><div class="lbl">Howard ballots counted</div></div>`);
+    if (t.precincts) cells.push(`<div><div class="big">${t.precincts.n} of ${t.precincts.of}</div><div class="lbl">Election Day precincts in</div><div class="meter"><i style="width:${((t.precincts.n / t.precincts.of) * 100).toFixed(1)}%"></i></div></div>`);
     if (t.share != null) cells.push(`<div><div class="big">${B.pct0(t.share)}</div><div class="lbl">of the expected Howard vote is in</div><div class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></div></div>`);
     turn.hidden = !cells.length || tab !== 'howard';
     turn.innerHTML = cells.join('');

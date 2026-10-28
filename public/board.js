@@ -90,6 +90,7 @@
       turnout: ballots != null && registered ? ballots / registered : null,
       share: ballots != null && expected ? Math.min(1, ballots / expected) : null,
       reportTime: m.reportTime ? m.reportTime.replace(/^\d{2}\/\d{2}\/\d{4}\s+/, '') : null,
+      precincts: m.precincts && m.precincts.of ? m.precincts : null, // Election Day precincts reporting, from the clerk
     };
   }
 

@@ -61,6 +61,7 @@
     const stats = [];
     if (t.turnout != null) stats.push(`<div class="stat"><span class="big">${B.pct(t.turnout)}</span><span class="lbl">turnout so far<br>${B.fmt.format(t.ballots)} of ${B.fmt.format(t.registered)} registered</span></div>`);
     else if (t.ballots != null) stats.push(`<div class="stat"><span class="big">${B.fmt.format(t.ballots)}</span><span class="lbl">ballots counted</span></div>`);
+    if (t.precincts) stats.push(`<div class="stat"><span class="big">${t.precincts.n} of ${t.precincts.of}</span><span class="lbl">Election Day precincts in</span><span class="meter"><i style="width:${((t.precincts.n / t.precincts.of) * 100).toFixed(1)}%"></i></span></div>`);
     if (t.share != null) stats.push(`<div class="stat"><span class="big">${B.pct0(t.share)}</span><span class="lbl">of the expected vote is in</span><span class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></span></div>`);
     const clerkOk = results.sources?.clerk?.ok !== false;
     stats.push(`<div class="rt">Clerk's report<br>${t.reportTime ? `from <b>${B.esc(t.reportTime)}</b>` : 'not posted yet'}${clerkOk ? '' : '<br><span class="warn">Clerk\'s page not answering</span>'}</div>`);
@@ -101,7 +102,9 @@
     const set = (v) => cards.forEach((c) => c.style.setProperty('--k', v.toFixed(2)));
     const over = () => cards.some((c) => c.scrollHeight > c.clientHeight + 1);
     set(k);
-    while (over() && k > 0.45) { k -= 0.04; set(k); }
+    // Names cut off with "…" are also worth shrinking for, but only back down to normal size.
+    const namesCut = () => cards.some((c) => [...c.querySelectorAll('.trow .n')].some((n) => n.scrollWidth > n.clientWidth + 1));
+    while ((over() || (k > 1 && namesCut())) && k > 0.45) { k -= 0.04; set(k); }
   }
   function fit() {
     el.querySelectorAll('.pinned .tcard').forEach((c) => fitGroup([c], 1.6));
