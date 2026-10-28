@@ -28,6 +28,15 @@ function apply(s, b) {
       if ('tickerPos' in b) s.tickerPos = b.tickerPos === 'top' ? 'top' : 'bottom';
       if ('registered' in b) s.registered = nullableInt(b.registered);
       if ('expected' in b) s.expected = nullableInt(b.expected);
+      if ('clerkUrl' in b) {
+        const u = str(b.clerkUrl, 500);
+        if (!u) s.clerkUrl = null;
+        else {
+          let url; try { url = new URL(u); } catch { throw new Error("That doesn't look like a web address."); }
+          if (url.protocol !== 'https:' && url.hostname !== 'localhost') throw new Error('Use the https:// address of the clerk\'s results page.');
+          s.clerkUrl = url.href;
+        }
+      }
       return;
     }
     case 'addState': {

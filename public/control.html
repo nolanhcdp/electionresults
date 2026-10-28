@@ -109,7 +109,17 @@
           <label for="expected">Ballots we expect in total<input id="expected" inputmode="numeric" placeholder="Your estimate"></label>
         </div>
         <div class="actions"><button class="btn" id="saveBallots" type="button">Save</button><span class="status" id="ballotStatus" style="margin:0"></span></div>
-        <p class="note" style="margin-top:10px">Turnout is ballots counted divided by registered voters. Leave registered voters blank to use the clerk's number when the report includes it. "Share of the vote in" only shows once you enter an expected total.</p>
+        <p class="note" style="margin-top:10px">Turnout is ballots counted divided by registered voters. Leave registered voters blank to use the clerk's number when the report includes it. "Share of the vote in" only shows once you enter an expected total, and switches to final turnout once every Election Day precinct is in.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Clerk's results page</h2>
+        <p>On election night, paste the address of the clerk's November results page here. The board starts reading it within 30 seconds.</p>
+        <div class="fields">
+          <label for="clerkUrl">Results page address<input id="clerkUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.in.gov/counties/howard/…/results.html"></label>
+        </div>
+        <div class="actions"><button class="btn" id="saveClerk" type="button">Save</button><button class="linkbtn" id="resetClerk" type="button">Use the default page</button><span class="status" id="clerkStatus" style="margin:0"></span></div>
+        <p class="note" id="clerkNow" style="margin-top:10px"></p>
       </section>
     </div>
   </div>
@@ -149,7 +159,18 @@
   });
 
   // ---------- rendering ----------
-  function renderAll() { renderStatus(); renderRaces(); renderTicker(); renderSettings(); renderAdded(); }
+  function renderAll() { renderStatus(); renderRaces(); renderTicker(); renderSettings(); renderAdded(); renderClerk(); }
+
+  function renderClerk() {
+    if (document.activeElement !== $('clerkUrl')) $('clerkUrl').value = state?.clerkUrl || '';
+    const c = results?.sources?.clerk;
+    if (!c) { $('clerkNow').textContent = ''; return; }
+    const which = c.custom ? 'the page saved here' : 'the default page (May primary)';
+    const what = !c.ok ? `isn't answering${c.error ? ` (${c.error})` : ''}. Check the address.`
+      : c.general ? `is answering. It's the general election report, so its results are on the board.`
+      : `is answering, but it's ${c.election ? `the ${c.election} report` : 'not a general election report'}, so the board keeps showing the November ballot with no votes.`;
+    $('clerkNow').innerHTML = `Reading ${which}${c.url ? `: <a href="${B.esc(c.url)}" target="_blank" rel="noopener">${B.esc(c.url)}</a>` : ''}. It ${B.esc(what)}`;
+  }
 
   function renderStatus() {
     if (!results) return;
@@ -219,6 +240,16 @@
   $('tickerPos').addEventListener('change', (e) => change({ op: 'settings', tickerPos: e.target.value }));
   $('slideSeconds').addEventListener('change', (e) => change({ op: 'settings', slideSeconds: e.target.value }));
   $('slideColumns').addEventListener('change', (e) => change({ op: 'settings', slideColumns: e.target.value }));
+  async function saveClerk(value) {
+    const ok = await change({ op: 'settings', clerkUrl: value }, $('clerkStatus'));
+    if (!ok) return;
+    $('clerkStatus').textContent = 'Saved. Checking the page…';
+    try { results = await B.getJSON(B.api('/api/results') + (B.api('/api/results').includes('?') ? '&' : '?') + 'fresh=' + Date.now()); renderAll(); } catch (e) {}
+    $('clerkStatus').textContent = 'Saved';
+    setTimeout(() => ($('clerkStatus').textContent = ''), 2500);
+  }
+  $('saveClerk').addEventListener('click', () => saveClerk($('clerkUrl').value));
+  $('resetClerk').addEventListener('click', () => { $('clerkUrl').value = ''; saveClerk(''); });
   $('saveBallots').addEventListener('click', async () => {
     const ok = await change({ op: 'settings', registered: $('registered').value, expected: $('expected').value }, $('ballotStatus'));
     if (ok) { $('ballotStatus').textContent = 'Saved'; setTimeout(() => ($('ballotStatus').textContent = ''), 2500); }

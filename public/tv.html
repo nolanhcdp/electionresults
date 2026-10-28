@@ -59,8 +59,8 @@
     if (page >= L.pages.length) page = 0;
     const t = B.turnout(results, state);
     const stats = [];
-    if (t.turnout != null) stats.push(`<div class="stat"><span class="big">${B.pct(t.turnout)}</span><span class="lbl">turnout so far<br>${B.fmt.format(t.ballots)} of ${B.fmt.format(t.registered)} registered</span></div>`);
-    else if (t.ballots != null) stats.push(`<div class="stat"><span class="big">${B.fmt.format(t.ballots)}</span><span class="lbl">ballots counted</span></div>`);
+    if (t.turnout != null) stats.push(`<div class="stat"><span class="big">${B.pct(t.turnout)}</span><span class="lbl">${t.final ? 'turnout, all precincts in' : 'turnout so far'}<br>${B.fmt.format(t.ballots)} of ${B.fmt.format(t.registered)} registered</span></div>`);
+    else if (t.ballots != null) stats.push(`<div class="stat"><span class="big">${B.fmt.format(t.ballots)}</span><span class="lbl">${t.final ? 'ballots counted, all precincts in' : 'ballots counted'}</span></div>`);
     if (t.precincts) stats.push(`<div class="stat"><span class="big">${t.precincts.n} of ${t.precincts.of}</span><span class="lbl">Election Day precincts in</span><span class="meter"><i style="width:${((t.precincts.n / t.precincts.of) * 100).toFixed(1)}%"></i></span></div>`);
     if (t.share != null) stats.push(`<div class="stat"><span class="big">${B.pct0(t.share)}</span><span class="lbl">of the expected vote is in</span><span class="meter"><i style="width:${(t.share * 100).toFixed(1)}%"></i></span></div>`);
     const clerkOk = results.sources?.clerk?.ok !== false;

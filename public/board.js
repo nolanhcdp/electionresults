@@ -84,11 +84,14 @@
     const ballots = m.ballotsCast;
     const registered = state?.registered || m.registered || null;
     const expected = state?.expected || null;
+    const p = m.precincts && m.precincts.of ? m.precincts : null;
+    const final = !!p && p.n >= p.of; // every Election Day precinct in: the expected-vote estimate has done its job
     return {
       ballots,
       registered,
       turnout: ballots != null && registered ? ballots / registered : null,
-      share: ballots != null && expected ? Math.min(1, ballots / expected) : null,
+      share: !final && ballots != null && expected ? Math.min(1, ballots / expected) : null,
+      final,
       reportTime: m.reportTime ? m.reportTime.replace(/^\d{2}\/\d{2}\/\d{4}\s+/, '') : null,
       precincts: m.precincts && m.precincts.of ? m.precincts : null, // Election Day precincts reporting, from the clerk
     };
