@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   const showTest = url.searchParams.get('test') === '1' || process.env.NATIONAL_SHOW_TEST === '1';
   const c = await civic();
 
-  const withRes = (list, prefix) => list.map((x) => ({ ...x, res: shape(x, c.map.get(prefix + x.id), { showTest }) }));
+  const withRes = (list, prefix) => list.map((x) => { const cv = c.map.get(prefix + x.id); return { ...x, pollsClose: cv?.polls_close || null, res: shape(x, cv, { showTest }) }; });
   const house = withRes(FORECAST.house, 'H:');
   const senate = withRes(FORECAST.senate, 'S:');
   const all = [...house, ...senate];

@@ -9,303 +9,450 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* One phone-width column: control odds and live seat counts, then a searchable race list grouped by rating. */
+/* Laptop board: sticky seat strip on top; Senate tile grid + what's-left on the left; auto-sorted race sections in a multi-column grid on the right. */
 :root {
-  --bg: #f6f7f9; --panel: #ffffff; --fg: #1b2230; --muted: #5d6677; --line: #dde1e8;
-  --dem: #2457c5; --dem-soft: #dbe5fb; --rep: #c8352b; --rep-soft: #f8dcd9; --toss: #9a6b00; --star: #c98a00;
-  --warn-bg: #fff4d6; --warn-fg: #6b4a00; --oth: #c9ced8;
+  --bg: #f3f4f7; --panel: #ffffff; --fg: #18202d; --muted: #5b6475; --line: #dde1e8; --soft: #eceef3;
+  --dem: #2457c5; --dem-2: #8fb0ef; --dem-soft: #e1e9fb; --rep: #c8352b; --rep-2: #ec9a93; --rep-soft: #f9e1de;
+  --hot: #b45c00; --hot-soft: #fff1dc; --star: #c98a00; --oth: #c3c8d2;
   --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --num: "Barlow Semi Condensed", "Public Sans", system-ui, sans-serif;
-  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) { :root {
-  --bg: #11151c; --panel: #19202a; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2b3441;
-  --dem: #6f9bff; --dem-soft: #1f2f52; --rep: #ff7b70; --rep-soft: #4a2423; --toss: #e0b04a; --star: #f0bd3a;
-  --warn-bg: #3a2f12; --warn-fg: #f3d58a; --oth: #48505e; color-scheme: dark } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f131a; --panel: #171d26; --fg: #e8ebf0; --muted: #98a1b0; --line: #29323f; --soft: #1f2631;
+  --dem: #6f9bff; --dem-2: #3c5d9e; --dem-soft: #1b2a48; --rep: #ff7b70; --rep-2: #9a453f; --rep-soft: #3f2120;
+  --hot: #f0a64a; --hot-soft: #3a2a12; --star: #f0bd3a; --oth: #444c59; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f131a; --panel: #171d26; --fg: #e8ebf0; --muted: #98a1b0; --line: #29323f; --soft: #1f2631;
+  --dem: #6f9bff; --dem-2: #3c5d9e; --dem-soft: #1b2a48; --rep: #ff7b70; --rep-2: #9a453f; --rep-soft: #3f2120;
+  --hot: #f0a64a; --hot-soft: #3a2a12; --star: #f0bd3a; --oth: #444c59; color-scheme: dark }
 * { box-sizing: border-box }
 [hidden] { display: none !important }
-html, body { margin: 0 }
-body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.45; }
-.wrap { max-width: 760px; margin: 0 auto; padding-block: max(20px, env(safe-area-inset-top, 0px)) 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px }
-h1 { font-family: var(--num); font-weight: 700; font-size: 30px; line-height: 1.1; margin: 0; text-wrap: balance }
-.src { color: var(--muted); font-size: 13px; margin: 4px 0 0 }
-.src a { color: inherit }
-.banner { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: 500 }
-.odds { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
-.odd { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; min-width: 0 }
-.odd h2 { font-size: 14px; font-weight: 600; margin: 0 }
-.odd .big { font-family: var(--num); font-weight: 700; font-size: 34px; line-height: 1; color: var(--dem); font-variant-numeric: tabular-nums }
-.odd .big small { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 4px }
-.odd p { margin: 0; font-size: 13px; color: var(--muted) }
-.live { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; display: grid; gap: 4px }
-.live .seats { font-family: var(--num); font-size: 22px; font-weight: 700; display: flex; gap: 10px; flex-wrap: wrap; font-variant-numeric: tabular-nums }
-.live .seats .D { color: var(--dem) } .live .seats .R { color: var(--rep) }
-.split { height: 8px; border-radius: 4px; background: var(--rep); overflow: hidden } .split i { display: block; height: 100%; background: var(--dem) }
-.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line) }
-.tabs button { font: 600 15px var(--body); background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 8px 10px 9px; cursor: pointer }
-.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--fg) }
-.tools { display: grid; gap: 10px }
-input[type=search], input[type=password] { width: 100%; font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg) }
-.filters { display: flex; flex-wrap: wrap; gap: 6px }
-.filters button, .btn { font: 500 13px var(--body); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer }
-.filters button[aria-pressed="true"], .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg) }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--dem); outline-offset: 2px }
-.math { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px }
-.math summary { font-weight: 600; cursor: pointer }
-.math table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px }
-.math td { padding: 6px 0; border-top: 1px solid var(--line); vertical-align: top }
-.math td:last-child { text-align: right; font-family: var(--num); font-weight: 700; font-size: 17px; white-space: nowrap; padding-left: 10px }
-.group { display: grid; gap: 8px }
-.group h3 { margin: 10px 0 0; font-size: 16px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline }
-.group h3 span { font-size: 13px; color: var(--muted); font-weight: 500 }
-.side { font-family: var(--num); font-size: 22px; font-weight: 700; margin: 14px 0 0 }
-.side + p { margin: 0; color: var(--muted); font-size: 13px }
-.race { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px }
-.race.won-D { border-left: 4px solid var(--dem) } .race.won-R { border-left: 4px solid var(--rep) }
-.top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0 }
-.id { font-family: var(--num); font-weight: 700; font-size: 19px; white-space: nowrap }
-.rt { font-size: 13px; font-weight: 600 }
-.rt.D { color: var(--dem) } .rt.R { color: var(--rep) } .rt.T { color: var(--toss) }
-.tag { font-size: 12.5px; font-weight: 700 }
-.tag.D { color: var(--dem) } .tag.R { color: var(--rep) } .tag.N { color: var(--muted); font-weight: 600 }
-.star { margin-left: auto; background: none; border: 0; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; padding: 2px 4px }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14px; line-height: 1.4 }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel) }
+.num { font-family: var(--num); font-variant-numeric: tabular-nums }
+.D { color: var(--dem) } .R { color: var(--rep) }
+
+/* sticky strip */
+.strip { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line) }
+.strip-in { max-width: 1440px; margin: 0 auto; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: auto 1.2fr 1.2fr 1fr; gap: 12px 28px; align-items: center }
+.brand h1 { font-family: var(--num); font-size: 24px; margin: 0; line-height: 1 }
+.brand p { margin: 3px 0 0; font-size: 12px; color: var(--muted) }
+.mock { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--hot) }
+.meter h2 { font-size: 13px; font-weight: 600; margin: 0 0 4px; display: flex; justify-content: space-between; gap: 8px }
+.meter h2 span { color: var(--muted); font-weight: 500 }
+.seatline { display: flex; align-items: baseline; gap: 10px; font-family: var(--num); font-weight: 700; font-size: 26px; line-height: 1 }
+.seatline small { font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--muted) }
+.track { position: relative; height: 10px; border-radius: 5px; background: var(--soft); overflow: hidden; display: flex; margin-top: 6px }
+.track i { background: var(--dem) } .track u { background: var(--rep); margin-left: auto }
+.track .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg) }
+.swing .big { font-family: var(--num); font-weight: 700; font-size: 26px; line-height: 1 }
+.swing p { margin: 4px 0 0; font-size: 12px; color: var(--muted) }
+
+/* layout */
+.page { max-width: 1440px; margin: 0 auto; padding-block: 18px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 372px minmax(0, 1fr); gap: 22px; align-items: start }
+aside { display: grid; gap: 16px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); max-height: calc(100vh - 110px); overflow-y: auto; overscroll-behavior: contain }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px }
+.panel h2 { margin: 0 0 8px; font-size: 15px }
+.panel h2 span { color: var(--muted); font-weight: 500; font-size: 12px; margin-left: 6px }
+
+/* senate tiles */
+.tiles { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px }
+.tile { border: 0; border-radius: 6px; padding: 5px 2px 4px; text-align: center; cursor: pointer; background: var(--soft); color: var(--fg); font: inherit; min-width: 0 }
+.tile b { display: block; font-family: var(--num); font-size: 16px; line-height: 1.05 }
+.tile span { display: block; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden }
+.tile.fD { box-shadow: inset 0 -3px 0 var(--dem-2) } .tile.fR { box-shadow: inset 0 -3px 0 var(--rep-2) } .tile.fT { box-shadow: inset 0 -3px 0 var(--hot) }
+.tile.lD { background: var(--dem-soft); color: var(--dem) } .tile.lR { background: var(--rep-soft); color: var(--rep) }
+.tile.cD { background: var(--dem); color: #fff } .tile.cR { background: var(--rep); color: #fff }
+.tile.close { outline: 2px solid var(--hot); outline-offset: -2px }
+.tile:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--dem); outline-offset: 2px }
+.tiles.h { grid-template-columns: repeat(8, 1fr); gap: 3px }
+.tiles.h .tile { padding: 4px 1px 3px; border-radius: 5px }
+.tiles.h .tile b { font-size: 12px; white-space: nowrap; overflow: hidden }
+.tiles.h .tile span { font-size: 9.5px }
+.tgroup { margin: 10px 0 4px; font-size: 12px; color: var(--muted); font-weight: 600 }
+.tgroup:first-of-type { margin-top: 0 }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 11.5px; color: var(--muted) }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px }
+
+.left ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.left li { display: flex; justify-content: space-between; gap: 8px; font-size: 13px }
+.left li b { font-family: var(--num); font-size: 15px }
+.left p { margin: 0 0 8px; font-size: 13px }
+.left p strong { font-family: var(--num); font-size: 17px }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 6px }
+.views { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel) }
+.views button { font: 600 13px var(--body); padding: 7px 14px; border: 0; background: none; color: var(--muted); cursor: pointer }
+.views button[aria-pressed="true"] { background: var(--fg); color: var(--bg) }
+.controls input, .controls select { font: 13px var(--body); padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg) }
+.controls input { flex: 1 1 220px; min-width: 0 }
+
+/* sections + rows */
+.sec { margin-top: 14px }
+.sec > h3 { margin: 0 0 6px; font-size: 15px; display: flex; gap: 10px; align-items: baseline }
+.sec > h3 span { color: var(--muted); font-weight: 500; font-size: 12.5px }
+.sec > h3 button { margin-left: auto; font: 500 12px var(--body); background: none; border: 0; color: var(--muted); cursor: pointer; text-decoration: underline }
+.rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 6px; align-items: start }
+.row { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; min-width: 0 }
+.row.hot { border-color: var(--hot); background: linear-gradient(var(--hot-soft), var(--hot-soft)) padding-box }
+.row.wD { box-shadow: inset 3px 0 0 var(--dem) } .row.wR { box-shadow: inset 3px 0 0 var(--rep) }
+.rhead { display: grid; grid-template-columns: 18px 50px minmax(84px, 1fr) auto 44px 36px; gap: 6px; align-items: center; padding: 7px 10px 7px 6px; cursor: pointer; width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left }
+.star { background: none; border: 0; font-size: 16px; line-height: 1; color: var(--muted); cursor: pointer; padding: 0 }
 .star[aria-pressed="true"] { color: var(--star) }
-.cands { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; font-size: 14px }
-.cands .r { text-align: right }
-.cands b { display: block; font-family: var(--num); font-size: 24px; line-height: 1.05; font-variant-numeric: tabular-nums }
-.cands .d b { color: var(--dem) } .cands .r b { color: var(--rep) }
-.cands .nm { min-width: 0; overflow-wrap: anywhere }
-.cands .v { display: block; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums }
-.bar { height: 8px; border-radius: 4px; background: var(--oth); overflow: hidden; display: flex }
-.bar i { background: var(--dem) } .bar u { background: var(--rep); margin-left: auto }
-.bar.odds { background: var(--rep-soft) }
-.meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted) }
-.meta strong { color: var(--fg); font-weight: 600 }
-.empty { color: var(--muted); padding: 16px 0 }
-.foot { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 12px }
-.foot a { color: inherit }
-.login { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; max-width: 420px }
+.rid { font-family: var(--num); font-weight: 700; font-size: 16px; white-space: nowrap }
+.rmid { min-width: 0; display: grid; gap: 1px }
+.rmid .rt { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.rmid .flag { font-size: 11.5px; font-weight: 700; color: var(--hot); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.rmid .flag.D { color: var(--dem) } .rmid .flag.R { color: var(--rep) } .rmid .flag.m { color: var(--muted); font-weight: 600 }
+.lead { font-family: var(--num); font-weight: 700; font-size: 17px; text-align: right; white-space: nowrap; min-width: 50px }
+.mini { height: 8px; border-radius: 4px; background: var(--oth); overflow: hidden; display: flex }
+.mini i { background: var(--dem) } .mini u { background: var(--rep); margin-left: auto }
+.mini.odds { background: var(--soft) } .mini.odds i { background: var(--dem-2) } .mini.odds u { background: var(--rep-2) }
+.pin { font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap }
+.rbody { border-top: 1px solid var(--line); padding: 8px 12px 10px; display: grid; gap: 6px; font-size: 13px }
+.cand { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline }
+.cand .n { min-width: 0; overflow-wrap: anywhere }
+.cand .p { font-family: var(--num); font-weight: 700; font-size: 17px }
+.cand .v { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 84px; text-align: right }
+.facts { display: flex; flex-wrap: wrap; gap: 3px 14px; color: var(--muted); font-size: 12px }
+.facts strong { color: var(--fg); font-weight: 600 }
+.empty { color: var(--muted); padding: 8px 0 }
+.pop { position: fixed; z-index: 20; width: 320px; max-width: calc(100vw - 24px); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(10, 16, 28, .18); padding: 10px 12px 12px; display: grid; gap: 6px; font-size: 13px }
+.pop .ph { display: flex; align-items: baseline; gap: 8px }
+.pop .ph b { font-family: var(--num); font-size: 18px }
+.pop .ph .x { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer }
+.tile.sel { outline: 2px solid var(--fg); outline-offset: 1px }
+.foot { color: var(--muted); font-size: 12px; margin-top: 22px; border-top: 1px solid var(--line); padding-top: 10px }
+
+@media (max-width: 1100px) { .strip-in { grid-template-columns: 1fr 1fr } .brand { grid-column: 1 / -1 } }
+@media (max-width: 900px) { .page { grid-template-columns: minmax(0, 1fr) } aside { position: static } }
+@media (max-width: 520px) { .strip-in { grid-template-columns: 1fr } .rows { grid-template-columns: minmax(0, 1fr) } .rows { grid-template-columns: minmax(0, 1fr) !important } .rhead { grid-template-columns: 18px 48px minmax(84px, 1fr) auto 44px 32px; gap: 6px } }
+.login { max-width: 420px; margin: 60px auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px }
+.login h1 { font-family: var(--num); font-size: 26px; margin: 0 }
 .login p { margin: 0 }
+.login input { font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg) }
+.login button { justify-self: start; font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 0; background: var(--fg); color: var(--bg); cursor: pointer }
 .err { color: var(--rep); font-size: 14px; min-height: 1.2em }
-@media (max-width: 420px) { .odd .big { font-size: 30px } .cands b { font-size: 21px } }
-@media (max-width: 360px) { .odds { grid-template-columns: 1fr } }
+.banner { max-width: 1440px; margin: 10px auto 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+.banner div { background: var(--hot-soft); color: var(--fg); border: 1px solid var(--hot); border-radius: 8px; padding: 8px 12px; font-weight: 500 }
+html, body { margin: 0 }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Midterm Watch 2026</h1>
-    <p class="src" id="src">FLIPR Deluxe forecast from Silver Bulletin. Live results from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>.</p>
-  </header>
+<form class="login" id="login" hidden>
+  <h1>Midterm Watch</h1>
+  <p>Enter the code to see this page.</p>
+  <input id="code" type="password" autocomplete="current-password" aria-label="Code">
+  <button type="submit">Open</button>
+  <div class="err" id="loginErr"></div>
+</form>
+<div id="app" hidden>
 
-  <form class="login" id="login" hidden>
-    <p>Enter the code to see this page.</p>
-    <input id="code" type="password" autocomplete="current-password" aria-label="Code">
-    <div><button class="btn primary" type="submit">Open</button></div>
-    <div class="err" id="loginErr"></div>
-  </form>
-
-  <div id="app" hidden>
-    <div class="banner" id="banner" hidden></div>
-    <section class="odds" aria-label="Control of Congress" id="odds"></section>
-
-    <nav class="tabs" role="tablist" style="margin-top:18px">
-      <button type="button" role="tab" id="tab-senate" data-tab="senate">Senate</button>
-      <button type="button" role="tab" id="tab-house" data-tab="house">House</button>
-    </nav>
-
-    <div class="tools" style="margin-top:14px">
-      <input id="q" type="search" placeholder="Search a state, district, or candidate" autocomplete="off">
-      <div class="filters" id="filters"></div>
+<div class="pop" id="pop" hidden role="dialog" aria-label="Race details"></div>
+<header class="strip"><div class="strip-in" id="strip"></div></header>
+<div class="banner" id="banner" hidden></div>
+<div class="page">
+  <aside>
+    <section class="panel"><h2>Senate<span id="tileNote"></span></h2><div class="tiles" id="tiles"></div>
+      <div class="legend"><span><i style="background:var(--soft);box-shadow:inset 0 -3px 0 var(--dem-2)"></i>No votes yet</span><span><i style="background:var(--dem-soft)"></i>Leading</span><span><i style="background:var(--dem)"></i>Called</span><span><i style="outline:2px solid var(--hot);outline-offset:-2px;background:var(--soft)"></i>Close</span></div>
+    </section>
+    <section class="panel"><h2>House<span>flip targets, most Democratic to most Republican</span></h2><div id="htiles"></div></section>
+    <section class="panel left" id="left"></section>
+  </aside>
+  <main>
+    <div class="controls">
+      <div class="views" role="group" aria-label="View">
+        <button type="button" data-view="watch">Watch now</button>
+        <button type="button" data-view="senate">Senate</button>
+        <button type="button" data-view="house">House</button>
+      </div>
+      <input id="q" type="search" placeholder="Search state, district, or candidate" autocomplete="off">
+      <select id="sort" aria-label="Sort"><option value="close">Closest margin</option><option value="left">Most vote still out</option><option value="polls">Poll closing time</option><option value="rating">Forecast rating</option></select>
     </div>
-
-    <details class="math" id="math" hidden style="margin-top:14px">
-      <summary>How many Republican seats Dems need to flip</summary>
-      <table>
-        <tr><td><b>Great night.</b> Dems lose only their 4 Likely R and Solid R seats.</td><td>7 flips</td></tr>
-        <tr><td><b>Good night.</b> Dems win their toss-ups and every Lean D or better, but none of their Lean R seats.</td><td>9 flips</td></tr>
-        <tr><td><b>Mildly disappointing.</b> Dems lose their toss-ups and 2 of their 3 Lean D seats.</td><td>13 flips</td></tr>
-        <tr><td><b>Very disappointing.</b> Dems lose every Lean D and their first four Likely D seats.</td><td>18 flips</td></tr>
-      </table>
-    </details>
-
-    <main id="list"></main>
-
-    <p class="foot" id="foot">Forecast win chances are for the Democratic side vs. the Republican. Ratings: Solid means over 95%, Likely 75–95%, Lean 60–75%, Toss-up when neither side reaches 60%. On election night, vote shares replace the odds in the big numbers and a check marks the winner once a race is called. Results from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>; compare close races with another source. Stars are saved on this device only.</p>
-  </div>
+    <div id="list"></div>
+    <p class="foot">Forecast: FLIPR Deluxe (Silver Bulletin), Oct. 27. Results: <a href="https://civicapi.org" target="_blank" rel="noopener" style="color:inherit">civicAPI</a>, checked every minute; compare close races with another source. The Senate shows Likely, Lean, and Toss-up races plus any Solid race that flips; seat counts include every race. Close means no call yet and a lead under 3 points. National swing compares Democrats' current House margins with the 2024 presidential margin in the same districts, counting races at least a quarter in. Times are Eastern.</p>
+  </main>
 </div>
 
 <script>
-(() => {
-  const ORDER = ['Solid D', 'Likely D', 'Lean D', 'Toss-up', 'Lean R', 'Likely R', 'Solid R'];
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = new Intl.NumberFormat('en-US');
-  const side = (r) => (r === 'Toss-up' ? 'T' : r.endsWith('D') ? 'D' : 'R');
-  const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
-  const $ = (id) => document.getElementById(id);
-  const TEST = new URLSearchParams(location.search).get('test') === '1';
+let F = { senateHoldover: { D: 34, R: 31 }, houseNow: { D: 215, R: 220 } };
+const T0 = Date.parse('2026-11-03T05:00:00Z'); // midnight ET on Election Day; times below are hours after it
+const hrs = (t) => (Date.parse(t) - T0) / 3.6e6;
+let NOW = (Date.now() - T0) / 3.6e6;
+// Fallback poll-closing times (ET, last polls in each state) if civicAPI doesn't give one.
+const CLOSE = { IN:19, KY:19, GA:19, VA:19, SC:19, FL:20, NH:20, VT:19, NC:19.5, OH:19.5, WV:19.5, AL:20, CT:20, DE:20, IL:20, ME:20, MD:20, MA:20, MS:20, MO:20, NJ:20, OK:20, PA:20, RI:20, TN:20, AR:20.5, AZ:21, CO:21, KS:21, LA:21, MI:21, MN:21, NE:21, NM:21, NY:21, SD:21, TX:21, WI:21, WY:21, IA:22, MT:22, NV:22, UT:22, CA:23, ID:23, OR:23, WA:23, AK:25 };
+const ORDER = ['Solid D','Likely D','Lean D','Toss-up','Lean R','Likely R','Solid R'];
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const fmt = new Intl.NumberFormat('en-US');
+const clock = (h) => { const hh = Math.floor(h) % 24, mm = Math.round((h % 1) * 60); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')}${hh >= 12 && hh < 24 ? ' PM' : ' AM'}`; };
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const mg = (s) => (/^D\+/.test(s) ? +s.slice(2) : /^R\+/.test(s) ? -s.slice(2) : 0); // D-positive
 
-  let data = null;
-  let tab = store.get('mw-tab', 'senate');
-  let filter = 'all';
-  let stars = new Set(store.get('mw-stars', []));
-
-  const favoredFlip = (x) => (x.held === 'R' && x.p > 50) || (x.held === 'D' && x.p < 50);
-  const won = (x) => x.res?.winner || null;
-  const flipped = (x) => won(x) && won(x) !== 'O' && won(x) !== x.held;
-  const upset = (x) => (won(x) === 'D' && x.p < 50) || (won(x) === 'R' && x.p > 50);
-
-  function filters() {
-    const f = [['all', 'All'], ['star', '★ Starred'], ['flip', 'Favored to flip'], ['close', 'Toss-up and Lean']];
-    if (data?.anyResults) f.push(['called', 'Called'], ['flipped', 'Flipped'], ['upset', 'Upsets']);
-    return f;
-  }
-  function matches(x) {
-    const t = $('q').value.trim().toLowerCase();
-    const names = [x.id, x.state, x.d, x.r, x.res?.d?.name, x.res?.r?.name];
-    if (t && !names.some((v) => v && String(v).toLowerCase().includes(t))) return false;
-    switch (filter) {
-      case 'star': return stars.has(tab + ':' + x.id);
-      case 'flip': return favoredFlip(x);
-      case 'close': return /Toss-up|Lean/.test(x.rating);
-      case 'called': return !!won(x);
-      case 'flipped': return flipped(x);
-      case 'upset': return upset(x);
-      default: return true;
+// ---------- live data ----------
+let senate = [], house = [], ALL = [], DATA = null;
+const prevLead = new Map(); // key -> leader at the last check
+const changedAt = new Map(); // key -> when the lead last changed (hours)
+const firstWon = new Map(); // key -> when we first saw a call, if civicAPI has no call time
+try { const s = JSON.parse(sessionStorage.getItem('mw-track') || '{}'); Object.entries(s.p || {}).forEach(([k, v]) => prevLead.set(k, v)); Object.entries(s.c || {}).forEach(([k, v]) => changedAt.set(k, v)); } catch {}
+function prep(x, kind) {
+  x.kind = kind; x.st = kind === 'S' ? x.id : x.id.split('-')[0];
+  x.close = x.pollsClose ? hrs(x.pollsClose) : (CLOSE[x.st] ?? 21);
+  const r = x.res;
+  if (r) {
+    if (!(r.total > 0)) x.res = null;
+    else {
+      const k = kind + ':' + x.id, lead = r.margin >= 0 ? 'D' : 'R';
+      if (prevLead.has(k) && prevLead.get(k) !== lead && !r.winner) changedAt.set(k, NOW);
+      prevLead.set(k, lead);
+      x.leadChanged = changedAt.has(k) && NOW - changedAt.get(k) < 1 / 6;
+      if (r.winner) { if (!firstWon.has(k)) firstWon.set(k, DATA_SEEN ? NOW : -99); // called before this page opened: not "just called"
+ r.calledAt = r.calledAt ? hrs(r.calledAt) : firstWon.get(k); }
     }
   }
+  return x;
+}
+let DATA_SEEN = false;
+function ingest(d) {
+  DATA_SEEN = !!DATA; DATA = d; NOW = (Date.now() - T0) / 3.6e6;
+  F = { senateHoldover: d.senateHoldover, houseNow: d.houseNow };
+  senate = d.senate.map((x) => prep(x, 'S'));
+  house = d.house.map((x) => prep(x, 'H'));
+  ALL = [...senate, ...house];
+  try { sessionStorage.setItem('mw-track', JSON.stringify({ p: Object.fromEntries(prevLead), c: Object.fromEntries(changedAt) })); } catch {}
+}
 
-  function card(x) {
-    const key = tab + ':' + x.id, on = stars.has(key), s = side(x.rating), r = x.res;
-    const pd = x.p, pr = +(100 - x.p).toFixed(1);
-    const title = tab === 'senate' ? esc(x.state) : esc(x.id);
-    const heldTxt = `Held by <strong>${x.held === 'D' ? 'Dems' : 'GOP'}</strong>`;
-    const tags = [];
-    let cls = '';
-    if (r && r.winner) {
-      const w = r.winner === 'O' ? 'N' : r.winner;
-      tags.push(`<span class="tag ${w}">${r.winner === 'O' ? 'Other' : r.winner} win ✓</span>`);
-      if (flipped(x)) tags.push(`<span class="tag ${w}">Flip</span>`);
-      if (upset(x)) tags.push(`<span class="tag N">Upset vs. forecast</span>`);
-      cls = r.winner === 'O' ? '' : 'won-' + r.winner;
-    } else if (r) {
-      tags.push(`<span class="tag N">${Math.round(r.pct)}% in</span>`);
-    } else if (favoredFlip(x)) {
-      tags.push(`<span class="tag N">${x.held === 'R' ? 'D' : 'R'} favored to flip</span>`);
+// ---------- derived ----------
+const keyOf = (x) => x.kind + ':' + x.id;
+const won = (x) => x.res?.winner || null;
+const isClose = (x) => x.res && !won(x) && x.res.total > 0 && Math.abs(x.res.margin) < 3;
+const justCalled = (x) => won(x) && NOW - x.res.calledAt >= 0 && NOW - x.res.calledAt < 1 / 6;
+const counting = (x) => x.res && !won(x);
+const voteLeft = (x) => (x.res ? (x.res.total / Math.max(1, x.res.pct)) * (100 - x.res.pct) : Infinity);
+const flipped = (x) => won(x) && won(x) !== x.held;
+const name = (x) => (x.kind === 'S' ? x.st : x.id);
+// Senate: only Likely, Lean, and Toss-up races, plus any Solid race that flips. House list is already flips and competitive seats.
+const shown = (x) => x.kind === 'H' || !/^Solid/.test(x.rating) || flipped(x);
+const SEN = () => senate.filter(shown);
+
+let view = store.get('mwb-view', 'watch');
+let stars = new Set(store.get('mwb-stars', []));
+let open = new Set();
+let showCalled = false;
+let showSafe = false;
+let popKey = null, popAnchor = null;
+function showPop() {
+  const pop = document.getElementById('pop');
+  document.querySelectorAll('.tile.sel').forEach((t) => t.classList.remove('sel'));
+  const x = popKey && ALL.find((y) => keyOf(y) === popKey);
+  const tileEl = popKey && document.querySelector(`[data-jump="${popKey}"]`);
+  if (!x || !tileEl) { pop.hidden = true; return; }
+  tileEl.classList.add('sel');
+  const on = stars.has(popKey);
+  const status = won(x) ? `<span class="flag ${won(x)}" style="font-weight:700">${won(x)} ✓${flipped(x) ? ' · Flip' : ''}</span>` : isClose(x) ? '<span style="color:var(--hot);font-weight:700">Close</span>' : x.res ? `<span style="color:var(--muted)">${x.res.pct}% in</span>` : '';
+  pop.innerHTML = `<div class="ph"><b>${esc(x.kind === 'S' ? x.state : x.id)}</b><span class="rt" style="font-size:12px;font-weight:600">${esc(x.rating)}</span>${status}
+    <button type="button" class="star" data-star="${popKey}" aria-pressed="${on}" aria-label="${on ? 'Unstar' : 'Star'}">${on ? '★' : '☆'}</button>
+    <button type="button" class="x" data-popclose aria-label="Close">×</button></div>${detail(x)}`;
+  pop.hidden = false;
+  const r = tileEl.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  let left = r.right + 10; if (left + w > innerWidth - 12) left = Math.max(12, r.left - w - 10);
+  if (innerWidth < 700) left = Math.max(12, (innerWidth - w) / 2);
+  const top = Math.min(Math.max(12, r.top - 8), innerHeight - h - 12);
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+}
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && popKey) { popKey = null; showPop(); } });
+addEventListener('scroll', () => { if (popKey) showPop(); }, { passive: true });
+document.addEventListener('scroll', (e) => { if (popKey && e.target.closest?.('aside')) showPop(); }, { capture: true, passive: true });
+
+function strip() {
+  const sw = (p) => senate.filter((x) => won(x) === p).length;
+  const sd = F.senateHoldover.D + sw('D'), sr = F.senateHoldover.R + sw('R'), left = 100 - sd - sr;
+  const gain = house.filter((x) => x.held === 'R' && won(x) === 'D').length, lost = house.filter((x) => x.held === 'D' && won(x) === 'R').length;
+  const hd = F.houseNow.D + gain - lost, hr = 435 - hd;
+  const pool = house.filter((x) => x.res && x.res.pct >= 25);
+  const swing = pool.reduce((a, x) => a + (x.res.margin - mg(x.m24)), 0) / (pool.length || 1);
+  document.getElementById('strip').innerHTML = `
+    <div class="brand"><h1>Midterm Watch</h1><p>${DATA.anyResults ? 'Results checked' : 'Checked'} ${new Date(DATA.source.checkedAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET</p>${DATA.showTest ? '<span class="mock">Test data, not real results</span>' : ''}</div>
+    <div class="meter"><h2>Senate <span>51 for control</span></h2>
+      <div class="seatline"><span class="D">D ${sd}</span><span class="R">R ${sr}</span><small>${left} not called</small></div>
+      <div class="track"><i style="width:${sd}%"></i><u style="width:${sr}%"></u><span class="mark" style="left:50.5%"></span></div></div>
+    <div class="meter"><h2>House <span>218 for control</span></h2>
+      <div class="seatline"><span class="D">D ${hd}</span><small>flipped ${gain}, lost ${lost} so far</small></div>
+      <div class="track"><i style="width:${hd / 4.35}%"></i><u style="width:${hr / 4.35}%"></u><span class="mark" style="left:${218 / 4.35}%"></span></div></div>
+    <div class="swing"><h2 style="font-size:13px;margin:0 0 4px">National swing</h2><div class="big ${swing >= 0 ? 'D' : 'R'}">${swing >= 0 ? 'D' : 'R'} +${Math.abs(swing).toFixed(1)}</div><p>vs. 2024 presidential, across ${pool.length} House races</p></div>`;
+}
+
+function tile(x) {
+  const f = x.rating === 'Toss-up' ? 'fT' : x.p > 50 ? 'fD' : 'fR';
+  let cls = f, sub = clock(x.close).replace(' PM', '').replace(' AM', 'a');
+  if (x.res) {
+    const lead = x.res.margin >= 0 ? 'D' : 'R';
+    cls = won(x) ? 'c' + won(x) : 'l' + lead;
+    sub = won(x) ? (flipped(x) ? 'Flip ✓' : '✓') : (x.kind === 'H' ? `${lead}+${Math.abs(x.res.margin).toFixed(0)}` : `${lead}+${Math.abs(x.res.margin).toFixed(0)} ${x.res.pct}%`);
+  }
+  if (isClose(x)) cls += ' close';
+  return `<button type="button" class="tile ${cls}" data-jump="${keyOf(x)}" title="${esc(x.kind === 'S' ? x.state : x.id + ': ' + (x.d || '') + ' vs. ' + x.r)}"><b>${esc(name(x))}</b><span>${sub}</span></button>`;
+}
+function tiles() {
+  document.getElementById('tiles').innerHTML = SEN().sort((a, b) => b.p - a.p).map(tile).join('');
+  document.getElementById('tileNote').textContent = 'competitive races, most Democratic to most Republican';
+  const grp = (held, label) => { const l = house.filter((x) => x.held === held).sort((a, b) => b.p - a.p); return `<div class="tgroup">${label} (${l.length})</div><div class="tiles h">${l.map(tile).join('')}</div>`; };
+  document.getElementById('htiles').innerHTML = grp('R', 'Republican seats Dems could flip') + grp('D', 'Democratic seats Republicans could flip');
+}
+
+function left() {
+  const sw = (p) => senate.filter((x) => won(x) === p).length;
+  const safeD = senate.filter((x) => !won(x) && !shown(x) && x.p > 50).length; // uncalled Solid D seats, counted as safe
+  const sd = F.senateHoldover.D + sw('D') + safeD;
+  const need = Math.max(0, 51 - sd);
+  const open = SEN().filter((x) => !won(x)).sort((a, b) => b.p - a.p);
+  const gain = house.filter((x) => x.held === 'R' && won(x) === 'D').length, lost = house.filter((x) => x.held === 'D' && won(x) === 'R').length;
+  const hNeed = 218 - F.houseNow.D + lost - gain;
+  const hOpen = house.filter((x) => x.held === 'R' && !won(x)).length;
+  const row = (x) => `<li><span>${esc(x.state)}</span>${x.res ? `<b class="${x.res.margin >= 0 ? 'D' : 'R'}">${x.res.margin >= 0 ? 'D' : 'R'} +${Math.abs(x.res.margin).toFixed(1)} · ${x.res.pct}%</b>` : `<b style="color:var(--muted)">${clock(x.close)}</b>`}</li>`;
+  document.getElementById('left').innerHTML = `<h2>What's left to win</h2>
+    <p>Senate: Dems need <strong>${need}</strong> of these <strong>${open.length}</strong> competitive races not called yet${safeD ? ` (counting ${safeD} uncalled Solid D seat${safeD === 1 ? '' : 's'} as safe)` : ''}.</p>
+    <ul>${open.map(row).join('')}</ul>
+    <p style="margin-top:12px">House: Dems need <strong>${Math.max(0, hNeed)}</strong> more flips. <strong>${hOpen}</strong> Republican seats on the list are still open.</p>`;
+}
+
+function detail(x) {
+  const r = x.res;
+  return `
+    ${r ? `<div class="cand"><span class="n">${esc(r.d.name || 'No Democrat')}${won(x) === 'D' ? ' ✓' : ''}</span><span class="p D">${r.d.pct.toFixed(1)}%</span><span class="v">${fmt.format(r.d.votes)}</span></div>
+           <div class="cand"><span class="n">${esc(r.r.name)}${won(x) === 'R' ? ' ✓' : ''}</span><span class="p R">${r.r.pct.toFixed(1)}%</span><span class="v">${fmt.format(r.r.votes)}</span></div>`
+        : `<div class="cand"><span class="n">${esc(x.d || 'No Democrat')}</span><span class="p D">${x.p.toFixed(1)}%</span><span class="v">win chance</span></div>
+           <div class="cand"><span class="n">${esc(x.r)}</span><span class="p R">${(100 - x.p).toFixed(1)}%</span><span class="v">win chance</span></div>`}
+    <div class="facts">${r ? `<span>FLIPR <strong>D ${x.p.toFixed(1)}%</strong></span><span><strong>${r.pct}%</strong> reporting</span><span>About <strong>${fmt.format(Math.round(voteLeft(x) / 1000) * 1000)}</strong> votes still out</span>` : ''}
+      <span>Held by <strong>${x.held === 'D' ? 'Dems' : 'GOP'}</strong></span>${x.kind === 'H' ? `<span>Projected <strong>${esc(x.proj)}</strong></span><span>2024 pres. <strong>${esc(x.m24)}</strong></span>` : ''}<span>Polls close <strong>${clock(x.close)}</strong></span>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>`;
+}
+
+function rowHtml(x) {
+  const k = keyOf(x), on = stars.has(k), isOpen = open.has(k), r = x.res;
+  const rs = x.rating === 'Toss-up' ? 'color:var(--hot)' : x.rating.endsWith('D') ? 'color:var(--dem)' : 'color:var(--rep)';
+  let flag = '', cls = '';
+  if (won(x)) { flag = `<span class="flag ${won(x)}">${justCalled(x) ? 'Just called ' : ''}${won(x)} ✓${flipped(x) ? ' · Flip' : ''}</span>`; cls = 'w' + won(x); }
+  else if (x.leadChanged) { flag = `<span class="flag">Lead changed</span>`; cls = 'hot'; }
+  else if (isClose(x)) { flag = `<span class="flag">Close</span>`; cls = 'hot'; }
+  else if (!r) flag = `<span class="flag m">Polls close ${clock(x.close)}</span>`;
+  let lead, bar, pin;
+  if (r) {
+    const m = r.margin, s = m >= 0 ? 'D' : 'R';
+    lead = `<span class="lead ${s}">${s} +${Math.abs(m).toFixed(1)}</span>`;
+    bar = `<span class="mini"><i style="width:${r.d.pct}%"></i><u style="width:${r.r.pct}%"></u></span>`;
+    pin = `<span class="pin">${r.pct}%</span>`;
+  } else {
+    const s = x.p >= 50 ? 'D' : 'R';
+    lead = `<span class="lead" style="color:var(--muted);font-size:14px">${s} ${Math.round(s === 'D' ? x.p : 100 - x.p)}%</span>`;
+    bar = `<span class="mini odds"><i style="width:${x.p}%"></i><u style="width:${100 - x.p}%"></u></span>`;
+    pin = `<span class="pin">odds</span>`;
+  }
+  const body = !isOpen ? '' : `<div class="rbody">${detail(x)}</div>`;
+  return `<div class="row ${cls}" id="r-${k.replace(':', '-')}">
+    <div class="rhead" data-open="${k}" role="button" tabindex="0" aria-expanded="${isOpen}">
+      <button type="button" class="star" data-star="${k}" aria-pressed="${on}" aria-label="${on ? 'Unstar' : 'Star'} ${esc(name(x))}">${on ? '★' : '☆'}</button>
+      <span class="rid">${esc(name(x))}</span>
+      <span class="rmid"><span class="rt" style="${rs}">${x.kind === 'S' ? 'Senate · ' : ''}${esc(x.rating)}</span>${flag}</span>
+      ${lead}${bar}${pin}
+    </div>${body}</div>`;
+}
+
+const sorters = {
+  close: (a, b) => (a.res ? Math.abs(a.res.margin) : 99 + Math.abs(50 - a.p)) - (b.res ? Math.abs(b.res.margin) : 99 + Math.abs(50 - b.p)),
+  left: (a, b) => (won(a) ? 1 : 0) - (won(b) ? 1 : 0) || voteLeft(b) - voteLeft(a),
+  polls: (a, b) => a.close - b.close || Math.abs(50 - a.p) - Math.abs(50 - b.p),
+  rating: (a, b) => ORDER.indexOf(a.rating) - ORDER.indexOf(b.rating) || b.p - a.p,
+};
+const sec = (title, note, list, extra = '') => (list.length ? `<section class="sec"><h3>${title}<span>${note || list.length + ' race' + (list.length === 1 ? '' : 's')}</span>${extra}</h3><div class="rows">${list.map(rowHtml).join('')}</div></section>` : '');
+
+function render() {
+  if (!DATA) return;
+  const ban = [];
+  if (DATA.showTest) ban.push('Showing civicAPI test data. These are not real results.');
+  if (!DATA.source.ok) ban.push(`civicAPI isn't answering right now (${esc(DATA.source.error)}). Showing the last results we had.`);
+  document.getElementById('banner').hidden = !ban.length;
+  document.getElementById('banner').innerHTML = ban.map((b) => `<div>${b}</div>`).join('');
+  strip(); tiles(); left();
+  document.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.view === view));
+  document.getElementById('sort').disabled = view === 'watch';
+  const t = document.getElementById('q').value.trim().toLowerCase();
+  const pool = (view === 'senate' ? senate : view === 'house' ? house : ALL).filter(shown).filter((x) => !t || [x.id, x.state, x.d, x.r].some((v) => v && v.toLowerCase().includes(t)));
+  let html = '';
+  if (view === 'watch') {
+    const used = new Set();
+    const take = (fn, sort) => { const l = pool.filter((x) => !used.has(x) && fn(x)).sort(sort); l.forEach((x) => used.add(x)); return l; };
+    const starred = take((x) => stars.has(keyOf(x)), sorters.close);
+    const changed = take((x) => x.leadChanged || justCalled(x), sorters.close);
+    const close = take(isClose, sorters.close);
+    const count = take(counting, sorters.close);
+    const soon = take((x) => !x.res && x.close - NOW <= 1.5, sorters.polls);
+    const later = take((x) => !x.res, sorters.polls);
+    const called = take((x) => !!won(x), (a, b) => (flipped(b) ? 1 : 0) - (flipped(a) ? 1 : 0) || b.res.calledAt - a.res.calledAt);
+    html = sec('Your starred races', '', starred)
+      + sec('Just called or lead changed', 'last 10 minutes', changed)
+      + sec('Close', 'no call yet, lead under 3 points', close)
+      + sec('Counting', 'closest first', count)
+      + sec('Polls closing soon', 'next 90 minutes', soon)
+      + sec(NOW < 6 ? 'Not started' : 'Polls still open', NOW < 6 ? 'polls open Nov. 3' : '', later)
+      + (called.length ? `<section class="sec"><h3>Called<span>${called.length} races, ${called.filter(flipped).length} flips</span><button type="button" data-toggle-called>${showCalled ? 'Hide' : 'Show'}</button></h3>${showCalled ? `<div class="rows">${called.map(rowHtml).join('')}</div>` : ''}</section>` : '');
+  } else {
+    const sort = sorters[document.getElementById('sort').value];
+    html = sec(view === 'senate' ? 'Competitive Senate races' : 'House races', '', [...pool].sort(sort));
+    if (view === 'senate') {
+      const safe = senate.filter((x) => !shown(x)).filter((x) => !t || [x.id, x.state, x.d, x.r].some((v) => v && v.toLowerCase().includes(t))).sort(sort);
+      const sd = safe.filter((x) => x.p > 50).length;
+      if (safe.length) html += `<section class="sec"><h3>Safe seats<span>${safe.length} races (${sd} D, ${safe.length - sd} R), counted in the totals</span><button type="button" data-toggle-safe>${showSafe ? 'Hide' : 'Show'}</button></h3>${showSafe ? `<div class="rows">${safe.map(rowHtml).join('')}</div>` : ''}</section>`;
     }
-
-    let body;
-    if (r && r.total > 0) {
-      const dp = r.d?.pct || 0, rp = r.r?.pct || 0;
-      const nm = (c, fallback, isW) => `${esc(c?.name || fallback || '—')}${isW ? ' ✓' : ''}`;
-      body = `<div class="cands"><div class="d nm"><b>${dp.toFixed(1)}%</b>${nm(r.d, x.d, r.winner === 'D')}<span class="v">${fmt.format(r.d?.votes || 0)} votes</span></div>
-        <div class="r nm"><b>${rp.toFixed(1)}%</b>${nm(r.r, x.r, r.winner === 'R')}<span class="v">${fmt.format(r.r?.votes || 0)} votes</span></div></div>
-        <div class="bar" aria-hidden="true"><i style="width:${dp}%"></i><u style="width:${rp}%"></u></div>`;
-    } else {
-      body = `<div class="cands"><div class="d nm"><b>${pd.toFixed(1)}%</b>${esc(x.d || 'No Democrat')}</div><div class="r nm"><b>${pr.toFixed(1)}%</b>${esc(x.r)}</div></div>
-        <div class="bar odds" aria-hidden="true"><i style="width:${pd}%"></i><u style="width:${pr}%"></u></div>`;
-    }
-    const meta = [];
-    if (r && r.total > 0) meta.push(`<span>FLIPR <strong>D ${pd.toFixed(1)}%</strong></span>`, `<span><strong>${Math.round(r.pct)}%</strong> reporting</span>`);
-    meta.push(`<span>${heldTxt}</span>`);
-    if (tab === 'house') meta.push(`<span>Projected <strong>${esc(x.proj)}</strong></span>`, `<span>2024 pres. <strong>${esc(x.m24)}</strong></span>`);
-    if (!r && tab === 'house') meta.push(`<span>${x.polls} poll${x.polls === 1 ? '' : 's'}</span>`);
-    if (x.note) meta.push(`<span>${esc(x.note)}</span>`);
-
-    return `<article class="race ${cls}">
-      <div class="top"><span class="id">${title}</span><span class="rt ${s}">${esc(x.rating)}</span>${tags.join('')}
-        <button type="button" class="star" data-k="${esc(key)}" aria-pressed="${on}" aria-label="${on ? 'Unstar' : 'Star'} ${esc(x.id)}">${on ? '★' : '☆'}</button></div>
-      ${body}<div class="meta">${meta.join('')}</div></article>`;
   }
+  document.getElementById('list').innerHTML = html || '<p class="empty">No races match.</p>';
+  showPop();
+}
 
-  function groups(list) {
-    return ORDER.map((rt) => {
-      const rows = list.filter((x) => x.rating === rt).sort((a, b) => b.p - a.p);
-      if (!rows.length) return '';
-      return `<section class="group"><h3>${rt}<span>${rows.length} race${rows.length === 1 ? '' : 's'}</span></h3>${rows.map(card).join('')}</section>`;
-    }).join('');
-  }
-
-  function odds() {
-    const c = data.control;
-    let senLive = '', houLive = '';
-    if (data.anyResults) {
-      const sw = (p) => data.senate.filter((x) => won(x) === p).length;
-      const sd = data.senateHoldover.D + sw('D'), sr = data.senateHoldover.R + sw('R'), open = data.senate.filter((x) => !won(x)).length;
-      senLive = `<div class="live"><div class="seats"><span class="D">D ${sd}</span><span class="R">R ${sr}</span></div><p>Seats so far, counting those not up this year. ${open} race${open === 1 ? '' : 's'} not called.</p></div>`;
-      const gain = data.house.filter((x) => x.held === 'R' && won(x) === 'D').length;
-      const lost = data.house.filter((x) => x.held === 'D' && won(x) === 'R').length;
-      const net = gain - lost, proj = data.houseNow.D + net;
-      houLive = `<div class="live"><div class="seats"><span class="D">D ${proj}</span></div><p>Dems flipped ${gain}, lost ${lost} (net ${net >= 0 ? '+' : ''}${net}). That's where they land if every seat not yet called stays with its party.</p></div>`;
-    }
-    $('odds').innerHTML = `
-      <div class="odd"><h2>Senate</h2><div class="big">${c.senate}%<small>chance of D control</small></div><div class="split"><i style="width:${c.senate}%"></i></div><p>Need 51 seats. Dems hold ${data.senateHoldover.D} not up this year, so they need 17 of the 35 races: keep their 13 and flip 4.</p>${senLive}</div>
-      <div class="odd"><h2>House</h2><div class="big">${c.house}%<small>chance of D control</small></div><div class="split"><i style="width:${c.house}%"></i></div><p>Need 218. Dems hold ${data.houseNow.D} now. FLIPR's average outcome: 239 D, 196 R.</p>${houLive}</div>`;
-  }
-
-  function render() {
-    if (!data) return;
-    document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
-    if (!filters().some(([k]) => k === filter)) filter = 'all';
-    $('filters').innerHTML = filters().map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join('');
-    $('math').hidden = tab !== 'house';
-    odds();
-    const checked = data.source.checkedAt ? new Date(data.source.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-    $('src').innerHTML = `FLIPR Deluxe forecast from Silver Bulletin, as of ${esc(data.asOf)}. Live results from <a href="https://civicapi.org" target="_blank" rel="noopener">civicAPI</a>${checked ? `, checked ${checked}` : ''}.`;
-    const ban = [];
-    if (data.showTest) ban.push('Showing civicAPI test data. These are not real results.');
-    if (!data.source.ok) ban.push(`civicAPI isn't answering right now (${esc(data.source.error)}). Showing the last results we had.`);
-    $('banner').hidden = !ban.length; $('banner').innerHTML = ban.join('<br>');
-
-    const list = data[tab].filter(matches);
-    let html;
-    if (!list.length) html = `<p class="empty">${filter === 'star' ? 'No starred races yet. Tap ☆ on any race to keep it here.' : 'No races match.'}</p>`;
-    else if (tab === 'house') {
-      const rh = list.filter((x) => x.held === 'R'), dh = list.filter((x) => x.held === 'D');
-      html = (rh.length ? `<h2 class="side">Republican seats Dems could flip</h2><p>${rh.length} of 69 seats</p>${groups(rh)}` : '')
-           + (dh.length ? `<h2 class="side">Democratic seats Republicans could flip</h2><p>${dh.length} of 21 seats</p>${groups(dh)}` : '');
-    } else html = groups(list);
-    $('list').innerHTML = html;
-  }
-
-  async function load() {
-    const r = await fetch('/api/national' + (TEST ? '?test=1' : ''), { cache: 'no-store', credentials: 'same-origin' });
-    if (r.status === 401) { $('app').hidden = true; $('login').hidden = false; return false; }
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    data = await r.json();
-    $('login').hidden = true; $('app').hidden = false;
-    render();
-    return true;
-  }
-  let timer;
-  async function poll() {
-    clearTimeout(timer);
-    let ok = true;
-    try { ok = await load(); } catch { /* keep what we have */ }
-    if (ok) timer = setTimeout(poll, 60_000);
-  }
-
-  $('login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    $('loginErr').textContent = '';
-    try {
-      const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ code: $('code').value, scope: 'national' }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "That code didn't match.");
-      $('code').value = '';
-      poll();
-    } catch (err) { $('loginErr').textContent = err.message; }
-  });
-  document.addEventListener('click', (e) => {
-    const t = e.target.closest('button'); if (!t || t.closest('form')) return;
-    if (t.dataset.tab) { tab = t.dataset.tab; store.set('mw-tab', tab); render(); }
-    else if (t.dataset.f) { filter = t.dataset.f; render(); }
-    else if (t.dataset.k) { const k = t.dataset.k; stars.has(k) ? stars.delete(k) : stars.add(k); store.set('mw-stars', [...stars]); render(); }
-  });
-  $('q').addEventListener('input', render);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && data) poll(); });
-  poll();
-})();
+document.addEventListener('click', (e) => {
+  const s = e.target.closest('[data-star]');
+  if (s) { e.stopPropagation(); const k = s.dataset.star; stars.has(k) ? stars.delete(k) : stars.add(k); store.set('mwb-stars', [...stars]); return render(); }
+  const v = e.target.closest('[data-view]'); if (v) { view = v.dataset.view; store.set('mwb-view', view); return render(); }
+  if (e.target.closest('[data-toggle-called]')) { showCalled = !showCalled; return render(); }
+  if (e.target.closest('[data-toggle-safe]')) { showSafe = !showSafe; return render(); }
+  const j = e.target.closest('[data-jump]');
+  if (j) { popKey = popKey === j.dataset.jump ? null : j.dataset.jump; popAnchor = j.dataset.jump; return showPop(); }
+  if (e.target.closest('[data-popclose]') || (popKey && !e.target.closest('#pop'))) { popKey = null; showPop(); }
+  const o = e.target.closest('[data-open]'); if (o) { const k = o.dataset.open; open.has(k) ? open.delete(k) : open.add(k); render(); }
+});
+document.addEventListener('keydown', (e) => { const o = e.target.closest?.('[data-open]'); if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); o.click(); } });
+document.getElementById('q').addEventListener('input', render);
+document.getElementById('sort').addEventListener('change', render);
+const TEST = new URLSearchParams(location.search).get('test') === '1';
+let timer;
+async function load() {
+  const r = await fetch('/api/national' + (TEST ? '?test=1' : ''), { cache: 'no-store', credentials: 'same-origin' });
+  if (r.status === 401) { document.getElementById('app').hidden = true; document.getElementById('login').hidden = false; return false; }
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  ingest(await r.json());
+  document.getElementById('login').hidden = true; document.getElementById('app').hidden = false;
+  render();
+  return true;
+}
+async function poll() {
+  clearTimeout(timer);
+  let ok = true;
+  try { ok = await load(); } catch (err) { console.error(err); /* keep what we have */ }
+  if (ok) timer = setTimeout(poll, 60_000);
+}
+document.getElementById('login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ code: document.getElementById('code').value, scope: 'national' }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "That code didn't match.");
+    document.getElementById('code').value = '';
+    poll();
+  } catch (err) { document.getElementById('loginErr').textContent = err.message; }
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && DATA) poll(); });
+poll();
 </script>
+</div>
 </body>
 </html>
