@@ -34,7 +34,9 @@
     if (total) {
       const a = sorted[r.voteFor - 1], b = sorted[r.voteFor];
       const gap = a.votes - b.votes;
-      line = gap === 0 ? `<b>Tied</b> for ${r.voteFor > 1 ? 'the last seat' : 'the lead'}` : `<b>${esc(a.name)}</b> ${r.voteFor > 1 ? 'holds the last seat' : 'leads'} by <b>${fmt.format(gap)}</b>`;
+      // Margin in percentage points first, then votes: "Nicholas Colon leads by 3.2% (591 votes)".
+      const mp = (gap / total) * 100;
+      line = gap === 0 ? `<b>Tied</b> for ${r.voteFor > 1 ? 'the last seat' : 'the lead'}` : `<b>${esc(a.name)}</b> ${r.voteFor > 1 ? 'holds the last seat' : 'leads'} by <b>${mp < 0.1 ? '<0.1' : mp.toFixed(1)}%</b> (${fmt.format(gap)} vote${gap === 1 ? '' : 's'})`;
     }
     return { total, sorted, line };
   }
