@@ -54,10 +54,21 @@
   // Signature of a race's numbers, used to flash races that just changed.
   const sig = (r) => r.cands.map((c) => c.votes).join(',');
 
+  // Third-party and independent candidates in a race with both a Democrat and a Republican: kept on the card, but
+  // on one small line, so the two major-party candidates get the big text. Anyone actually leading stays full size.
+  function splitMinor(list) {
+    const parties = list.map((c) => c.party);
+    if (!(parties.includes('D') && parties.includes('R'))) return { main: list, minor: [] };
+    const isMinor = (c) => c.party !== 'D' && c.party !== 'R' && !c.lead;
+    return { main: list.filter((c) => !isMinor(c)), minor: list.filter(isMinor) };
+  }
+  const minorLine = (minor, total, cls) => (minor.length ? `<div class="${cls}">${minor.map((c) => `${esc(c.name)}${c.party ? ` <small>${esc(c.party)}</small>` : ''}${total ? ` <b>${pct(c.pct)}</b>` : ''}`).join('<span class="sep"> · </span>')}</div>` : '');
+
   function tvCard(r, fresh) {
     const { sorted, line, total } = stats(r);
+    const { main, minor } = splitMinor(total ? sorted : r.cands);
     // No votes yet: just the names, in ballot order.
-    const rows = !total ? r.cands.map((c) => `<div class="trow"><span class="n">${esc(c.name)}${c.party ? `<small class="${partyClass(c.party)}">${esc(c.party)}</small>` : ''}</span></div>`).join('') : sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="seatline">Top ${r.voteFor} win seats</div>` : '') + `
+    const rows = !total ? main.map((c) => `<div class="trow"><span class="n">${esc(c.name)}${c.party ? `<small class="${partyClass(c.party)}">${esc(c.party)}</small>` : ''}</span></div>`).join('') : main.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="seatline">Top ${r.voteFor} win seats</div>` : '') + `
       <div class="trow ${c.lead ? 'lead' : ''}">
         <span class="n">${esc(c.name)}${c.party ? `<small class="${partyClass(c.party)}">${esc(c.party)}</small>` : ''}</span>
         <span class="p">${pct(c.pct)}</span>
@@ -67,7 +78,7 @@
     const sub = subLine(r);
     return `<article class="tcard ${isBoard(r) ? 'tall' : ''} ${fresh ? 'fresh' : ''}" data-id="${esc(r.id)}">
       <h3>${esc(r.office)}</h3>${sub ? `<div class="sub">${sub}</div>` : ''}
-      ${rows}<div class="call">${line}</div></article>`;
+      ${rows}${minorLine(minor, total, 'tminor')}<div class="call">${line}</div></article>`;
   }
 
 
@@ -141,13 +152,14 @@
 
   function phoneCard(r, starred, fresh) {
     const { sorted, line, total } = stats(r);
+    const { main, minor } = splitMinor(total ? sorted : r.cands);
     const sub = subLine(r);
     return `<article class="pcard ${fresh ? 'fresh' : ''}">
       <div class="pc-top"><div><h3>${esc(r.office)}</h3>${sub ? `<div class="psub">${sub}</div>` : ''}</div>
         <button class="star" data-star="${esc(r.id)}" aria-pressed="${starred}" aria-label="${starred ? 'Remove from' : 'Add to'} my races">${starred ? '★' : '☆'}</button></div>
-      ${!total ? `<p class="pnames">${r.cands.map((c) => `${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}`).join('<br>')}</p>` : sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="pseat">Top ${r.voteFor} win seats</div>` : '') + `<div class="prow ${c.lead ? 'lead' : ''}"><span class="n">${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}</span><span class="p">${pct(c.pct)}</span><span class="v">${fmt.format(c.votes)}</span>
+      ${!total ? `<p class="pnames">${main.map((c) => `${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}`).join('<br>')}</p>` : main.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="pseat">Top ${r.voteFor} win seats</div>` : '') + `<div class="prow ${c.lead ? 'lead' : ''}"><span class="n">${esc(c.name)}${c.party ? ` (${esc(c.party)})` : ''}</span><span class="p">${pct(c.pct)}</span><span class="v">${fmt.format(c.votes)}</span>
         <span class="pbar"><i class="${partyClass(c.party)}" style="width:${(c.pct * 100).toFixed(1)}%"></i></span></div>`).join('')}
-      <div class="pcall">${line}</div>${r.detail ? `<details class="pdetail"><summary>Read the question</summary><p>${esc(r.detail)}</p></details>` : ''}${panelButtons(r)}${panelHtml(r)}</article>`;
+      ${minorLine(minor, total, 'pminor')}<div class="pcall">${line}</div>${r.detail ? `<details class="pdetail"><summary>Read the question</summary><p>${esc(r.detail)}</p></details>` : ''}${panelButtons(r)}${panelHtml(r)}</article>`;
   }
 
   // Ballots counted, turnout (needs registered voters), and share of the expected vote (needs HQ's estimate).

@@ -98,6 +98,8 @@ body.tvpage.idle { cursor: none; }
 .tcard.tall .tbar { height: calc(0.6cqw * var(--k, 1)); margin-top: calc(0.2cqw * var(--k, 1)); }
 .seatline { display: flex; align-items: center; gap: calc(0.8cqw * var(--k, 1)); font-family: var(--ui); font-size: calc(1.05cqw * var(--k, 1)); font-weight: 700; color: var(--amber); }
 .seatline::after { content: ""; flex: 1; border-top: calc(0.15cqw * var(--k, 1)) dashed var(--amber); }
+.tminor { font-family: var(--ui); font-size: calc(1.05cqw * var(--k, 1)); font-weight: 500; color: var(--t-muted); line-height: 1.3; }
+.tminor small { font-size: .85em; font-weight: 700; } .tminor b { font-family: var(--t-num); font-weight: 600; color: var(--t-fg); } .tminor .sep { opacity: .6; }
 .tcard .call { font-family: var(--ui); font-size: calc(1.2cqw * var(--k, 1)); font-weight: 500; color: var(--t-muted); margin-top: auto; padding-top: calc(0.2cqw * var(--k, 1)); }
 .tcard .call b { color: var(--t-fg); }
 .tcard.fresh::after { content: ""; position: absolute; inset: 0; border: 0.25cqw solid var(--amber); animation: flash 4s ease forwards; pointer-events: none; }
@@ -248,3 +250,7 @@ body.idle .tv-tools { opacity: 0; pointer-events: none; }
 .pspark .zero { stroke: var(--line); stroke-dasharray: 3 3; }
 .pspark .line { stroke: var(--fg); stroke-width: 2; }
 .pspark .dot { fill: var(--amber); }
+
+/* third-party candidates on phone cards: one small line under the two major parties */
+.pminor { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+.pminor small { font-weight: 700; } .pminor b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; } .pminor .sep { opacity: .6; }
