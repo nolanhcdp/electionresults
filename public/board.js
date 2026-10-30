@@ -55,9 +55,9 @@
   function tvCard(r, fresh) {
     const { sorted, line, total } = stats(r);
     // No votes yet: just the names, in ballot order.
-    const rows = !total ? r.cands.map((c) => `<div class="trow"><span class="n">${esc(c.name)}${c.party ? `<small>${esc(c.party)}</small>` : ''}</span></div>`).join('') : sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="seatline">Top ${r.voteFor} win seats</div>` : '') + `
+    const rows = !total ? r.cands.map((c) => `<div class="trow"><span class="n">${esc(c.name)}${c.party ? `<small class="${partyClass(c.party)}">${esc(c.party)}</small>` : ''}</span></div>`).join('') : sorted.map((c, i) => (isBoard(r) && i === r.voteFor ? `<div class="seatline">Top ${r.voteFor} win seats</div>` : '') + `
       <div class="trow ${c.lead ? 'lead' : ''}">
-        <span class="n">${esc(c.name)}${c.party ? `<small>${esc(c.party)}</small>` : ''}</span>
+        <span class="n">${esc(c.name)}${c.party ? `<small class="${partyClass(c.party)}">${esc(c.party)}</small>` : ''}</span>
         <span class="p">${pct(c.pct)}</span>
         <span class="v">${fmt.format(c.votes)}</span>
         <span class="tbar"><i class="${partyClass(c.party)}" style="width:${(c.pct * 100).toFixed(1)}%"></i></span>

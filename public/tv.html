@@ -6,7 +6,7 @@
 <title>HCDP Election Night · TV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700;800&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/board.css">
 </head>
 <body class="tvpage">
@@ -103,12 +103,15 @@
     const over = () => cards.some((c) => c.scrollHeight > c.clientHeight + 1);
     set(k);
     // Names cut off with "…" are also worth shrinking for, but only back down to normal size.
-    const namesCut = () => cards.some((c) => [...c.querySelectorAll('.trow .n')].some((n) => n.scrollWidth > n.clientWidth + 1));
-    while ((over() || (k > 1 && namesCut())) && k > 0.45) { k -= 0.04; set(k); }
+    const textW = (n) => { const r = document.createRange(); r.selectNodeContents(n); return r.getBoundingClientRect().width; };
+    const namesCut = () => cards.some((c) => [...c.querySelectorAll('.trow .n')].some((n) => textW(n) > n.clientWidth - 2)); // 2px margin: a name within a pixel still shows "…"
+    // Cut-off names are worth shrinking for too, down to a floor that's still readable across the room.
+    while ((over() || (k > 0.8 && namesCut())) && k > 0.45) { k -= 0.04; set(k); }
   }
   function fit() {
     el.querySelectorAll('.pinned .tcard').forEach((c) => fitGroup([c], 1.6));
-    fitGroup([...el.querySelectorAll('.rot .tcard')], 1.35);
+    // Each card gets the biggest text that fits it, so short races read larger and long names aren't cut off.
+    el.querySelectorAll('.rot .tcard').forEach((c) => fitGroup([c], 1.45));
   }
   if (window.ResizeObserver) new ResizeObserver(fit).observe(el);
   if (document.fonts?.ready) document.fonts.ready.then(fit);
