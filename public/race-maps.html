@@ -178,12 +178,12 @@ html:not(.dash) #dash { display: none }
 .rc .th .g { fill: var(--ghost); stroke: var(--panel); stroke-width: .5 }
 .rc .th .c { stroke: var(--panel); stroke-width: .4 }
 .rc .bd { min-width: 0; display: grid; gap: 4px; align-content: start }
-.rc .r1 { display: flex; align-items: flex-start; gap: 8px; min-width: 0 }
+.rc .r1 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; padding-right: 22px }
 .rc .r1 b { font-size: 16px; font-weight: 900; line-height: 1.2; min-width: 0 }
 .rc .rt { flex: none; margin-top: 1px; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 99px; color: #fff; background: var(--c, var(--card)) }
 .rc .rt.lt { color: #111 }
 .rc .badge2 { flex: none; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--fg); color: var(--bg) }
-.rc .stb { margin-left: auto; flex: none; background: none; border: 0; font-size: 19px; line-height: 1; color: var(--dim); cursor: pointer; padding: 0 2px }
+.rc .stb { position: absolute; top: 10px; right: 10px; background: none; border: 0; font-size: 19px; line-height: 1; color: var(--dim); cursor: pointer; padding: 0 2px }
 .rc .stb.on { color: var(--hot) }
 .rc .ttl { font-size: 13px; color: var(--dim); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .rc .mu { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
@@ -194,7 +194,38 @@ html:not(.dash) #dash { display: none }
 .rc .r3 .D { color: var(--dem) } .rc .r3 .R { color: var(--rep) }
 .dnone { padding: 40px 10px; text-align: center; color: var(--dim); font-weight: 600 }
 .back { font-weight: 800 }
+/* Overview: chamber scoreboard, what's left to win, and the watch-now feed */
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 22px }
+.board .bx { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px }
+.board h3 { margin: 0 0 6px; font-size: 14px; font-weight: 800; color: var(--muted); display: flex; justify-content: space-between; gap: 8px }
+.board h3 span { font-weight: 600; color: var(--dim) }
+.board .big { font: 700 30px var(--num); line-height: 1; display: flex; gap: 12px; align-items: baseline }
+.board .big small { font: 600 13px var(--ui); color: var(--dim) }
+.board .trk { position: relative; height: 9px; border-radius: 99px; background: var(--card); overflow: hidden; display: flex; margin-top: 10px }
+.board .trk i { background: var(--dem) } .board .trk u { background: var(--rep); margin-left: auto }
+.board .trk b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg) }
+.board p { margin: 8px 0 0; font-size: 13px; color: var(--dim); font-weight: 600 }
+.left2 { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px }
+.left2 h2 { margin: 0 0 8px; font-size: 18px; font-weight: 900 }
+.left2 p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.4; color: var(--muted); font-weight: 600 }
+.left2 p b { color: var(--fg) }
+.left2 ul { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 2px }
+.left2 li { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 700; padding: 5px 0; border-bottom: 1px solid var(--line) }
+.left2 li span:last-child { font-family: var(--num) }
+.more { margin-top: 8px; font-size: 14px; color: var(--dim); font-weight: 600 }
+.more button { font: 700 14px var(--ui); color: var(--fg); background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; padding: 0 }
+.mrows { display: grid; gap: 8px }
+.mrow2 { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px }
+.mrow2 .h { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.mrow2 .h b { font-weight: 900 } .mrow2 .h .nm2 { font-weight: 700; flex: 1; min-width: 200px }
+.mrow2 .h .fl { font-size: 12.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--card); color: var(--muted) }
+.mrow2 .h .fl.D { background: var(--dem); color: #fff } .mrow2 .h .fl.R { background: var(--rep); color: #fff }
+.mrow2 .h .yn { font: 700 15px var(--num); display: flex; gap: 12px }
+.mrow2 .bar2 { position: relative; display: flex; height: 8px; border-radius: 99px; background: var(--card); overflow: hidden }
+.mrow2 .bar2 i { background: var(--dem) } .mrow2 .bar2 u { background: var(--rep); margin-left: auto }
+.mrow2 .bar2 b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg) }
 @media (max-width: 900px) {
+  .board { grid-template-columns: 1fr 1fr }
   .dbody { grid-template-columns: 1fr }
   .dside { position: static }
   .usmap svg, .usmap .cap, .usmap .key { display: none }
@@ -259,11 +290,12 @@ html:not(.dash) #dash { display: none }
 
 <main id="dash">
   <header class="dh">
-    <div><h1>Race Maps</h1><p>County maps for every Senate, House, governor, and Indiana race, with forecast projections and live results.</p></div>
-    <nav class="links"><a href="/">Home</a><a href="/national">National results</a><a href="/howard">Howard County</a></nav>
+    <div><h1>Race Maps</h1><p>Senate and House control, the closest races, and county maps for every Senate, House, governor, and Indiana race, with projections and live results.</p></div>
+    <nav class="links"><a href="/">Home</a><a href="/howard">Howard County</a></nav>
   </header>
   <div class="dsearch"><input id="dq" type="search" placeholder="Search a state, district, or candidate: Iowa, PA-7, Collins, Senate 21" autocomplete="off" aria-label="Search races"></div>
   <section class="pres" id="pres" hidden></section>
+  <section class="board" id="board" hidden></section>
   <nav class="tabs" id="tabs" aria-label="Race groups"></nav>
   <div class="dbody">
     <aside class="dside" id="dside"></aside>
@@ -615,13 +647,13 @@ html:not(.dash) #dash { display: none }
   });
 
   // ---- dashboard -------------------------------------------------------------------------------------------
-  const TABS = [['S', 'Senate'], ['H', 'House'], ['G', 'Governors'], ['I', 'Indiana']];
+  const TABS = [['O', 'Overview'], ['S', 'Senate'], ['H', 'House'], ['G', 'Governors'], ['I', 'Indiana'], ['M', 'Ballot measures'], ['L', 'Legislatures']];
   const RATINGS = ['Toss-up', 'Lean', 'Likely', 'Solid'];
   const STATUS = [['close', 'Close'], ['called', 'Called'], ['flips', 'Flips']];
   const RC = { 'Solid D': '#1b46a3', 'Likely D': '#3a78e6', 'Lean D': '#8fb3f2', 'Toss-up': '#c6b3e3', 'Lean R': '#f2a297', 'Likely R': '#df4636', 'Solid R': '#9e1d12' };
   const LIGHT_RC = new Set(['Lean D', 'Toss-up', 'Lean R']);
   const store = { get(k, d) { try { const v = localStorage.getItem('rm-' + k); return v ? JSON.parse(v) : d; } catch { return d; } }, set(k, v) { try { localStorage.setItem('rm-' + k, JSON.stringify(v)); } catch { /* private window */ } } };
-  let TAB = ['S', 'H', 'G', 'I'].includes(Q.get('tab')) ? Q.get('tab') : store.get('tab', 'S');
+  let TAB = TABS.some(([k]) => k === Q.get('tab')) ? Q.get('tab') : store.get('tab2', 'O');
   let F = { ratings: [], status: [], state: null };
   let STARS = store.get('stars', []);
   let SET = null; // keys the arrow keys flip through
@@ -679,7 +711,7 @@ html:not(.dash) #dash { display: none }
     const dn = String(x.d).replace(/\s*\(I\)$/, ''), dl = last(dn), rl = last(x.r);
     const name = x.kind === 'H' ? x.id : x.kind === 'I' ? (x.district && !x.leg ? shortOf(x) : titleOf(x).replace(/^Indiana /, '')) : STATE[x.st];
     const sub = x.kind === 'H' ? titleOf(x) : x.kind === 'S' ? 'Senate' : x.kind === 'G' ? 'Governor' : x.district && !x.leg ? titleOf(x) : x.group;
-    const chip = x.rating ? `<span class="rt ${LIGHT_RC.has(x.rating) ? 'lt' : ''}" style="--c:${RC[x.rating] || 'var(--card)'}">${esc(x.rating)}</span>` : '';
+    const chip = x.rating && !won(x) ? `<span class="rt ${LIGHT_RC.has(x.rating) ? 'lt' : ''}" style="--c:${RC[x.rating] || 'var(--card)'}">${esc(x.rating)}</span>` : '';
     const badge = won(x) ? `<span class="badge2">${flip(x) ? 'Flip ' : ''}${won(x)} win</span>` : '';
     let bar, r3;
     if (lv) {
@@ -726,9 +758,17 @@ html:not(.dash) #dash { display: none }
     $('pres').innerHTML = starred.length
       ? `<h2>Your presenting list</h2>${starred.map((x, i) => `<span class="pc">${esc(shortOf(x))}<button type="button" data-mv="${i}:-1" aria-label="Move earlier">‹</button><button type="button" data-mv="${i}:1" aria-label="Move later">›</button><button type="button" data-unstar="${esc(x.key)}" aria-label="Remove">×</button></span>`).join('')}<button type="button" class="go" id="present">Present ▸</button>`
       : `<h2>Your presenting list</h2><span class="hint">Star races (☆) to line them up for the watch party, then press Present. The clicker steps through them in order.</span>`;
-    $('tabs').innerHTML = TABS.map(([k, l]) => `<button type="button" class="${!q && TAB === k ? 'on' : ''}" data-tab="${k}">${l}<span>${ALL.filter((x) => x.kind === k).length}</span></button>`).join('');
+    const cnt = (k) => (k === 'O' ? '' : k === 'M' ? (NAT?.measures || []).length : k === 'L' ? (NAT?.legislatures || []).length : ALL.filter((x) => x.kind === k).length);
+    const raceQ = q && !['M', 'L'].includes(TAB); // on Ballot measures and Legislatures the box filters that list instead
+    $('tabs').innerHTML = TABS.map(([k, l]) => `<button type="button" class="${!raceQ && TAB === k ? 'on' : ''}" data-tab="${k}">${l}${cnt(k) !== '' ? `<span>${cnt(k)}</span>` : ''}</button>`).join('');
+    $('board').hidden = !(TAB === 'O' && !raceQ);
+    if (!$('board').hidden) board();
     // side panel
-    if (TAB === 'I' && !q) {
+    if (TAB === 'O' && !raceQ) {
+      $('dside').innerHTML = leftToWin();
+    } else if (['M', 'L'].includes(TAB)) {
+      $('dside').innerHTML = `<div class="left2"><h2>${TAB === 'M' ? 'Ballot measures' : 'Legislatures'}</h2><p>${TAB === 'M' ? 'Every statewide ballot measure, from civicAPI. Type a state or topic in the search box to narrow the list.' : 'State legislative chambers: seats each party holds after this election, counting seats not on the ballot. The tick marks a majority.'}</p></div>`;
+    } else if (TAB === 'I' && !q) {
       const g = indianaGroups();
       $('dside').innerHTML = `<div class="jump">${g.map(([id, label, L]) => `<a href="#${id}">${label}<span>${L.length}</span></a>`).join('')}</div>`;
     } else {
@@ -739,7 +779,13 @@ html:not(.dash) #dash { display: none }
     }
     // cards
     let html;
-    if (q) {
+    if (TAB === 'O' && !raceQ) {
+      html = watchNow();
+    } else if (TAB === 'M') {
+      html = measures(q);
+    } else if (TAB === 'L') {
+      html = legislatures(q);
+    } else if (q) {
       const L = searched(q);
       html = L.length ? `<section class="sec"><h2>Search results <span>${L.length}</span></h2><div class="cards">${L.map(card).join('')}</div></section>` : '<div class="dnone">No race matches that search.</div>';
     } else if (TAB === 'I') {
@@ -750,6 +796,101 @@ html:not(.dash) #dash { display: none }
     }
     $('dlist').innerHTML = html;
     document.querySelectorAll('#dlist .th').forEach((el) => { if (!el.firstChild) io ? io.observe(el) : drawThumb(ALL.find((y) => y.key === el.dataset.th), el); });
+  }
+  // ---- overview ----
+  const T0 = Date.parse('2026-11-03T05:00:00Z'); // midnight ET on Election Day; times below are hours after it
+  const nowH = () => (Date.now() - T0) / 3.6e6;
+  const closeH = (x) => CLOSE[x.st] ?? 21;
+  const prevLead = new Map(), changedAt = new Map(), firstWon = new Map();
+  try { const t = JSON.parse(sessionStorage.getItem('rm-track') || '{}'); Object.entries(t.p || {}).forEach(([k, v]) => prevLead.set(k, v)); Object.entries(t.c || {}).forEach(([k, v]) => changedAt.set(k, v)); } catch { /* fresh */ }
+  let tracked = false;
+  function track() { // lead changes and new calls since the last check
+    const N = nowH();
+    for (const x of ALL) {
+      if (x.kind === 'I' || !live(x)) continue;
+      const lead = x.res.margin >= 0 ? 'D' : 'R';
+      if (prevLead.has(x.key) && prevLead.get(x.key) !== lead && !won(x)) changedAt.set(x.key, N);
+      prevLead.set(x.key, lead);
+      if (won(x) && !firstWon.has(x.key)) firstWon.set(x.key, tracked ? N : -99);
+    }
+    tracked = true;
+    try { sessionStorage.setItem('rm-track', JSON.stringify({ p: Object.fromEntries(prevLead), c: Object.fromEntries(changedAt) })); } catch { /* ok */ }
+  }
+  const calledH = (x) => (x.res?.calledAt ? (Date.parse(x.res.calledAt) - T0) / 3.6e6 : firstWon.get(x.key) ?? -99);
+  const justCalled = (x) => won(x) && nowH() - calledH(x) >= 0 && nowH() - calledH(x) < 1 / 6;
+  const leadChanged = (x) => changedAt.has(x.key) && nowH() - changedAt.get(x.key) < 1 / 6;
+  const watched = (x) => x.kind === 'H' || ((x.kind === 'S' || x.kind === 'G') && (!/^Solid/.test(x.rating) || flip(x)));
+  function board() {
+    const S = ALL.filter((x) => x.kind === 'S'), H = ALL.filter((x) => x.kind === 'H');
+    const sw = (p) => S.filter((x) => won(x) === p).length;
+    const sd = NAT.senateHoldover.D + sw('D'), sr = NAT.senateHoldover.R + sw('R');
+    const gain = H.filter((x) => x.held === 'R' && won(x) === 'D').length, lost = H.filter((x) => x.held === 'D' && won(x) === 'R').length;
+    const hd = NAT.houseNow.D + gain - lost;
+    const pool = H.filter((x) => live(x) && x.res.pct >= 25 && mg(x.m24) != null);
+    const swing = pool.length ? pool.reduce((a, x) => a + (x.res.margin - mg(x.m24)), 0) / pool.length : null;
+    const checked = NAT.source?.checkedAt ? new Date(NAT.source.checkedAt).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' }) + ' ET' : '';
+    $('board').innerHTML = `
+      <div class="bx"><h3>Senate <span>51 for control</span></h3><div class="big"><span class="D">D ${sd}</span><span class="R">R ${sr}</span><small>${100 - sd - sr} not called</small></div>
+        <div class="trk"><i style="width:${sd}%"></i><u style="width:${sr}%"></u><b style="left:50.5%"></b></div><p>Includes the ${NAT.senateHoldover.D + NAT.senateHoldover.R} seats not up this year.</p></div>
+      <div class="bx"><h3>House <span>218 for control</span></h3><div class="big"><span class="D">D ${hd}</span><small>flipped ${gain}, lost ${lost}</small></div>
+        <div class="trk"><i style="width:${hd / 4.35}%"></i><u style="width:${(435 - hd) / 4.35}%"></u><b style="left:${218 / 4.35}%"></b></div><p>Democrats hold ${NAT.houseNow.D} going in.</p></div>
+      <div class="bx"><h3>Chance of control <span>FLIPR forecast</span></h3><div class="big"><span class="D">${Math.round(NAT.control.senate)}%</span><small>Senate</small><span class="D">${Math.round(NAT.control.house)}%</span><small>House</small></div><p>Democrats' odds as of ${esc(NAT.asOf)}.</p></div>
+      <div class="bx"><h3>National swing <span>vs. 2024</span></h3><div class="big">${swing == null ? '<span style="color:var(--dim)">—</span>' : `<span class="${swing >= 0 ? 'D' : 'R'}">${fm(swing)}</span>`}</div><p>${swing == null ? 'Shift from the 2024 presidential vote, once House races are a quarter counted.' : `Across ${pool.length} House races at least a quarter counted.${checked ? ' Checked ' + checked + '.' : ''}`}</p></div>`;
+  }
+  function leftToWin() {
+    const S = ALL.filter((x) => x.kind === 'S'), H = ALL.filter((x) => x.kind === 'H');
+    const sw = (p) => S.filter((x) => won(x) === p).length;
+    const safeD = S.filter((x) => !won(x) && !watched(x) && x.p > 50).length; // uncalled Solid D seats count as safe
+    const need = Math.max(0, 51 - (NAT.senateHoldover.D + sw('D') + safeD));
+    const open = S.filter((x) => watched(x) && !won(x)).sort((a, b) => b.p - a.p);
+    const gain = H.filter((x) => x.held === 'R' && won(x) === 'D').length, lost = H.filter((x) => x.held === 'D' && won(x) === 'R').length;
+    const hNeed = Math.max(0, 218 - NAT.houseNow.D + lost - gain), hOpen = H.filter((x) => x.held === 'R' && !won(x)).length;
+    return `<div class="left2"><h2>What's left to win</h2>
+      <p>Senate: Democrats need <b>${need}</b> of these <b>${open.length}</b> competitive races${safeD ? ` (counting ${safeD} uncalled Solid D seat${safeD === 1 ? '' : 's'} as safe)` : ''}.</p>
+      <ul>${open.map((x) => `<li><span>${esc(STATE[x.st])}</span><span class="${live(x) ? (x.res.margin >= 0 ? 'D' : 'R') : ''}">${live(x) ? `${fm(x.res.margin)} · ${Math.round(x.res.pct)}%` : `${x.p >= 50 ? 'D' : 'R'} ${Math.round(Math.max(x.p, 100 - x.p))}% · ${clock(closeH(x))}`}</span></li>`).join('')}</ul>
+      <p>House: Democrats need <b>${hNeed}</b> more flip${hNeed === 1 ? '' : 's'}. <b>${hOpen}</b> Republican seats on the list are still open.</p></div>`;
+  }
+  let showAll = new Set();
+  function watchNow() {
+    const N = nowH(), pool = ALL.filter(watched), used = new Set();
+    const byClose = (a, b) => (live(a) && live(b) ? Math.abs(a.res.margin) - Math.abs(b.res.margin) : Math.abs(a.p - 50) - Math.abs(b.p - 50));
+    const take = (fn, sort) => { const l = pool.filter((x) => !used.has(x) && fn(x)).sort(sort); l.forEach((x) => used.add(x)); return l; };
+    const groups = [
+      ['w-new', 'Just called or lead changed', 'last 10 minutes', take((x) => justCalled(x) || leadChanged(x), byClose)],
+      ['w-close', 'Close', 'no call yet, lead under 3 points', take((x) => live(x) && !won(x) && Math.abs(x.res.margin) < 3, byClose)],
+      ['w-count', 'Counting', 'closest first', take((x) => live(x) && !won(x), byClose)],
+      ['w-closed', 'Polls closed, waiting for votes', '', take((x) => !live(x) && closeH(x) <= N, byClose)],
+      ['w-soon', 'Polls closing soon', 'next 90 minutes', take((x) => !live(x) && closeH(x) > N && closeH(x) - N <= 1.5, (a, b) => closeH(a) - closeH(b) || byClose(a, b))],
+      ['w-later', N < 6 ? 'Races to watch' : 'Polls still open', N < 6 ? 'closest in the forecast first; polls open Nov. 3' : 'by poll closing time', take((x) => !live(x), N < 6 ? byClose : (a, b) => closeH(a) - closeH(b) || byClose(a, b))],
+      ['w-called', 'Called', '', take((x) => !!won(x), (a, b) => (flip(b) ? 1 : 0) - (flip(a) ? 1 : 0) || calledH(b) - calledH(a))],
+    ];
+    const html = groups.map(([id, label, note, L]) => {
+      if (!L.length) return '';
+      const cap = id === 'w-called' ? 6 : 12, all = showAll.has(id), shown = all ? L : L.slice(0, cap);
+      const flips = id === 'w-called' ? `, ${L.filter(flip).length} flips` : '';
+      return `<section class="sec" id="${id}"><h2>${label} <span>${L.length}${flips}</span></h2>${note ? `<p class="sub2">${note}</p>` : ''}<div class="cards">${shown.map(card).join('')}</div>${L.length > cap ? `<p class="more"><button type="button" data-more="${id}">${all ? 'Show fewer' : `Show all ${L.length}`}</button></p>` : ''}</section>`;
+    }).join('');
+    return html || '<div class="dnone">Nothing to show yet.</div>';
+  }
+  function measures(q) {
+    const t = q.toLowerCase(), L = (NAT?.measures || []).filter((m) => !t || [m.state, STATE[m.state] || '', m.name].some((v) => v.toLowerCase().includes(t)));
+    if (!L.length) return '<div class="dnone">No statewide ballot measures match.</div>';
+    const row = (m) => {
+      const tot = m.yes + m.no, y = tot ? (m.yes / tot) * 100 : 0;
+      const st = m.winner ? `<span class="fl ${/^yes$/i.test(m.winner) ? 'D' : 'R'}">${/^yes$/i.test(m.winner) ? 'Passed' : 'Failed'}</span>` : `<span class="fl">${tot ? Math.round(m.pct) + '% in' : 'No votes yet'}</span>`;
+      return `<div class="mrow2"><div class="h"><b>${esc(m.state)}</b><span class="nm2">${esc(m.name.replace(new RegExp('^' + m.state + '\\s+', 'i'), ''))}</span>${st}${tot ? `<span class="yn"><span class="D">Yes ${y.toFixed(1)}%</span><span class="R">No ${(100 - y).toFixed(1)}%</span></span>` : ''}</div>${tot ? `<div class="bar2"><i style="width:${y}%"></i><u style="width:${100 - y}%"></u><b style="left:50%"></b></div>` : ''}</div>`;
+    };
+    return `<section class="sec"><h2>Statewide ballot measures <span>${L.length}</span></h2><div class="mrows">${L.map(row).join('')}</div></section>`;
+  }
+  function legislatures(q) {
+    const t = q.toLowerCase(), L = (NAT?.legislatures || []).filter((l) => !t || [l.state, STATE[l.state] || '', l.name].some((v) => v.toLowerCase().includes(t)));
+    if (!L.length) return '<div class="dnone">No legislative chambers match.</div>';
+    const row = (l) => {
+      const maj = Math.floor(l.seats / 2) + 1, known = l.d != null;
+      const ctl = !known ? '' : l.d >= maj ? '<span class="fl D">D majority</span>' : l.r >= maj ? '<span class="fl R">R majority</span>' : '<span class="fl">No majority yet</span>';
+      return `<div class="mrow2"><div class="h"><b>${esc(l.state)}</b><span class="nm2">${esc(l.name.replace(new RegExp('^' + l.state + '\\s+', 'i'), ''))}</span>${ctl}<span class="yn">${known ? `<span class="D">D ${l.d}</span><span class="R">R ${l.r}</span><span style="color:var(--dim)">of ${l.seats}</span>` : `<span style="color:var(--dim)">${l.seats} seats</span>`}</span></div>${known ? `<div class="bar2"><i style="width:${(l.d / l.seats) * 100}%"></i><u style="width:${(l.r / l.seats) * 100}%"></u><b style="left:${(maj / l.seats) * 100}%"></b></div>` : ''}</div>`;
+    };
+    return `<section class="sec"><h2>State legislatures <span>${L.length}</span></h2><div class="mrows">${L.map(row).join('')}</div></section>`;
   }
   function indianaGroups() {
     const I = ALL.filter((x) => x.kind === 'I' || x.key === 'IN-5');
@@ -765,6 +906,7 @@ html:not(.dash) #dash { display: none }
   // Which list the arrow keys flip through when a race is opened from a given place on the dashboard.
   function listFor(key) {
     const q = $('dq').value.trim();
+    if (TAB === 'O' && !q) return [...new Set([...document.querySelectorAll('#dlist .rc')].map((c) => c.dataset.key))];
     if (q) return searched(q).map((x) => x.key);
     const x = ALL.find((y) => y.key === key);
     if (x && (x.kind === 'I' || (TAB === 'I' && x.key === 'IN-5'))) {
@@ -800,12 +942,13 @@ html:not(.dash) #dash { display: none }
   addEventListener('popstate', () => { const k = new URLSearchParams(location.search).get('race'); if (k && ALL.length) openRace(k, store.get('set', null), false); else openDash(false); });
   $('dq').addEventListener('input', () => renderDash());
   $('dash').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-star],[data-unstar],[data-mv],[data-tab],[data-r],[data-s],[data-st],[data-clear],#present,.rc');
+    const t = e.target.closest('[data-more],[data-star],[data-unstar],[data-mv],[data-tab],[data-r],[data-s],[data-st],[data-clear],#present,.rc');
     if (!t) return;
+    if (t.dataset.more) { showAll.has(t.dataset.more) ? showAll.delete(t.dataset.more) : showAll.add(t.dataset.more); renderDash(); return; }
     if (t.dataset.star || t.dataset.unstar) { e.stopPropagation(); toggleStar(t.dataset.star || t.dataset.unstar); renderDash(); return; }
     if (t.dataset.mv) { const [i, d] = t.dataset.mv.split(':').map(Number), j = i + d; if (j >= 0 && j < STARS.length) { [STARS[i], STARS[j]] = [STARS[j], STARS[i]]; store.set('stars', STARS); renderDash(); } return; }
     if (t.id === 'present') { const keys = STARS.filter((k) => ALL.some((x) => x.key === k)); if (keys.length) { document.documentElement.requestFullscreen?.().catch?.(() => {}); openRace(keys[0], keys); } return; }
-    if (t.dataset.tab) { TAB = t.dataset.tab; store.set('tab', TAB); $('dq').value = ''; F.state = null; renderDash(); return; }
+    if (t.dataset.tab) { TAB = t.dataset.tab; store.set('tab2', TAB); $('dq').value = ''; F.state = null; renderDash(); return; }
     if (t.dataset.r) { F.ratings = F.ratings.includes(t.dataset.r) ? F.ratings.filter((y) => y !== t.dataset.r) : [...F.ratings, t.dataset.r]; renderDash(); return; }
     if (t.dataset.s) { F.status = F.status.includes(t.dataset.s) ? F.status.filter((y) => y !== t.dataset.s) : [...F.status, t.dataset.s]; renderDash(); return; }
     if (t.dataset.clear != null) { e.preventDefault(); F.state = null; renderDash(); return; }
@@ -847,6 +990,7 @@ html:not(.dash) #dash { display: none }
       const [n, ind, how] = await Promise.all([getJSON('/api/national' + (TEST ? '?test=1' : '')), getJSON('/api/indiana').catch(() => IND), first ? getJSON('/api/results').catch(() => null) : null]);
       NAT = n; IND = ind;
       ALL = buildAll(n, ind);
+      track();
       if (how) HOWARD = new Set((how.races || []).filter((r) => r.seat).map((r) => (r.seat === 'CD5' ? 'IN-5' : 'IN-' + r.seat)));
       const dash = document.documentElement.classList.contains('dash');
       if (first) {

@@ -35,7 +35,7 @@ h1 { font-family: var(--display); font-weight: 600; font-size: clamp(38px, 7vw, 
 .when b { color: var(--amber); font-weight: 600 }
 
 .main { padding-block: 28px 40px; display: grid; gap: 28px }
-.choices { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 14px }
+.choices { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px }
 
 .choice { display: grid; align-content: start; gap: 8px; text-decoration: none; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px 20px 20px; min-height: 180px; transition: border-color .15s }
 .choice:hover { border-color: var(--amber) }
@@ -53,7 +53,7 @@ h1 { font-family: var(--display); font-weight: 600; font-size: clamp(38px, 7vw, 
 .hq a:hover { color: var(--fg) }
 .foot { color: var(--muted); font-size: 12.5px; margin: 0 }
 
-@media (max-width: 1000px) { .choices { grid-template-columns: 1fr 1fr } .choice.local { grid-column: 1 / -1 } }
+@media (max-width: 760px) { .choices { grid-template-columns: 1fr } }
 @media (max-width: 620px) { .choices { grid-template-columns: 1fr } .choice { min-height: 0 } }
 @media (prefers-reduced-motion: reduce) { .choice { transition: none } }
 </style>
@@ -74,19 +74,14 @@ h1 { font-family: var(--display); font-weight: 600; font-size: clamp(38px, 7vw, 
       <p>County, township, town, and school board races, plus statewide offices, Congress, and the legislature around Indiana.</p>
       <span class="go">See local results</span>
     </a>
-    <a class="choice" href="/national">
-      <h2>U.S. House &amp; Senate</h2>
-      <p>Every competitive race in the country, with the forecast, live counts, and calls.</p>
-      <span class="go">See national results</span>
-    </a>
     <a class="choice" href="/race-maps">
-      <h2>Race Maps</h2>
-      <p>County maps for every Senate, House, governor, and Indiana race, with forecast projections and live results.</p>
+      <h2>National &amp; Race Maps</h2>
+      <p>The national picture on election night: Senate and House control, what's left to win, and the closest races, plus county maps for every Senate, House, governor, and Indiana race with projections and live results.</p>
       <span class="go">Open race maps</span>
     </a>
   </nav>
 
-  <p class="hq"><a href="/early-vote">Howard early vote tracker</a> · <a href="/tv">Watch party display</a> · <a href="/national-tv">National display</a> · <a href="/control">HQ control</a></p>
+  <p class="hq"><a href="/early-vote">Howard early vote tracker</a> · <a href="/national">Senate &amp; House board</a> · <a href="/tv">Watch party display</a> · <a href="/national-tv">National display</a> · <a href="/control">HQ control</a></p>
 
   <p class="foot">Unofficial results from the Howard County Clerk, the Indiana Secretary of State, and civicAPI, updated automatically.</p>
   <p class="nb" style="margin:14px 0 0;font-size:12px;opacity:.75">Built by NB · <a href="https://ko-fi.com/nolanb" target="_blank" rel="noopener" style="color:inherit">Support the work here</a></p>
