@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Race Spotlight · Midterm Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500;600;700;800;900&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Race spotlight: one competitive race on one screen. Laptop or projector for presenting, "Save image" for graphics.
+   Midterm Watch look (charcoal), sized in container units so it scales to any screen or export size. */
+:root {
+  --bg: #0b0d10; --panel: #151a21; --card: #1d232c; --line: #323b47; --fg: #ffffff; --muted: #c9d1dc; --dim: #8f9aa8;
+  --dem: #3d8bff; --rep: #ff4f42; --hot: #ffae2b; --ghost: #1a1f27; --ghost-line: #2a313b; --county-line: #0b0d10;
+  --ui: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --num: 'Barlow Semi Condensed', 'Public Sans', system-ui, sans-serif;
+  color-scheme: dark;
+}
+body.light { --bg: #f7f5f0; --panel: #ffffff; --card: #f0eee8; --line: #d9d4ca; --fg: #111418; --muted: #3b4350; --dim: #6b7380; --dem: #1260d8; --rep: #d42b1e; --hot: #b86a00; --ghost: #ebe7de; --ghost-line: #d6d0c4; --county-line: #f7f5f0; color-scheme: light }
+* { box-sizing: border-box }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--ui); overflow: hidden }
+[hidden] { display: none !important }
+button { font-family: inherit }
+body.idle { cursor: none }
+
+.stage { container: stage / size; width: 100vw; height: 100vh; height: 100dvh; background: var(--bg); position: relative }
+.in { position: absolute; inset: 0; display: grid; grid-template-columns: 37fr 63fr; grid-template-rows: auto minmax(0, 1fr) auto; column-gap: 2.6cqw; row-gap: 1.6cqh; padding: 2.4cqw 2.8cqw 1.8cqw }
+
+/* header */
+.hd { grid-column: 1 / -1; display: flex; align-items: flex-end; gap: 2cqw; min-width: 0 }
+.hd .t { min-width: 0; flex: 1 }
+.hd h1 { margin: 0; font-size: 4.1cqw; font-weight: 900; letter-spacing: -.02em; line-height: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.hd .sub { margin-top: .9cqw; display: flex; align-items: center; gap: .8cqw; font-size: 1.35cqw; font-weight: 600; color: var(--muted); flex-wrap: wrap }
+.chip { display: inline-flex; align-items: center; font-weight: 800; font-size: 1.2cqw; padding: .3cqw .8cqw; border-radius: 99px; border: .15cqw solid currentColor }
+.chip.D { color: var(--dem) } .chip.R { color: var(--rep) } .chip.hot { color: var(--hot) }
+.chip.fill.D { background: var(--dem); color: #fff; border-color: var(--dem) } .chip.fill.R { background: var(--rep); color: #fff; border-color: var(--rep) }
+.nav { display: flex; align-items: center; gap: .6cqw; flex: none }
+.nav button, .nav select { font: 700 1.15cqw var(--ui); color: var(--fg); background: var(--card); border: .12cqw solid var(--line); border-radius: .5cqw; padding: .55cqw .9cqw; cursor: pointer }
+.nav select { max-width: 18cqw }
+.nav .pos { font: 700 1.2cqw var(--num); color: var(--dim); padding: 0 .3cqw }
+
+/* left column */
+.side { display: flex; flex-direction: column; gap: 1.2cqh; min-height: 0; min-width: 0 }
+.box { background: var(--panel); border: .12cqw solid var(--line); border-radius: .9cqw; padding: 1.25cqw 1.5cqw }
+.cand { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 1cqw }
+.cand + .cand { margin-top: .9cqw }
+.cand .nm { font-size: 1.85cqw; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1 }
+.cand.trail .nm { font-weight: 700; color: var(--muted) }
+.cand .nm small { font-size: .62em; font-weight: 800; margin-left: .45em; vertical-align: .12em }
+.cand .pc { font-family: var(--num); font-weight: 700; font-size: 3.5cqw; line-height: .9; font-variant-numeric: tabular-nums }
+.cand .vt { grid-column: 2; text-align: right; font-family: var(--num); font-size: 1.15cqw; font-weight: 600; color: var(--dim); margin-top: .35cqw; font-variant-numeric: tabular-nums; white-space: nowrap }
+.cand .br { grid-column: 1; align-self: center; height: .65cqw; border-radius: 99px; background: var(--card); overflow: hidden; margin-top: .35cqw }
+.cand .br i { display: block; height: 100%; border-radius: 99px }
+.D { color: var(--dem) } .R { color: var(--rep) }
+i.D { background: var(--dem) } i.R { background: var(--rep) }
+.cand.odds .pc { color: var(--muted) } .cand.odds .br i { opacity: .55 }
+.status { margin-top: 1cqw; padding-top: .8cqw; border-top: .12cqw solid var(--line); font-size: 1.2cqw; font-weight: 600; color: var(--muted); line-height: 1.35 }
+.status b { color: var(--fg); font-weight: 800 }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8cqw }
+.stat { background: var(--panel); border: .12cqw solid var(--line); border-radius: .8cqw; padding: .8cqw 1cqw; min-width: 0 }
+.stat .k { font-size: 1cqw; font-weight: 600; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.stat .v { font-family: var(--num); font-size: 1.7cqw; font-weight: 700; line-height: 1.05; margin-top: .25cqw; white-space: nowrap }
+.left { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden }
+.left h2 { margin: 0; font-size: 1.4cqw; font-weight: 800 }
+.spark h2 { margin: 0; font-size: 1.15cqw; font-weight: 800 }
+.left .sum { margin: .6cqw 0 .9cqw; font-size: 1.2cqw; font-weight: 600; color: var(--muted); line-height: 1.35 }
+.left .sum b { color: var(--fg) }
+.lrow { display: grid; grid-template-columns: 9.5cqw minmax(0, 1fr) 4.6cqw 4.8cqw; align-items: center; gap: .8cqw; font-size: 1.2cqw; font-weight: 700; padding: .38cqw 0 }
+.lrow .cn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.lrow .lb { height: 1.05cqw; background: var(--card); border-radius: 99px; overflow: hidden }
+.lrow .lb i { display: block; height: 100%; border-radius: 99px; opacity: .85 }
+.lrow .n { font-family: var(--num); font-weight: 600; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums }
+.lrow .ln { font-family: var(--num); font-weight: 700; text-align: right }
+.spark { position: absolute; right: 1.3cqw; bottom: 1.3cqw; width: 25cqw; background: color-mix(in srgb, var(--panel) 88%, transparent); border: .12cqw solid var(--line); border-radius: .8cqw; padding: .9cqw 1.1cqw .6cqw }
+.spark svg { display: block; width: 100%; margin-top: .4cqw; overflow: visible }
+.spark .ax { stroke: var(--line); stroke-width: 1 }
+.spark .zero { stroke: var(--dim); stroke-dasharray: 3 4; stroke-width: 1 }
+.spark text { font-family: var(--num); font-weight: 600; fill: var(--dim) }
+
+/* map */
+.mapw { position: relative; min-height: 0; min-width: 0; background: var(--panel); border: .12cqw solid var(--line); border-radius: .9cqw; overflow: hidden }
+.map { position: absolute; inset: 0 }
+.map svg { display: block; width: 100%; height: 100% }
+.map .c { stroke: var(--county-line); stroke-width: .7; transition: fill .5s, fill-opacity .5s; cursor: pointer }
+.map .c:hover, .map .c.sel { stroke: var(--fg); stroke-width: 2 }
+.map .gh { fill: var(--ghost); stroke: var(--ghost-line); stroke-width: .6 }
+.map .st { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-opacity: .55; pointer-events: none }
+.map .lbl { pointer-events: none; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,.65); stroke-width: 3.5px; stroke-linejoin: round }
+body.light .map .lbl { stroke: rgba(255,255,255,.85) }
+.map .lbl .a { font: 800 var(--fa, 13px) var(--ui); fill: #fff }
+.map .lbl .b { font: 700 var(--fb, 12px) var(--num); fill: #fff }
+body.light .map .lbl .a, body.light .map .lbl .b { fill: #111 }
+.modes { position: absolute; top: 1.2cqw; right: 1.2cqw; display: flex; background: var(--card); border: .12cqw solid var(--line); border-radius: .7cqw; padding: .25cqw; gap: .2cqw }
+.modes button { font: 700 1.15cqw var(--ui); color: var(--muted); background: transparent; border: 0; border-radius: .5cqw; padding: .5cqw 1cqw; cursor: pointer }
+.modes button.on { background: var(--fg); color: var(--bg) }
+.modes button:disabled { opacity: .35; cursor: default }
+.mt { position: absolute; top: 1.3cqw; left: 1.5cqw; max-width: 46%; }
+.mt h3 { margin: 0; font-size: 1.6cqw; font-weight: 800 }
+.mt p { margin: .3cqw 0 0; font-size: 1.1cqw; font-weight: 600; color: var(--dim); line-height: 1.3 }
+.legend { position: absolute; left: 1.5cqw; bottom: 1.3cqw; width: 24cqw }
+.legend .bar { height: .9cqw; border-radius: 99px }
+.legend .ticks { display: flex; justify-content: space-between; margin-top: .4cqw; font: 700 1.05cqw var(--num); color: var(--muted) }
+.legend .ticks span:first-child { color: var(--rep) } .legend .ticks span:last-child { color: var(--dem) }
+.legend .note { margin-top: .35cqw; font-size: 1cqw; font-weight: 600; color: var(--dim) }
+.tip { position: absolute; pointer-events: none; z-index: 5; background: var(--card); border: .12cqw solid var(--line); border-radius: .7cqw; padding: .9cqw 1.1cqw; min-width: 17cqw; box-shadow: 0 1cqw 3cqw rgba(0,0,0,.45); font-size: 1.1cqw; font-weight: 600; color: var(--muted) }
+.tip h4 { margin: 0 0 .5cqw; font-size: 1.35cqw; font-weight: 800; color: var(--fg) }
+.tip .r { display: flex; justify-content: space-between; gap: 1.5cqw; padding: .12cqw 0 }
+.tip .r b { font-family: var(--num); font-weight: 700; color: var(--fg) }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 4cqw; font-size: 1.5cqw; color: var(--dim); font-weight: 600 }
+
+/* footer */
+.ft { grid-column: 1 / -1; display: flex; align-items: center; gap: 1.2cqw; font-size: 1.05cqw; font-weight: 600; color: var(--dim); min-width: 0 }
+.ft .src { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.ft .brand { font-weight: 900; color: var(--fg); font-size: 1.2cqw; letter-spacing: -.01em }
+.badge { background: var(--hot); color: #111; font-weight: 800; padding: .25cqw .7cqw; border-radius: .35cqw; white-space: nowrap }
+.tools { display: flex; gap: .5cqw; transition: opacity .4s }
+body.idle .tools { opacity: 0; pointer-events: none }
+.tools button { font: 700 1.05cqw var(--ui); color: var(--fg); background: var(--card); border: .12cqw solid var(--line); border-radius: .45cqw; padding: .45cqw .85cqw; cursor: pointer }
+.toast { position: fixed; left: 50%; bottom: 7vh; transform: translateX(-50%); background: var(--fg); color: var(--bg); font: 700 15px var(--ui); padding: 10px 16px; border-radius: 8px; z-index: 20 }
+
+/* Square or portrait (square graphic export, phones held upright): map on top, numbers below. */
+@container stage (max-aspect-ratio: 4/3) {
+  .in { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1.15fr) auto auto; padding: 3.4cqw; row-gap: 2cqw }
+  .hd h1 { font-size: 6.4cqw } .hd .sub { font-size: 2.1cqw; margin-top: 1.2cqw } .chip { font-size: 1.9cqw }
+  .nav { display: none }
+  .mapw { grid-row: 2 }
+  .side { grid-row: 3; display: grid; grid-template-columns: 1.45fr 1fr; gap: 2cqw }
+  .side .left, .spark { display: none }
+  .stats { grid-template-columns: 1fr; gap: 1.2cqw }
+  .stat .k { font-size: 1.7cqw } .stat .v { font-size: 3.2cqw }
+  .box { padding: 2.2cqw 2.4cqw }
+  .cand .nm { font-size: 2.7cqw } .cand .pc { font-size: 5.2cqw } .cand .vt { font-size: 1.9cqw } .cand .br { height: 1.1cqw }
+  .status { font-size: 2cqw }
+  .modes { display: none }
+  .mt h3 { font-size: 2.6cqw } .mt p { font-size: 1.8cqw }
+  .legend { width: 44cqw } .legend .ticks { font-size: 1.7cqw } .legend .note { font-size: 1.5cqw } .legend .bar { height: 1.3cqw }
+  .ft { grid-row: 4; font-size: 1.7cqw } .ft .brand { font-size: 2cqw } .tools { display: none }
+}
+/* Export sizes: the stage is laid out at the exact pixel size, captured, then put back. */
+.stage.x-wide { position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 50 }
+.stage.x-sq { position: fixed; left: 0; top: 0; width: 1080px; height: 1080px; z-index: 50 }
+.stage.x-wide .tools, .stage.x-sq .tools { display: none }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="in">
+    <header class="hd">
+      <div class="t"><h1 id="title">Loading…</h1><div class="sub" id="sub"></div></div>
+      <div class="nav noexp"><button type="button" id="prev" aria-label="Previous race">‹</button><span class="pos" id="pos"></span><button type="button" id="next" aria-label="Next race">›</button><select id="pick" aria-label="Jump to a race"></select></div>
+    </header>
+    <section class="side">
+      <div class="box" id="cands"></div>
+      <div class="stats" id="stats"></div>
+      <div class="box left" id="left"></div>
+    </section>
+    <section class="mapw">
+      <div class="map" id="map"></div>
+      <div class="mt" id="mt"></div>
+      <div class="modes noexp" id="modes">
+        <button type="button" data-m="base">2024 result</button><button type="button" data-m="live">Live count</button><button type="button" data-m="swing">Swing</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="spark" id="spark" hidden></div>
+      <div class="tip" id="tip" hidden></div>
+    </section>
+    <footer class="ft">
+      <span class="brand">Midterm Watch</span>
+      <span class="badge" id="badge" hidden></span>
+      <span class="src" id="src">Results: civicAPI · Forecast: FLIPR (Silver Bulletin) · 2024: county presidential results</span>
+      <span class="tools noexp"><button type="button" id="saveW">Save image 16:9</button><button type="button" id="saveS">Save square</button><button type="button" id="fs">Full screen</button></span>
+    </footer>
+  </div>
+</div>
+
+<script src="/vendor/d3-array.min.js"></script>
+<script src="/vendor/d3-geo.min.js"></script>
+<script src="/vendor/topojson-client.min.js"></script>
+<script src="/vendor/modern-screenshot.js" defer></script>
+<script>
+(() => {
+  const Q = new URLSearchParams(location.search);
+  if (Q.has('light')) document.body.classList.add('light');
+  const TEST = Q.get('test') === '1';      // civicAPI practice data (wild numbers; for wiring checks)
+  const SAMPLE = Q.get('sample') === '1';  // realistic made-up numbers built from 2024 results, for design previews
+  const $ = (id) => document.getElementById(id);
+  const fmt = new Intl.NumberFormat('en-US');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fm = (m) => (m == null || Number.isNaN(m) ? '—' : Math.abs(m) < 0.05 ? 'Even' : `${m > 0 ? 'D' : 'R'}+${Math.abs(m).toFixed(1)}`);
+  const mg = (s) => { const m = String(s || '').match(/^([DR])\+([\d.]+)$/); return m ? (m[1] === 'D' ? 1 : -1) * +m[2] : null; };
+  const k = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 9500 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : fmt.format(Math.round(n)));
+  const last = (s) => String(s || '').replace(/\s+(jr\.?|sr\.?|ii|iii|iv)$/i, '').replace(/\s*\(I\)$/, '').split(' ').pop();
+  const norm = (s) => String(s || '').toLowerCase().replace(/\b(county|parish|borough|census area|city and borough|municipality)\b/g, '').replace(/\bsaint\b/g, 'st').replace(/[^a-z]/g, '');
+  const CLOSE = { IN: 19, KY: 19, GA: 19, VA: 19, SC: 19, VT: 19, FL: 20, NH: 20, NC: 19.5, OH: 19.5, WV: 19.5, AL: 20, CT: 20, DE: 20, IL: 20, ME: 20, MD: 20, MA: 20, MS: 20, MO: 20, NJ: 20, OK: 20, PA: 20, RI: 20, TN: 20, AR: 20.5, AZ: 21, CO: 21, KS: 21, LA: 21, MI: 21, MN: 21, NE: 21, NM: 21, NY: 21, SD: 21, TX: 21, WI: 21, WY: 21, IA: 22, MT: 22, NV: 22, UT: 22, CA: 23, ID: 23, OR: 23, WA: 23, HI: 24, AK: 25 };
+  const clock = (h) => { const hh = Math.floor(h) % 24, mm = Math.round((h % 1) * 60); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`; };
+  const STATE = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
+
+  // Margin colors: near-even is a dark neutral, stronger margins are brighter and more saturated (reads on a projector).
+  const STOPS = {
+    dark: { D: [[0, '#3a3944'], [4, '#334a78'], [12, '#2c63cc'], [25, '#3d8bff'], [45, '#8cbaff']], R: [[0, '#3a3944'], [4, '#7a3a36'], [12, '#cc3b30'], [25, '#ff4f42'], [45, '#ffa197']] },
+    light: { D: [[0, '#e7e3ea'], [4, '#bcd0f2'], [12, '#7aa6ec'], [25, '#2f74e0'], [45, '#0c3f99']], R: [[0, '#e7e3ea'], [4, '#f2c1bb'], [12, '#ea8a80'], [25, '#d8402f'], [45, '#8f1c12']] },
+  };
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const lerp = (a, b, t) => { const A = hex(a), B = hex(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+  function color(m) {
+    const s = STOPS[document.body.classList.contains('light') ? 'light' : 'dark'][m >= 0 ? 'D' : 'R'], x = Math.min(Math.abs(m), 45);
+    for (let i = 1; i < s.length; i++) if (x <= s[i][0]) return lerp(s[i - 1][1], s[i][1], (x - s[i - 1][0]) / (s[i][0] - s[i - 1][0]));
+    return s[s.length - 1][1];
+  }
+  const ramp = () => { const p = []; for (let m = -45; m <= 45; m += 3) p.push(`${color(m)} ${((m + 45) / 90 * 100).toFixed(1)}%`); return `linear-gradient(90deg, ${p.join(',')})`; };
+
+  let NAT = null, LIST = [], idx = 0, race = null, mode = null, sel = null;
+  const maps = new Map();
+  const getJSON = async (u) => { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); };
+  const mapFor = async (st) => { if (!maps.has(st)) maps.set(st, getJSON(`/maps/${st}.json`)); return maps.get(st); };
+
+  // The races: Toss-up and Lean Senate, House, and governor races from the forecast, closest first.
+  function buildList(n) {
+    const keep = (x) => /^(Toss-up|Lean )/.test(x.rating) || (x.res?.winner && x.held && x.res.winner !== x.held);
+    const L = [
+      ...n.senate.filter(keep).map((x) => ({ ...x, kind: 'S', key: x.id + '-senate', st: x.id })),
+      ...n.house.filter(keep).map((x) => ({ ...x, kind: 'H', key: x.id, st: x.id.split('-')[0] })),
+      ...(n.governors || []).filter(keep).map((x) => ({ ...x, kind: 'G', key: x.id + '-governor', st: x.id })),
+    ];
+    const order = { S: 0, H: 1, G: 2 };
+    return L.sort((a, b) => order[a.kind] - order[b.kind] || Math.abs(a.p - 50) - Math.abs(b.p - 50));
+  }
+  const titleOf = (x) => (x.kind === 'H' ? `${STATE[x.st]}'s ${ordinal(+x.id.split('-')[1])} District` : `${STATE[x.st]} ${x.kind === 'S' ? 'Senate' : 'Governor'}`);
+  const shortOf = (x) => (x.kind === 'H' ? x.id : `${x.st} ${x.kind === 'S' ? 'Senate' : 'Gov.'}`);
+  function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+  // ---- county numbers ------------------------------------------------------------------------------------------
+  // Real: civicAPI county breakdown. Sample: county votes built from 2024 results plus a believable shift.
+  let seed = 1;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const gauss = () => { let s = 0; for (let i = 0; i < 6; i++) s += rnd(); return (s - 3) / 1.2; };
+  async function countyData(x, feats) {
+    if (SAMPLE) {
+      if (x.kind === 'H' && !x._counties && x.civicId) {
+        try { const b = await getJSON(`/api/breakdown?id=${x.civicId}&test=1`); x._counties = new Set(b.counties.map((c) => norm(c.name))); } catch { /* no district list */ }
+      }
+      seed = [...x.key].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 2147483647 || 7;
+      const base = x.m24 != null ? mg(x.m24) : null;
+      const target = x.proj ? mg(x.proj) : (x.p - 50) / 4.5; // the race lands near its forecast
+      const list = x.kind === 'H' && x._counties ? feats.filter((f) => x._counties.has(norm(f.properties.n))) : feats;
+      const tot24 = list.reduce((a, f) => a + (f.properties.t24 || 0), 0) || 1;
+      const m24w = list.reduce((a, f) => a + ((f.properties.d24 - f.properties.r24) || 0), 0) / tot24 * 100;
+      const shift = target - (base ?? m24w);
+      const mid = 30 + rnd() * 45; // how far along the count is
+      return list.filter((f) => f.properties.t24).map((f) => {
+        const p = f.properties, m = ((p.d24 - p.r24) / p.t24) * 100 + shift + gauss() * 3.5;
+        const exp = p.t24 * (0.66 + rnd() * 0.12), pct = Math.max(0, Math.min(100, mid + gauss() * 28));
+        const t = Math.round(exp * pct / 100), oth = 0.015;
+        return { key: norm(p.n), name: p.n, pct, tot: t, dv: Math.round(t * (1 - oth) * (0.5 + m / 200)), rv: Math.round(t * (1 - oth) * (0.5 - m / 200)) };
+      });
+    }
+    if (!x.civicId) return [];
+    const b = await getJSON(`/api/breakdown?id=${x.civicId}${TEST ? '&test=1' : ''}`);
+    const isD = (c) => c.party === 'D' || (x.ind && last(c.name).toLowerCase() === String(x.ind).toLowerCase());
+    return b.counties.map((c) => {
+      const tot = c.cands.reduce((a, q) => a + q.votes, 0);
+      return { key: norm(c.name), name: c.name, pct: c.pct, tot, dv: c.cands.filter(isD).reduce((a, q) => a + q.votes, 0), rv: c.cands.filter((q) => q.party === 'R').reduce((a, q) => a + q.votes, 0) };
+    });
+  }
+  function totalsFrom(cs, x) {
+    const dv = cs.reduce((a, c) => a + c.dv, 0), rv = cs.reduce((a, c) => a + c.rv, 0), t = cs.reduce((a, c) => a + c.tot, 0);
+    const exp = cs.reduce((a, c) => a + (c.pct > 0 ? c.tot / (c.pct / 100) : 0), 0);
+    return { total: t, margin: t ? (dv - rv) / t * 100 : 0, pct: exp ? t / exp * 100 : 0, d: { name: x.d, votes: dv, pct: t ? dv / t * 100 : 0 }, r: { name: x.r, votes: rv, pct: t ? rv / t * 100 : 0 }, winner: null };
+  }
+
+  // ---- draw ----------------------------------------------------------------------------------------------------
+  async function show(i) {
+    idx = (i + LIST.length) % LIST.length; sel = null; $('tip').hidden = true;
+    const x = race = LIST[idx];
+    history.replaceState(null, '', `?${new URLSearchParams({ ...Object.fromEntries(Q), race: x.key })}`);
+    $('pick').value = x.key; $('pos').textContent = `${idx + 1} of ${LIST.length}`;
+    $('title').textContent = titleOf(x);
+    const rs = x.rating === 'Toss-up' ? 'hot' : x.rating.endsWith('D') ? 'D' : 'R';
+    $('sub').innerHTML = `<span><b style="color:var(--fg)">${esc(x.d)}</b> <span class="D">(D)</span> vs. <b style="color:var(--fg)">${esc(x.r)}</b> <span class="R">(R)</span></span><span class="chip ${rs}">${esc(x.rating)}</span>${x.held ? `<span>Held by ${x.held === 'D' ? 'Democrats' : 'Republicans'}</span>` : ''}`;
+
+    let topo;
+    try { topo = await mapFor(x.st); } catch { topo = null; }
+    if (race !== x) return;
+    const feats = topo ? topojson.feature(topo, topo.objects.counties).features : [];
+    const outline = topo ? topojson.feature(topo, topo.objects.state).features[0] : null;
+
+    let cs = [];
+    try { cs = await countyData(x, feats); } catch { cs = []; }
+    if (race !== x) return;
+    const byKey = new Map(cs.map((c) => [c.key, c]));
+    const r = SAMPLE ? totalsFrom(cs, x) : (x.res && x.res.total > 0 ? x.res : null);
+    const has = !!(r && r.total > 0);
+    x._cs = byKey; x._has = has;
+    // House: only the district's counties are filled; the rest of the state is drawn faintly for context.
+    const inRace = x.kind === 'H' ? (f) => byKey.has(norm(f.properties.n)) || x._counties?.has(norm(f.properties.n)) : () => true;
+    const m24 = x.m24 != null ? mg(x.m24) : (() => { const fs = feats.filter(inRace); const t = fs.reduce((a, f) => a + (f.properties.t24 || 0), 0); return t ? fs.reduce((a, f) => a + (f.properties.d24 - f.properties.r24 || 0), 0) / t * 100 : null; })();
+
+    candidates(x, r, has);
+    stats(x, r, has, m24);
+    voteLeft(x, cs, r, has, feats);
+    spark(x, has);
+    const can = { base: feats.some((f) => f.properties.t24), live: cs.some((c) => c.tot > 0), swing: cs.some((c) => c.tot > 0 && c.pct >= 10) };
+    document.querySelectorAll('#modes button').forEach((b) => { b.disabled = !can[b.dataset.m]; });
+    if (!mode || !can[mode]) mode = can.live ? 'live' : 'base';
+    if (Q.get('map') && can[Q.get('map')]) mode = Q.get('map');
+    drawMap(x, feats, outline, inRace);
+    trimRows();
+    $('badge').hidden = !(SAMPLE || TEST || NAT?.showTest);
+    $('badge').textContent = SAMPLE ? 'Sample numbers, not real results' : 'Test data, not real results';
+  }
+
+  function candidates(x, r, has) {
+    let html;
+    if (has) {
+      const sides = [{ c: r.d, p: 'D', fb: x.d }, { c: r.r, p: 'R', fb: x.r }].sort((a, b) => (b.c?.votes || 0) - (a.c?.votes || 0));
+      html = sides.map(({ c, p, fb }, i) => `<div class="cand ${i ? 'trail' : ''}"><span class="nm">${esc(c?.name || fb)}<small class="${p}">${p}</small>${r.winner === p ? ' ✓' : ''}</span><span class="pc ${p}">${(c?.pct || 0).toFixed(1)}%</span><span class="br"><i class="${p}" style="width:${(c?.pct || 0).toFixed(1)}%"></i></span><span class="vt">${fmt.format(c?.votes || 0)} votes</span></div>`).join('');
+      const gap = Math.abs((r.d?.votes || 0) - (r.r?.votes || 0)), lead = sides[0];
+      const st = r.winner ? `<b>${esc(r.winnerName || lead.c?.name)}</b> wins${x.held && r.winner !== x.held ? `, a <b>${r.winner === 'D' ? 'Democratic' : 'Republican'} flip</b>` : ''}`
+        : gap ? `<b>${esc(last(lead.c?.name))}</b> leads by <b>${Math.abs(r.margin).toFixed(1)}%</b> (${fmt.format(gap)} votes) · <b>${Math.round(r.pct)}%</b> counted` : '<b>Tied</b>';
+      html += `<div class="status">${st}</div>`;
+    } else {
+      html = [{ n: x.d, p: 'D', v: x.p }, { n: x.r, p: 'R', v: 100 - x.p }].map((o) => `<div class="cand odds"><span class="nm">${esc(o.n)}<small class="${o.p}">${o.p}</small></span><span class="pc">${o.v.toFixed(0)}%</span><span class="br"><i class="${o.p}" style="width:${o.v.toFixed(1)}%"></i></span><span class="vt">chance to win</span></div>`).join('');
+      html += `<div class="status">Polls close <b>${clock(CLOSE[x.st] ?? 21)} ET</b>. No votes counted yet.</div>`;
+    }
+    $('cands').innerHTML = html;
+  }
+
+  function stats(x, r, has, m24) {
+    const fav = x.p >= 50 ? { n: last(x.d), v: x.p, p: 'D' } : { n: last(x.r), v: 100 - x.p, p: 'R' };
+    const items = [
+      [`${esc(fav.n)}'s chance`, `<span class="${fav.p}">${fav.v.toFixed(0)}%</span>`],
+      [x.kind === 'H' ? '2024 in district' : '2024 in state', `<span class="${m24 >= 0 ? 'D' : 'R'}">${m24 == null ? '—' : (m24 >= 0 ? 'Harris' : 'Trump') + ' +' + Math.abs(m24).toFixed(1)}</span>`],
+      has && m24 != null ? ['Swing vs. 2024', `<span class="${r.margin - m24 >= 0 ? 'D' : 'R'}">${fm(r.margin - m24)}</span>`] : x.proj ? ['Projected', `<span class="${mg(x.proj) >= 0 ? 'D' : 'R'}">${x.proj}</span>`] : ['Rating', esc(x.rating)],
+    ];
+    $('stats').innerHTML = items.map(([a, b]) => `<div class="stat"><div class="k">${a}</div><div class="v">${b}</div></div>`).join('');
+  }
+
+  // Where the uncounted vote is: expected county vote from the share counted so far (or a midterm turnout guess from
+  // 2024 when nothing is in), times the county's current lean. An estimate, and labeled as one.
+  function voteLeft(x, cs, r, has, feats) {
+    const el = $('left');
+    if (!has) {
+      const fs = feats.filter((f) => f.properties.t24 && (x.kind !== 'H' || x._cs.has(norm(f.properties.n)) || x._counties?.has(norm(f.properties.n)))).sort((a, b) => b.properties.t24 - a.properties.t24).slice(0, 6);
+      const T = fs.reduce((a, f) => Math.max(a, f.properties.t24), 1);
+      el.innerHTML = `<h2>Where the votes are</h2><p class="sum">The biggest counties in 2024 and how they voted. These are the places to watch once polls close.</p>` +
+        fs.map((f) => { const p = f.properties, m = (p.d24 - p.r24) / p.t24 * 100; return `<div class="lrow"><span class="cn">${esc(p.n)}</span><span class="lb"><i style="width:${(p.t24 / T * 100).toFixed(1)}%;background:${color(m)}"></i></span><span class="n">${k(p.t24)}</span><span class="ln ${m >= 0 ? 'D' : 'R'}">${fm(m)}</span></div>`; }).join('');
+      return;
+    }
+    const swing = (r.margin - (mg(x.m24) ?? r.margin));
+    const rows = cs.map((c) => {
+      const p = feats.find((f) => norm(f.properties.n) === c.key)?.properties;
+      const exp = c.pct >= 5 ? c.tot / (c.pct / 100) : (p?.t24 || 0) * 0.72;
+      const left = Math.max(0, exp - c.tot);
+      const lean = c.pct >= 10 && c.tot ? (c.dv - c.rv) / c.tot * 100 : p?.t24 ? (p.d24 - p.r24) / p.t24 * 100 + swing : 0;
+      return { c, left, lean, net: left * lean / 100 };
+    }).filter((o) => o.left > 0).sort((a, b) => b.left - a.left);
+    const L = rows.reduce((a, o) => a + o.left, 0), net = rows.reduce((a, o) => a + o.net, 0);
+    const gap = (r.d?.votes || 0) - (r.r?.votes || 0); // D minus R now
+    const leader = gap >= 0 ? { n: last(r.d?.name || x.d), s: 1 } : { n: last(r.r?.name || x.r), s: -1 };
+    const trailer = gap >= 0 ? last(r.r?.name || x.r) : last(r.d?.name || x.d);
+    const helps = net >= 0 ? last(r.d?.name || x.d) : last(r.r?.name || x.r);
+    const ends = gap + net;
+    let sum;
+    if (L < 500) sum = 'Almost everything is counted.';
+    else sum = `About <b>${k(L)}</b> votes left (estimate). At current county leans they'd net <b>${esc(helps)}</b> about <b>${k(Math.abs(net))}</b>: `
+      + (Math.sign(ends) === Math.sign(gap) || gap === 0 ? `not enough for <b>${esc(trailer)}</b>, down ${k(Math.abs(gap))}.` : `enough to overtake <b>${esc(leader.n)}</b>'s ${k(Math.abs(gap))} lead.`);
+    const T = rows[0]?.left || 1;
+    el.innerHTML = `<h2>Where the vote is left</h2><p class="sum">${sum}</p>` +
+      rows.slice(0, 8).map((o) => `<div class="lrow"><span class="cn">${esc(o.c.name)}</span><span class="lb"><i style="width:${(o.left / T * 100).toFixed(1)}%;background:${color(o.lean)}"></i></span><span class="n">${k(o.left)}</span><span class="ln ${o.lean >= 0 ? 'D' : 'R'}">${fm(o.lean)}</span></div>`).join('');
+  }
+
+  // Drop list rows that don't fit the box at this screen size.
+  function trimRows() { const el = $('left'); const rs = [...el.querySelectorAll('.lrow')]; while (rs.length > 1 && el.scrollHeight > el.clientHeight + 1) rs.pop().remove(); }
+
+  // How the margin moved as the count came in. Sample mode draws a plausible path; real data comes from civicAPI history.
+  async function spark(x, has) {
+    const el = $('spark');
+    let pts = [];
+    if (SAMPLE && has) {
+      const r = totalsFrom([...x._cs.values()], x), n = 9;
+      let m = r.margin + (rnd() - .5) * 14;
+      for (let i = 0; i < n; i++) { const t = i / (n - 1); m = m + (r.margin - m) * (0.35 + t * .4) + gauss() * 1.2 * (1 - t); pts.push({ p: 5 + t * (r.pct - 5), m: i === n - 1 ? r.margin : m }); }
+    } else if (has && x.civicId && !SAMPLE) {
+      try {
+        const t = await getJSON(`/api/timeline?id=${x.civicId}`);
+        const isD = (c) => c.party === 'D' || (x.ind && last(c.name).toLowerCase() === String(x.ind).toLowerCase());
+        pts = t.points.map((q) => { const tot = q.cands.reduce((a, c) => a + c.votes, 0); return tot ? { p: q.pct, m: (q.cands.filter(isD).reduce((a, c) => a + c.votes, 0) - q.cands.filter((c) => c.party === 'R').reduce((a, c) => a + c.votes, 0)) / tot * 100 } : null; }).filter(Boolean);
+      } catch { pts = []; }
+    }
+    if (race !== x) return;
+    el.hidden = pts.length < 2;
+    if (el.hidden) return;
+    el.innerHTML = '<h2>Margin as the count came in</h2>';
+    const W = Math.max(200, el.clientWidth - el.clientWidth * 0.09), H = Math.round(W * 0.24), P = 4, fs = Math.max(10, W * 0.04);
+    const lo = Math.min(-2, ...pts.map((q) => q.m)), hi = Math.max(2, ...pts.map((q) => q.m)), pad = (hi - lo) * .15;
+    const X = (p) => P + (p / 100) * (W - P * 2), Y = (m) => H - fs * 1.5 - ((m - (lo - pad)) / ((hi + pad) - (lo - pad))) * (H - fs * 3);
+    const path = pts.map((q, i) => `${i ? 'L' : 'M'}${X(q.p).toFixed(1)},${Y(q.m).toFixed(1)}`).join('');
+    const end = pts[pts.length - 1];
+    el.innerHTML = `<h2>Margin as the count came in</h2><svg viewBox="0 0 ${W} ${H}" height="${H}">
+      <line class="zero" x1="${P}" x2="${W - P}" y1="${Y(0)}" y2="${Y(0)}"/>
+      <path d="${path}" fill="none" stroke="${end.m >= 0 ? 'var(--dem)' : 'var(--rep)'}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <circle cx="${X(end.p)}" cy="${Y(end.m)}" r="5" fill="${end.m >= 0 ? 'var(--dem)' : 'var(--rep)'}"/>
+      <text x="${P}" y="${H - 1}" font-size="${fs}">0% counted</text><text x="${W - P}" y="${H - 1}" text-anchor="end" font-size="${fs}">100%</text>
+      <text x="${Math.min(X(end.p) + 8, W - fs * 3.2)}" y="${Y(end.m) - 8}" font-size="${fs * 1.25}" style="fill:var(--fg);font-weight:700">${fm(end.m)}</text></svg>`;
+  }
+
+  function drawMap(x, feats, outline, inRace) {
+    const box = $('map'), W = box.clientWidth, H = box.clientHeight;
+    if (!feats.length || !W) { box.innerHTML = '<div class="empty">No county map for this race yet.</div>'; legend(); return; }
+    const mine = feats.filter(inRace);
+    if (!mine.length) { box.innerHTML = '<div class="empty">The county map fills in once civicAPI lists this district’s counties.</div>'; legend(); return; }
+    const fc = { type: 'FeatureCollection', features: mine };
+    const [lon, lat] = d3.geoCentroid(fc);
+    const sw = $('stage').clientWidth, top = Math.max(80, H * 0.15), bottom = Math.max(60, H * 0.13, x._has && getComputedStyle($('spark')).display !== 'none' ? sw * 0.1 : 0);
+    const proj = d3.geoTransverseMercator().rotate([-lon, -lat]).fitExtent([[W * 0.05, top], [W * 0.95, H - bottom]], fc);
+    const path = d3.geoPath(proj);
+    const fill = (f) => {
+      const p = f.properties, c = x._cs.get(norm(p.n));
+      if (mode === 'base') return p.t24 ? color((p.d24 - p.r24) / p.t24 * 100) : 'var(--ghost)';
+      if (mode === 'live') return c && c.tot ? color((c.dv - c.rv) / c.tot * 100) : 'var(--ghost)';
+      if (mode === 'swing') return c && c.tot && c.pct >= 10 && p.t24 ? color(((c.dv - c.rv) / c.tot - (p.d24 - p.r24) / p.t24) * 100 * 2.2) : 'var(--ghost)';
+    };
+    const op = (f) => { if (mode !== 'live') return 1; const c = x._cs.get(norm(f.properties.n)); return c && c.tot ? 0.35 + 0.65 * Math.min(1, c.pct / 100) : 1; };
+    const ghosts = x.kind === 'H' ? feats.filter((f) => !inRace(f)).map((f) => `<path class="gh" d="${path(f)}"/>`).join('') : '';
+    const shapes = mine.map((f) => `<path class="c" data-k="${norm(f.properties.n)}" d="${path(f)}" fill="${fill(f)}" fill-opacity="${op(f).toFixed(2)}"/>`).join('');
+    // Label the biggest counties (by 2024 vote) where there's room.
+    const placed = [];
+    const labels = [...mine].filter((f) => f.properties.t24).sort((a, b) => b.properties.t24 - a.properties.t24).slice(0, 12).map((f) => {
+      const [cx, cy] = path.centroid(f); const a = path.area(f);
+      if (!isFinite(cx) || a < 900 && placed.length >= 2 || placed.some(([px, py]) => Math.abs(px - cx) < W * 0.09 && Math.abs(py - cy) < W * 0.03) || placed.length >= 6) return '';
+      placed.push([cx, cy]);
+      const p = f.properties, c = x._cs.get(norm(p.n));
+      const m = mode === 'base' ? (p.d24 - p.r24) / p.t24 * 100 : c && c.tot ? (mode === 'swing' ? ((c.dv - c.rv) / c.tot - (p.d24 - p.r24) / p.t24) * 100 : (c.dv - c.rv) / c.tot * 100) : null;
+      return `<g class="lbl" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})"><text class="a" y="-.2em">${esc(p.n)}</text>${m == null ? '' : `<text class="b" y="1.05em">${fm(m)}</text>`}</g>`;
+    }).join('');
+    const fa = Math.max(12, W * 0.0135).toFixed(1), fb = Math.max(11, W * 0.012).toFixed(1);
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="--fa:${fa}px;--fb:${fb}px" role="img" aria-label="County map of ${esc(titleOf(x))}">${ghosts}${shapes}${outline && x.kind !== 'H' ? `<path class="st" d="${path(outline)}"/>` : ''}${labels}</svg>`;
+    if (sel) box.querySelector(`.c[data-k="${sel}"]`)?.classList.add('sel');
+    const T = { base: ['How it voted in 2024', 'President, by county'], live: ['Live count by county', 'Lighter shading: less of the county counted'], swing: ['Swing from 2024', 'Change in margin vs. 2024 president · counties with 10%+ counted'] }[mode];
+    $('mt').innerHTML = `<h3>${T[0]}</h3><p>${T[1]}</p>`;
+    document.querySelectorAll('#modes button').forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
+    legend();
+  }
+  function legend() {
+    const sw = mode === 'swing';
+    $('legend').innerHTML = `<div class="bar" style="background:${ramp()}"></div><div class="ticks"><span>${sw ? 'Toward R' : 'R+40'}</span><span>${sw ? 'No change' : 'Even'}</span><span>${sw ? 'Toward D' : 'D+40'}</span></div>${sw ? '<div class="note">Full color at a 20-point shift</div>' : ''}`;
+  }
+
+  // County details on hover (mouse) or tap/click (touch, presenting).
+  function tipFor(key, ev) {
+    const x = race, f = key && [...document.querySelectorAll('#map .c')].find((n) => n.dataset.k === key);
+    if (!f) { $('tip').hidden = true; return; }
+    const c = x._cs.get(key);
+    const topo = maps.get(x.st);
+    topo.then((t) => {
+      const p = topojson.feature(t, t.objects.counties).features.find((g) => norm(g.properties.n) === key)?.properties || {};
+      const m24 = p.t24 ? (p.d24 - p.r24) / p.t24 * 100 : null, m = c && c.tot ? (c.dv - c.rv) / c.tot * 100 : null;
+      const rows = [];
+      if (c && c.tot) {
+        rows.push([`${esc(last(x.d))} <span class="D">D</span>`, `${fmt.format(c.dv)} · ${(c.dv / c.tot * 100).toFixed(1)}%`]);
+        rows.push([`${esc(last(x.r))} <span class="R">R</span>`, `${fmt.format(c.rv)} · ${(c.rv / c.tot * 100).toFixed(1)}%`]);
+        rows.push(['Counted', `${Math.round(c.pct)}%`]);
+      }
+      if (m24 != null) rows.push(['2024 president', fm(m24)]);
+      if (m != null && m24 != null && c.pct >= 10) rows.push(['Swing', fm(m - m24)]);
+      const tip = $('tip');
+      tip.innerHTML = `<h4>${esc(p.n || key)} County</h4>${rows.map(([a, b]) => `<div class="r"><span>${a}</span><b>${b}</b></div>`).join('') || '<div>No votes yet</div>'}`;
+      tip.hidden = false;
+      const R = $('map').getBoundingClientRect(), W = tip.offsetWidth, H = tip.offsetHeight;
+      let lx = ev.clientX - R.left + 18, ly = ev.clientY - R.top + 18;
+      if (lx + W > R.width - 8) lx = ev.clientX - R.left - W - 18;
+      if (ly + H > R.height - 8) ly = R.height - H - 8;
+      tip.style.left = Math.max(8, lx) + 'px'; tip.style.top = Math.max(8, ly) + 'px';
+    });
+  }
+  $('map').addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' && !sel) tipFor(e.target.dataset?.k, e); });
+  $('map').addEventListener('pointerleave', () => { if (!sel) $('tip').hidden = true; });
+  $('map').addEventListener('click', (e) => {
+    const key = e.target.dataset?.k || null;
+    document.querySelectorAll('#map .c.sel').forEach((n) => n.classList.remove('sel'));
+    sel = key && key !== sel ? key : null;
+    if (sel) { e.target.classList.add('sel'); tipFor(sel, e); } else $('tip').hidden = true;
+  });
+
+  // ---- controls ------------------------------------------------------------------------------------------------
+  $('prev').onclick = () => show(idx - 1);
+  $('next').onclick = () => show(idx + 1);
+  $('pick').onchange = (e) => show(LIST.findIndex((x) => x.key === e.target.value));
+  $('modes').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || b.disabled) return; mode = b.dataset.m; Q.delete('map'); show(idx); });
+  addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'SELECT') return;
+    if (['ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); show(idx + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(idx - 1); }
+    else if (['1', '2', '3'].includes(e.key)) { const b = document.querySelectorAll('#modes button')[+e.key - 1]; if (!b.disabled) { mode = b.dataset.m; Q.delete('map'); show(idx); } }
+    else if (e.key === 'Escape') { sel = null; $('tip').hidden = true; document.querySelectorAll('#map .c.sel').forEach((n) => n.classList.remove('sel')); }
+  });
+  $('fs').onclick = () => { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); };
+  let idle; const wake = () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 3500); };
+  ['mousemove', 'keydown', 'touchstart'].forEach((ev) => addEventListener(ev, wake, { passive: true })); wake();
+  let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => race && show(idx), 150); });
+
+  // Save image: lay the stage out at an exact size, capture it, put it back.
+  async function save(kind) {
+    const st = $('stage'), cls = kind === 'sq' ? 'x-sq' : 'x-wide';
+    const toast = document.createElement('div'); toast.className = 'toast'; toast.textContent = 'Making the image…'; document.body.appendChild(toast);
+    try {
+      st.classList.add(cls); $('tip').hidden = true;
+      await show(idx); await new Promise((r) => setTimeout(r, 450));
+      const url = await modernScreenshot.domToPng(st, { scale: 1, backgroundColor: getComputedStyle(document.body).backgroundColor, filter: (n) => !(n.classList && n.classList.contains('noexp')) });
+      const a = document.createElement('a'); a.href = url; a.download = `${race.key}${kind === 'sq' ? '-square' : ''}${mode ? '-' + mode : ''}.png`; a.click();
+      toast.textContent = 'Saved';
+    } catch (e) { toast.textContent = "Couldn't make the image"; }
+    finally { st.classList.remove(cls); await show(idx); setTimeout(() => toast.remove(), 1500); }
+  }
+  $('saveW').onclick = () => save('wide');
+  $('saveS').onclick = () => save('sq');
+
+  // ---- load ----------------------------------------------------------------------------------------------------
+  async function load(first) {
+    try {
+      const n = await getJSON('/api/national' + (TEST ? '?test=1' : ''));
+      NAT = n;
+      const prevKey = race?.key || Q.get('race');
+      LIST = buildList(n);
+      $('pick').innerHTML = LIST.map((x) => `<option value="${esc(x.key)}">${esc(shortOf(x))} · ${esc(x.rating)}</option>`).join('');
+      const i = Math.max(0, LIST.findIndex((x) => x.key.toLowerCase() === String(prevKey || '').toLowerCase()));
+      if (first || !sel) await show(i);
+    } catch (e) {
+      if (first) { $('title').textContent = 'Couldn’t load the races'; $('sub').textContent = 'Check the connection and reload.'; }
+    }
+  }
+  if (document.fonts?.ready) document.fonts.ready.then(() => race && show(idx));
+  load(true);
+  setInterval(() => load(false), 60_000);
+})();
+</script>
+</body>
+</html>
