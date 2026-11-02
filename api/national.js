@@ -1,7 +1,11 @@
 // GET /api/national — the FLIPR forecast for every tracked House and Senate race plus live results from civicAPI.
 // Public: no code needed.
 // ?test=1 (or NATIONAL_SHOW_TEST=1) shows civicAPI's test data, clearly labeled, to check the page before Nov. 3.
+import { readFileSync } from 'node:fs';
 import { FORECAST, loadCivic, loadExtra, shape } from '../lib/civic.js';
+
+// Every House race not on the tracked list (FLIPR odds, projection, rating), sent only with ?all=1.
+const OTHER = JSON.parse(readFileSync(new URL('../lib/house-other.json', import.meta.url), 'utf8'));
 
 let cache = null; // { at, goodAt, map, missing, error }
 const FRESH_MS = 45_000;
@@ -9,11 +13,11 @@ const FRESH_MS = 45_000;
 async function civic() {
   if (cache && Date.now() - cache.at < FRESH_MS) return cache;
   try {
-    const { map, missing } = await loadCivic();
-    cache = { at: Date.now(), goodAt: Date.now(), map, missing, error: null };
+    const { map, others, missing } = await loadCivic();
+    cache = { at: Date.now(), goodAt: Date.now(), map, others, missing, error: null };
   } catch (err) {
     // Keep the last good results if civicAPI hiccups.
-    cache = { at: Date.now(), goodAt: cache?.goodAt || null, map: cache?.map || new Map(), missing: cache?.missing || [], error: String(err.message || err) };
+    cache = { at: Date.now(), goodAt: cache?.goodAt || null, map: cache?.map || new Map(), others: cache?.others || new Map(), missing: cache?.missing || [], error: String(err.message || err) };
   }
   return cache;
 }
@@ -28,6 +32,15 @@ async function extra() {
 }
 const votesOf = (r, name) => Number((r.candidates || []).find((c) => String(c.name).trim().toLowerCase() === name)?.votes) || 0;
 const seatsOf = (r, party) => (r.candidates || []).filter((c) => String(c.party || c.name).toLowerCase().startsWith(party)).reduce((a, c) => a + (Number(c.seats) || 0), 0);
+
+// Names come from civicAPI's candidate list (top Democrat and top Republican), since FLIPR's table has last names only.
+const pick = (cv, party) => (cv?.candidates || []).filter((c) => String(c.party || '').toLowerCase().startsWith(party)).sort((a, b) => (b.votes || 0) - (a.votes || 0))[0]?.name?.replace(/\s+/g, ' ').trim() || null;
+function houseOther(c, showTest) {
+  return OTHER.house.map((x) => {
+    const cv = c.others?.get('H:' + x.id);
+    return { ...x, d: pick(cv, 'democrat') || 'No Democrat', r: pick(cv, 'republican') || 'No Republican', civicId: cv?.id || null, res: shape(x, cv, { showTest }) };
+  });
+}
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=30');
@@ -61,6 +74,7 @@ export default async function handler(req, res) {
     asOfNote: FORECAST.asOfNote || null,
     house,
     senate,
+    ...(url.searchParams.get('all') === '1' ? { houseOther: houseOther(c, showTest) } : {}),
     governors,
     measures,
     legislatures,
