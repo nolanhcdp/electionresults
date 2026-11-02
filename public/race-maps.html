@@ -8,7 +8,7 @@
 <meta name="description" content="County maps for every Senate, House, governor, and Indiana race, with forecast projections and live results.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500;600;700;800;900&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Public+Sans:wght@500;600;700;800;900&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Race Maps: a dashboard of every race, and one race at a time on a laptop or projector.
    Midterm Watch look (charcoal), sized in container units so it scales to any screen or export size. */
@@ -19,7 +19,9 @@
   --num: 'Barlow Semi Condensed', 'Public Sans', system-ui, sans-serif;
   color-scheme: dark;
 }
-body.light { --bg: #f7f5f0; --panel: #ffffff; --card: #f0eee8; --line: #d9d4ca; --fg: #111418; --muted: #3b4350; --dim: #6b7380; --dem: #1260d8; --rep: #d42b1e; --hot: #b86a00; --ghost: #ebe7de; --ghost-line: #d6d0c4; --county-line: #f7f5f0; color-scheme: light }
+body.light { --bg: #F4F1EA; --panel: #ffffff; --card: #ece7dc; --line: #ddd6c8; --fg: #1D3557; --muted: #44506a; --dim: #6b7484; --dem: #1260d8; --rep: #c8321f; --hot: #b8711a; --ghost: #e7e2d7; --ghost-line: #d6cfc1; --county-line: #ffffff; color-scheme: light }
+body.light .dh h1, body.light .hd h1 { font-family: 'Newsreader', Georgia, serif; font-weight: 700; letter-spacing: -.01em }
+body.light .rc:hover { box-shadow: 0 4px 16px rgba(29, 53, 87, .08) }
 * { box-sizing: border-box }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--ui); overflow: hidden }
 [hidden] { display: none !important }
@@ -283,7 +285,7 @@ html:not(.dash) #dash { display: none }
       <span class="brand">Midterm Watch</span>
       <span class="badge" id="badge" hidden></span>
       <span class="src" id="src">Projections: FLIPR (Silver Bulletin) · Live results: civicAPI and the Indiana Secretary of State · 2024: county presidential results</span>
-      <span class="tools noexp"><button type="button" id="fs">Full screen</button></span>
+      <span class="tools noexp"><button type="button" id="theme2">Dark mode</button><button type="button" id="fs">Full screen</button></span>
     </footer>
   </div>
 </div>
@@ -291,7 +293,7 @@ html:not(.dash) #dash { display: none }
 <main id="dash">
   <header class="dh">
     <div><h1>Race Maps</h1><p>Senate and House control, the closest races, and county maps for every Senate, House, governor, and Indiana race, with projections and live results.</p></div>
-    <nav class="links"><a href="/">Home</a><a href="/howard">Howard County</a></nav>
+    <nav class="links"><a href="/">Home</a><a href="/howard">Howard County</a><a href="#" id="theme1" class="theme">Dark mode</a></nav>
   </header>
   <div class="dsearch"><input id="dq" type="search" placeholder="Search a state, district, or candidate: Iowa, PA-7, Collins, Senate 21" autocomplete="off" aria-label="Search races"></div>
   <section class="pres" id="pres" hidden></section>
@@ -312,7 +314,15 @@ html:not(.dash) #dash { display: none }
 (() => {
   const Q = new URLSearchParams(location.search);
   if (!Q.get('race')) document.documentElement.classList.add('dash');
-  if (Q.has('light')) document.body.classList.add('light');
+  // Light (the site's cream and navy) by default; dark on request. ?dark / ?light override and are remembered.
+  const themeSaved = (() => { try { return localStorage.getItem('rm-theme'); } catch { return null; } })();
+  const setTheme = (t) => {
+    document.body.classList.toggle('light', t !== 'dark');
+    try { localStorage.setItem('rm-theme', t); } catch { /* private window */ }
+    const label = t === 'dark' ? 'Light mode' : 'Dark mode';
+    ['theme1', 'theme2'].forEach((id) => { const b = document.getElementById(id); if (b) b.textContent = label; });
+  };
+  setTheme(Q.has('dark') ? 'dark' : Q.has('light') ? 'light' : themeSaved || 'light');
   const TEST = Q.get('test') === '1';      // civicAPI practice data (wild numbers; for wiring checks)
   const SAMPLE = Q.get('sample') === '1';  // realistic made-up numbers built from 2024 results, for design previews
   const $ = (id) => document.getElementById(id);
@@ -598,7 +608,7 @@ html:not(.dash) #dash { display: none }
       return `<g class="lbl" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})"><text class="a" y="-.2em">${esc(p.n)}</text>${m == null ? '' : `<text class="b" y="1.05em">${fm(m)}</text>`}</g>`;
     }).join('');
     const fa = Math.max(12, W * 0.0135).toFixed(1), fb = Math.max(11, W * 0.012).toFixed(1);
-    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="--fa:${fa}px;--fb:${fb}px" role="img" aria-label="County map of ${esc(titleOf(x))}"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="2.6" height="7" fill="#0b0d10" fill-opacity=".5"/></pattern></defs>${ghosts}${shapes}${outline && !x.district ? `<path class="st" d="${path(outline)}"/>` : ''}${labels}</svg>`;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="--fa:${fa}px;--fb:${fb}px" role="img" aria-label="County map of ${esc(titleOf(x))}"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="2.6" height="7" fill="${document.body.classList.contains('light') ? '#1D3557' : '#0b0d10'}" fill-opacity="${document.body.classList.contains('light') ? '.35' : '.5'}"/></pattern></defs>${ghosts}${shapes}${outline && !x.district ? `<path class="st" d="${path(outline)}"/>` : ''}${labels}</svg>`;
     if (sel) box.querySelector(`.c[data-k="${sel}"]`)?.classList.add('sel');
     const T = { base: x.leg ? ['How these counties voted in 2024', 'President, whole counties; the district covers part of some'] : ['How it voted in 2024', 'President, by county'], live: ['Live count by county', 'Striped: less than half of the county counted'], swing: ['Swing from 2024', 'Change in margin vs. 2024 president · counties with 10%+ counted'] }[mode];
     $('mt').innerHTML = `<h3>${T[0]}</h3><p>${T[1]}</p>`;
@@ -958,6 +968,8 @@ html:not(.dash) #dash { display: none }
   $('dash').addEventListener('change', (e) => { if (e.target.matches('.usmap select')) { F.state = e.target.value || null; renderDash(); } });
   $('dash').addEventListener('keydown', (e) => { const c = e.target.closest?.('.rc'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRace(c.dataset.key, listFor(c.dataset.key)); } });
   $('find').onclick = () => openDash();
+  const flipTheme = (e) => { e?.preventDefault(); setTheme(document.body.classList.contains('light') ? 'dark' : 'light'); thumbs.clear(); if (document.documentElement.classList.contains('dash')) renderDash(); else show(idx); };
+  $('theme1').addEventListener('click', flipTheme); $('theme2').addEventListener('click', flipTheme);
   $('star').onclick = () => { if (!race) return; toggleStar(race.key); show(idx); };
 
   // ---- controls ------------------------------------------------------------------------------------------------
