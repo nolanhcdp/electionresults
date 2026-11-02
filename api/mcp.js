@@ -10,6 +10,10 @@ import { breakdown, timeline } from '../lib/civicapi.js';
 
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const POLLS_CLOSE_IN = Date.parse('2026-11-03T23:00:00Z');
+// Last polls in each state, ET (hours after midnight Nov. 3). civicAPI's closing times tested wrong, so these come first.
+const CLOSE = { IN: 19, KY: 19, GA: 19, VA: 19, SC: 19, VT: 19, FL: 20, NH: 20, NC: 19.5, OH: 19.5, WV: 19.5, AL: 20, CT: 20, DE: 20, IL: 20, ME: 20, MD: 20, MA: 20, MS: 20, MO: 20, NJ: 20, OK: 20, PA: 20, RI: 20, TN: 20, AR: 20.5, AZ: 21, CO: 21, KS: 21, LA: 21, MI: 21, MN: 21, NE: 21, NM: 21, NY: 21, SD: 21, TX: 21, WI: 21, WY: 21, IA: 22, MT: 22, NV: 22, UT: 22, CA: 23, ID: 23, OR: 23, WA: 23, HI: 24, AK: 25 };
+const T0 = Date.parse('2026-11-03T05:00:00Z'); // midnight ET, Nov. 3
+const closeOf = (x) => { const st = String(x.id).split('-')[0]; return CLOSE[st] != null ? new Date(T0 + CLOSE[st] * 3.6e6).toISOString() : x.pollsClose || null; };
 
 // Run one of the site's own API handlers in-process and return its JSON.
 function call(handler, path) {
@@ -52,7 +56,7 @@ function row(x) {
     forecast_dem_win_pct: x.p,
     flipr_projected_margin: x.proj || null,
     pres_2024_margin: x.m24 || null,
-    polls_close: et(x.pollsClose),
+    polls_close: et(closeOf(x)),
   };
   if (!r) return { ...out, status: 'no votes yet' };
   const margin = r.margin;
@@ -168,8 +172,8 @@ const TOOLS = [
     run: async (a) => {
       const n = await national(a.include_test_data);
       const sw = swing(n, { chamber: 'house', min: 25 });
-      const upcoming = [...new Set(n.all.filter((x) => x.pollsClose && Date.parse(x.pollsClose) > Date.now()).map((x) => x.pollsClose))].sort().slice(0, 3)
-        .map((t) => ({ polls_close: et(t), races: n.all.filter((x) => x.pollsClose === t).map((x) => label(x, x.kind)) }));
+      const upcoming = [...new Set(n.all.map(closeOf).filter((t) => t && Date.parse(t) > Date.now()))].sort().slice(0, 3)
+        .map((t) => ({ polls_close: et(t), races: n.all.filter((x) => closeOf(x) === t).map((x) => label(x, x.kind)) }));
       return {
         as_of: new Date().toISOString(), data: n.source.stale ? 'STALE: civicAPI has not answered for 3+ minutes' : n.source.ok ? 'fresh' : 'last check failed, using last good data',
         results_checked_at: et(n.source.checkedAt), test_data: n.showTest || undefined, any_results_yet: n.anyResults,
