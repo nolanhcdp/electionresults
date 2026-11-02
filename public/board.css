@@ -1,3 +1,4 @@
+html, body { overflow-x: clip }
 /* HCDP election night board. Brand: Logo Navy, Cream, Harvest Amber; Newsreader (Tiempos stand-in) + Public Sans.
    Phone and control pages follow the viewer's light/dark setting. The TV is always navy. */
 :root {
