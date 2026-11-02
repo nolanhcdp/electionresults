@@ -167,9 +167,18 @@
   });
 
   let lastRev = null, lastBuilt = null, lastIndiana = null, indianaTimer = null;
+  // HQ settings (pins, headlines from Control): public phones check every 60 seconds. A screen opened once with
+  // ?fast (the projector, HQ laptops) checks every 10 seconds and remembers it; ?fast=0 turns it back off.
+  const FAST = (() => {
+    const q = new URLSearchParams(location.search);
+    try {
+      if (q.has('fast')) localStorage.setItem('hcdp-fast', q.get('fast') === '0' ? '0' : '1');
+      return localStorage.getItem('hcdp-fast') === '1';
+    } catch (e) { return q.has('fast') && q.get('fast') !== '0'; }
+  })();
   async function pollState() {
     try { const s = await B.getJSON('/api/state'); if (s.rev !== lastRev) { state = s; lastRev = s.rev; noteChanges(); render(); } } catch (e) {}
-    setTimeout(pollState, 10000);
+    setTimeout(pollState, FAST ? 10000 : 60000);
   }
   async function pollResults() {
     let wait = 30;
