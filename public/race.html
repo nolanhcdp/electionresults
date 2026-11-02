@@ -85,6 +85,7 @@ i.D { background: var(--dem) } i.R { background: var(--rep) }
 .map svg { display: block; width: 100%; height: 100% }
 .map .c { stroke: var(--county-line); stroke-width: .7; transition: fill .5s, fill-opacity .5s; cursor: pointer }
 .map .c:hover, .map .c.sel { stroke: var(--fg); stroke-width: 2 }
+.map .hatch { pointer-events: none }
 .map .gh { fill: var(--ghost); stroke: var(--ghost-line); stroke-width: .6 }
 .map .st { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-opacity: .55; pointer-events: none }
 .map .lbl { pointer-events: none; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,.65); stroke-width: 3.5px; stroke-linejoin: round }
@@ -199,9 +200,9 @@ body.idle .tools { opacity: 0; pointer-events: none }
   const clock = (h) => { const hh = Math.floor(h) % 24, mm = Math.round((h % 1) * 60); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`; };
   const STATE = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
 
-  // Margin colors: near-even is a dark neutral, stronger margins are brighter and more saturated (reads on a projector).
+  // Margin colors: close races are pale, bigger margins get deeper and darker (the usual election-map convention).
   const STOPS = {
-    dark: { D: [[0, '#3a3944'], [4, '#334a78'], [12, '#2c63cc'], [25, '#3d8bff'], [45, '#8cbaff']], R: [[0, '#3a3944'], [4, '#7a3a36'], [12, '#cc3b30'], [25, '#ff4f42'], [45, '#ffa197']] },
+    dark: { D: [[0, '#d9d6e0'], [4, '#b9cff7'], [12, '#7aa9f5'], [25, '#3a78e6'], [45, '#1b46a3']], R: [[0, '#d9d6e0'], [4, '#f7c4bd'], [12, '#f48a7e'], [25, '#df4636'], [45, '#9e1d12']] },
     light: { D: [[0, '#e7e3ea'], [4, '#bcd0f2'], [12, '#7aa6ec'], [25, '#2f74e0'], [45, '#0c3f99']], R: [[0, '#e7e3ea'], [4, '#f2c1bb'], [12, '#ea8a80'], [25, '#d8402f'], [45, '#8f1c12']] },
   };
   const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -425,9 +426,10 @@ body.idle .tools { opacity: 0; pointer-events: none }
       if (mode === 'live') return c && c.tot ? color((c.dv - c.rv) / c.tot * 100) : 'var(--ghost)';
       if (mode === 'swing') return c && c.tot && c.pct >= 10 && p.t24 ? color(((c.dv - c.rv) / c.tot - (p.d24 - p.r24) / p.t24) * 100 * 2.2) : 'var(--ghost)';
     };
-    const op = (f) => { if (mode !== 'live') return 1; const c = x._cs.get(norm(f.properties.n)); return c && c.tot ? 0.35 + 0.65 * Math.min(1, c.pct / 100) : 1; };
+    const partial = (f) => { if (mode !== 'live') return false; const c = x._cs.get(norm(f.properties.n)); return !!(c && c.tot && c.pct < 50); };
     const ghosts = x.kind === 'H' ? feats.filter((f) => !inRace(f)).map((f) => `<path class="gh" d="${path(f)}"/>`).join('') : '';
-    const shapes = mine.map((f) => `<path class="c" data-k="${norm(f.properties.n)}" d="${path(f)}" fill="${fill(f)}" fill-opacity="${op(f).toFixed(2)}"/>`).join('');
+    const shapes = mine.map((f) => `<path class="c" data-k="${norm(f.properties.n)}" d="${path(f)}" fill="${fill(f)}"/>`).join('')
+      + mine.filter(partial).map((f) => `<path class="hatch" d="${path(f)}" fill="url(#hatch)"/>`).join('');
     // Label the biggest counties (by 2024 vote) where there's room.
     const placed = [];
     const labels = [...mine].filter((f) => f.properties.t24).sort((a, b) => b.properties.t24 - a.properties.t24).slice(0, 12).map((f) => {
@@ -439,9 +441,9 @@ body.idle .tools { opacity: 0; pointer-events: none }
       return `<g class="lbl" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})"><text class="a" y="-.2em">${esc(p.n)}</text>${m == null ? '' : `<text class="b" y="1.05em">${fm(m)}</text>`}</g>`;
     }).join('');
     const fa = Math.max(12, W * 0.0135).toFixed(1), fb = Math.max(11, W * 0.012).toFixed(1);
-    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="--fa:${fa}px;--fb:${fb}px" role="img" aria-label="County map of ${esc(titleOf(x))}">${ghosts}${shapes}${outline && x.kind !== 'H' ? `<path class="st" d="${path(outline)}"/>` : ''}${labels}</svg>`;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="--fa:${fa}px;--fb:${fb}px" role="img" aria-label="County map of ${esc(titleOf(x))}"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="2.6" height="7" fill="#0b0d10" fill-opacity=".5"/></pattern></defs>${ghosts}${shapes}${outline && x.kind !== 'H' ? `<path class="st" d="${path(outline)}"/>` : ''}${labels}</svg>`;
     if (sel) box.querySelector(`.c[data-k="${sel}"]`)?.classList.add('sel');
-    const T = { base: ['How it voted in 2024', 'President, by county'], live: ['Live count by county', 'Lighter shading: less of the county counted'], swing: ['Swing from 2024', 'Change in margin vs. 2024 president · counties with 10%+ counted'] }[mode];
+    const T = { base: ['How it voted in 2024', 'President, by county'], live: ['Live count by county', 'Striped: less than half of the county counted'], swing: ['Swing from 2024', 'Change in margin vs. 2024 president · counties with 10%+ counted'] }[mode];
     $('mt').innerHTML = `<h3>${T[0]}</h3><p>${T[1]}</p>`;
     document.querySelectorAll('#modes button').forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
     legend();
