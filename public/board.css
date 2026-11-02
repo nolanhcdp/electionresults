@@ -36,15 +36,19 @@ button, input, select, textarea { font: inherit; }
 .tv {
   /* Built for reading across a room or off a projector: high contrast, sans-serif names, condensed numbers,
      Democratic blue and Republican red bars (not cream), and nothing thinner than semibold. */
-  --t-bg: #0d1a2c; --t-card: #1a3154; --t-fg: #FFFFFF; --t-muted: #c5cfdd; --t-track: #2d4570;
-  --t-dem: #6ea8ff; --t-rep: #ff7a6b; --t-num: 'Barlow Semi Condensed', 'Public Sans', system-ui, sans-serif;
+  --t-bg: #08121f; --t-card: #1f3a60; --t-line: #335683; --t-fg: #FFFFFF; --t-muted: #d6deea; --t-track: #355483;
+  --t-dem: #6ea8ff; --t-rep: #ff6b5e; --t-num: 'Barlow Semi Condensed', 'Public Sans', system-ui, sans-serif;
   container-type: size;
   background: var(--t-bg); color: var(--t-fg);
   display: flex; flex-direction: column;
   padding: 1.8cqw 2.4cqw 1.5cqw; gap: 1.2cqw;
   font-family: var(--display); overflow: hidden; position: relative;
 }
-body.tvpage { background: #0d1a2c; }
+body.tvpage { background: #08121f; }
+/* ?light: for a bright room, where a projector can't make the navy dark anyway. HCDP cream and navy. */
+.tv.light { --t-bg: #F4F1EA; --t-card: #ffffff; --t-line: #d8d0bf; --t-fg: #1D3557; --t-muted: #3e4c61; --t-track: #e2dccf; --t-dem: #1f5fc4; --t-rep: #c0392b; }
+body.tvpage.light { background: #F4F1EA; }
+body.tvpage.light .tv-tools button, body.tvpage.light .tv-tools a { background: rgba(29,53,87,.08); color: #1D3557; border-color: rgba(29,53,87,.3); }
 body.tvpage .tv { width: 100vw; height: 100vh; height: 100dvh; }
 body.tvpage.idle { cursor: none; }
 
@@ -53,7 +57,7 @@ body.tvpage.idle { cursor: none; }
 .turn { display: flex; gap: 2.2cqw; align-items: flex-end; font-family: var(--ui); color: var(--t-muted); }
 .turn .stat { display: flex; flex-direction: column; gap: 0.2cqw; }
 .turn .big { font-family: var(--t-num); font-size: 2.9cqw; font-weight: 700; color: var(--t-fg); line-height: 1; font-variant-numeric: tabular-nums; }
-.turn .lbl { font-size: 1.15cqw; line-height: 1.25; font-weight: 500; }
+.turn .lbl { font-size: 1.15cqw; line-height: 1.25; font-weight: 600; }
 .turn .meter { width: 14cqw; height: 0.75cqw; background: var(--t-track); margin-top: 0.3cqw; }
 .turn .meter i { display: block; height: 100%; background: var(--amber); transition: width .8s ease; }
 .turn .rt { font-size: 1.15cqw; text-align: right; line-height: 1.4; }
@@ -76,9 +80,9 @@ body.tvpage.idle { cursor: none; }
 @keyframes fadein { from { opacity: 0; transform: translateY(0.6cqw); } to { opacity: 1; transform: none; } }
 
 /* Card text scales with --k, set per card by the fit routine so nothing clips. */
-.tcard { background: var(--t-card); padding: calc(1.2cqw * var(--k, 1)) calc(1.4cqw * var(--k, 1)); display: flex; flex-direction: column; gap: calc(0.45cqw * var(--k, 1)); min-height: 0; min-width: 0; overflow: hidden; border-radius: 6px; position: relative; }
+.tcard { background: var(--t-card); padding: calc(1.2cqw * var(--k, 1)) calc(1.4cqw * var(--k, 1)); display: flex; flex-direction: column; gap: calc(0.45cqw * var(--k, 1)); min-height: 0; min-width: 0; overflow: hidden; border-radius: 6px; position: relative; border: 0.15cqw solid var(--t-line); }
 .tcard h3 { margin: 0; font-size: calc(1.95cqw * var(--k, 1)); font-weight: 700; line-height: 1.08; }
-.tcard .sub { font-family: var(--ui); font-size: calc(1.1cqw * var(--k, 1)); font-weight: 500; color: var(--t-muted); }
+.tcard .sub { font-family: var(--ui); font-size: calc(1.1cqw * var(--k, 1)); font-weight: 600; color: var(--t-muted); }
 .trow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: calc(1cqw * var(--k, 1)); align-items: baseline; }
 .trow .n { min-width: 0; font-family: var(--ui); font-size: calc(1.75cqw * var(--k, 1)); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; }
 .trow .n small { font-family: var(--ui); font-size: calc(1.1cqw * var(--k, 1)); color: var(--t-muted); margin-left: calc(0.5cqw * var(--k, 1)); font-weight: 800; }
@@ -87,7 +91,7 @@ body.tvpage.idle { cursor: none; }
 .trow:not(.lead) .p { opacity: .9; }
 .trow .p { font-family: var(--t-num); font-size: calc(2.6cqw * var(--k, 1)); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; min-width: 4.6ch; text-align: right; }
 .trow .v { font-family: var(--t-num); font-size: calc(1.4cqw * var(--k, 1)); font-weight: 600; color: var(--t-muted); font-variant-numeric: tabular-nums; min-width: 5.5ch; text-align: right; }
-.tbar { grid-column: 1 / -1; height: calc(0.8cqw * var(--k, 1)); border-radius: calc(0.4cqw * var(--k, 1)); overflow: hidden; background: var(--t-track); margin-top: calc(0.25cqw * var(--k, 1)); }
+.tbar { grid-column: 1 / -1; height: calc(0.9cqw * var(--k, 1)); border-radius: calc(0.4cqw * var(--k, 1)); overflow: hidden; background: var(--t-track); margin-top: calc(0.25cqw * var(--k, 1)); }
 .tbar i { display: block; height: 100%; transition: width .8s ease; }
 .tbar i.D { background: var(--t-dem); }
 .tbar i.R { background: var(--t-rep); }
@@ -98,9 +102,9 @@ body.tvpage.idle { cursor: none; }
 .tcard.tall .tbar { height: calc(0.6cqw * var(--k, 1)); margin-top: calc(0.2cqw * var(--k, 1)); }
 .seatline { display: flex; align-items: center; gap: calc(0.8cqw * var(--k, 1)); font-family: var(--ui); font-size: calc(1.05cqw * var(--k, 1)); font-weight: 700; color: var(--amber); }
 .seatline::after { content: ""; flex: 1; border-top: calc(0.15cqw * var(--k, 1)) dashed var(--amber); }
-.tminor { font-family: var(--ui); font-size: calc(1.05cqw * var(--k, 1)); font-weight: 500; color: var(--t-muted); line-height: 1.3; }
+.tminor { font-family: var(--ui); font-size: calc(1.1cqw * var(--k, 1)); font-weight: 600; color: var(--t-muted); line-height: 1.3; }
 .tminor small { font-size: .85em; font-weight: 700; } .tminor b { font-family: var(--t-num); font-weight: 600; color: var(--t-fg); } .tminor .sep { opacity: .6; }
-.tcard .call { font-family: var(--ui); font-size: calc(1.2cqw * var(--k, 1)); font-weight: 500; color: var(--t-muted); margin-top: auto; padding-top: calc(0.2cqw * var(--k, 1)); }
+.tcard .call { font-family: var(--ui); font-size: calc(1.2cqw * var(--k, 1)); font-weight: 600; color: var(--t-muted); margin-top: auto; padding-top: calc(0.2cqw * var(--k, 1)); }
 .tcard .call b { color: var(--t-fg); }
 .tcard.fresh::after { content: ""; position: absolute; inset: 0; border: 0.25cqw solid var(--amber); animation: flash 4s ease forwards; pointer-events: none; }
 @keyframes flash { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }

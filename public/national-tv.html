@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Midterm Watch · Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500;600;700;800&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* National watch-party display: one screen, no controls. Midterm Watch look (charcoal, not HCDP navy), built to read
+   across a room or off a projector. Everything is sized in container units so it fills any TV or projection. */
+:root {
+  /* Projector-tuned: projectors can't show true black and wash out thin strokes and soft grays, so grays are
+     bright, party colors saturated, cards clearly lighter than the background, and nothing lighter than semibold. */
+  --bg: #0b0d10; --card: #20262f; --line: #39424e; --fg: #ffffff; --muted: #d5dce5; --track: #3a4350;
+  --dem: #3d8bff; --rep: #ff4f42; --hot: #ffae2b; --gold: #ffd25e;
+  --ui: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --num: 'Barlow Semi Condensed', 'Public Sans', system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--ui); overflow: hidden }
+[hidden] { display: none !important }
+/* ?light: for a bright room, where a projector's "black" turns gray anyway, dark text on white reads better. */
+body.light { --bg: #ffffff; --card: #eef1f5; --line: #c9d0d9; --fg: #0b0d10; --muted: #39424e; --track: #cfd6df; --dem: #0b5fd6; --rep: #d1271b; --hot: #b86a00; --gold: #b86a00; color-scheme: light }
+body.light .tools button, body.light .tools a { background: rgba(0,0,0,.06); color: #111; border-color: rgba(0,0,0,.25) }
+body.idle { cursor: none }
+.scr { container-type: size; width: 100vw; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 1cqw; padding: 1.4cqw 1.8cqw 1.1cqw }
+
+/* top strip */
+.top { display: grid; grid-template-columns: auto 1fr 1fr 0.7fr; gap: 2.4cqw; align-items: end }
+.brand h1 { margin: 0; font-size: 2.4cqw; font-weight: 800; line-height: 1; letter-spacing: -.01em }
+.brand p { margin: .35cqw 0 0; font-size: 1.15cqw; color: var(--muted); font-weight: 600 }
+.brand .test { color: var(--hot); font-weight: 700 }
+.m h2 { margin: 0 0 .3cqw; font-size: 1.2cqw; font-weight: 700; color: var(--muted); display: flex; justify-content: space-between }
+.m .seats { display: flex; align-items: baseline; gap: 1cqw; font-family: var(--num); font-weight: 700; font-size: 2.7cqw; line-height: 1 }
+.m .seats small { font-family: var(--ui); font-size: 1.15cqw; font-weight: 700; color: var(--muted) }
+.D { color: var(--dem) } .R { color: var(--rep) }
+.track { position: relative; height: .9cqw; border-radius: .35cqw; background: var(--track); overflow: hidden; display: flex; margin-top: .45cqw }
+.track i { background: var(--dem) } .track u { background: var(--rep); margin-left: auto }
+.track .mk { position: absolute; top: -.2cqw; bottom: -.2cqw; width: .18cqw; background: var(--fg) }
+.sw .big { font-family: var(--num); font-weight: 700; font-size: 2.7cqw; line-height: 1 }
+.sw p { margin: .3cqw 0 0; font-size: 1.1cqw; color: var(--muted); font-weight: 600 }
+
+/* race grid */
+.grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 4), 1fr); grid-template-rows: repeat(var(--rows, 3), 1fr); gap: 1cqw }
+.card { --k: 1; background: var(--card); border-radius: .5cqw; padding: calc(.9cqw * var(--k)) calc(1.1cqw * var(--k)); display: flex; flex-direction: column; gap: calc(.45cqw * var(--k)); min-width: 0; min-height: 0; overflow: hidden; position: relative; border: .2cqw solid var(--line) }
+.card.close { border-color: var(--hot); border-width: .3cqw }
+.card.wD { box-shadow: inset .7cqw 0 0 var(--dem) } .card.wR { box-shadow: inset .7cqw 0 0 var(--rep) }
+.card.new::after { content: ""; position: absolute; inset: 0; border: .25cqw solid var(--gold); border-radius: .5cqw; animation: flash 6s ease forwards; pointer-events: none }
+@keyframes flash { 0%, 70% { opacity: 1 } 100% { opacity: 0 } }
+.card > * { flex-shrink: 0 } /* lines never squeeze; the fit routine shrinks the text instead */
+.ch { display: flex; align-items: baseline; gap: calc(.7cqw * var(--k)); min-width: 0 }
+.ch h3 { flex: 1 1 auto; margin: 0; font-size: calc(1.75cqw * var(--k)); font-weight: 800; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0 }
+.ch .in { margin-left: auto; font-family: var(--num); font-size: calc(1.35cqw * var(--k)); font-weight: 700; color: var(--muted); white-space: nowrap }
+.tag { font-size: calc(1.15cqw * var(--k)); font-weight: 800; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.tag .hot { color: var(--hot) } .tag .D { color: var(--dem) } .tag .R { color: var(--rep) }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: calc(.8cqw * var(--k)); align-items: baseline }
+.row .n { font-size: calc(1.55cqw * var(--k)); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0 }
+.row.lead .n { font-weight: 800 }
+.row .n small { font-size: .7em; font-weight: 800; margin-left: .35em }
+.row .p { font-family: var(--num); font-size: calc(2.3cqw * var(--k)); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums }
+.row .v { font-family: var(--num); font-size: calc(1.3cqw * var(--k)); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.5ch; text-align: right }
+.bar { grid-column: 1 / -1; height: calc(.9cqw * var(--k)); border-radius: calc(.45cqw * var(--k)); background: var(--track); overflow: hidden; margin-top: calc(.2cqw * var(--k)) }
+.bar i { display: block; height: 100% } .bar i.D { background: var(--dem) } .bar i.R { background: var(--rep) } .bar i.O { background: var(--muted) }
+.odds .p { color: var(--muted) }
+.call { margin-top: auto; font-size: calc(1.2cqw * var(--k)); font-weight: 600; color: var(--muted); line-height: 1.25 }
+.call b { color: var(--fg); font-weight: 700 }
+.empty { grid-column: 1 / -1; grid-row: 1 / -1; display: grid; place-items: center; font-size: 1.8cqw; color: var(--muted) }
+
+/* bottom line */
+.foot { display: flex; justify-content: space-between; gap: 2cqw; font-size: 1.25cqw; font-weight: 700; color: var(--muted) }
+.foot b { color: var(--fg) }
+.banner { background: var(--hot); color: #111; font-weight: 800; font-size: 1.2cqw; padding: .5cqw 1cqw; border-radius: .4cqw }
+.tools { position: fixed; right: 14px; bottom: 14px; display: flex; gap: 8px; transition: opacity .4s }
+body.idle .tools { opacity: 0; pointer-events: none }
+.tools button, .tools a { font: 600 14px var(--ui); background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.3); padding: 8px 14px; border-radius: 6px; cursor: pointer; text-decoration: none }
+@media (prefers-reduced-motion: reduce) { .card.new::after { animation: none; opacity: 0 } }
+</style>
+</head>
+<body>
+<div class="scr">
+  <header class="top" id="top"><div class="brand"><h1>Midterm Watch</h1><p>Loading…</p></div></header>
+  <div class="banner" id="banner" hidden></div>
+  <main class="grid" id="grid"><div class="empty">Loading races…</div></main>
+  <footer class="foot" id="foot"></footer>
+</div>
+<div class="tools"><button type="button" id="fs">Full screen</button><a href="/national">Full results</a></div>
+
+<script>
+(() => {
+  const Q = new URLSearchParams(location.search);
+  const SLOTS = [6, 9, 12].includes(+Q.get('n')) ? +Q.get('n') : 12;
+  if (Q.has('light')) document.body.classList.add('light');
+  document.documentElement.style.setProperty('--cols', SLOTS === 6 ? 3 : SLOTS === 9 ? 3 : 4);
+  document.documentElement.style.setProperty('--rows', SLOTS === 6 ? 2 : 3);
+  const TEST = Q.get('test') === '1';
+  const T0 = Date.parse('2026-11-03T05:00:00Z'); // midnight ET on Election Day; times are hours after it
+  const hrs = (t) => (Date.parse(t) - T0) / 3.6e6;
+  // Last polls in each state, ET, when civicAPI doesn't give a time.
+  const CLOSE = { IN: 19, KY: 19, GA: 19, VA: 19, SC: 19, FL: 20, NH: 20, VT: 19, NC: 19.5, OH: 19.5, WV: 19.5, AL: 20, CT: 20, DE: 20, IL: 20, ME: 20, MD: 20, MA: 20, MS: 20, MO: 20, NJ: 20, OK: 20, PA: 20, RI: 20, TN: 20, AR: 20.5, AZ: 21, CO: 21, KS: 21, LA: 21, MI: 21, MN: 21, NE: 21, NM: 21, NY: 21, SD: 21, TX: 21, WI: 21, WY: 21, IA: 22, MT: 22, NV: 22, UT: 22, CA: 23, ID: 23, OR: 23, WA: 23, HI: 24, AK: 25 };
+  const fmt = new Intl.NumberFormat('en-US');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const clock = (h) => { const hh = Math.floor(h) % 24, mm = Math.round((h % 1) * 60); return `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`; };
+  const $ = (id) => document.getElementById(id);
+
+  let DATA = null, NOW = 0, races = [];
+  const prevLead = new Map(), changedAt = new Map(), seenWon = new Map();
+  let first = true;
+
+  const won = (x) => x.res?.winner || null;
+  const flipped = (x) => won(x) && won(x) !== 'O' && won(x) !== x.held;
+  const live = (x) => x.res && x.res.total > 0;
+  const isClose = (x) => live(x) && !won(x) && Math.abs(x.res.margin) < 3;
+  const recent = (x) => (changedAt.has(x.key) && NOW - changedAt.get(x.key) < 1 / 6) || (won(x) && NOW - x.calledH >= 0 && NOW - x.calledH < 1 / 6);
+  const shown = (x) => x.kind === 'H' || !/^Solid/.test(x.rating) || flipped(x);
+
+  function ingest(d) {
+    DATA = d; NOW = (Date.now() - T0) / 3.6e6;
+    const prep = (x, kind) => {
+      x.kind = kind; x.key = kind + ':' + x.id; x.st = kind === 'H' ? x.id.split('-')[0] : x.id;
+      x.close = x.pollsClose ? hrs(x.pollsClose) : (CLOSE[x.st] ?? 21);
+      if (x.res && !(x.res.total > 0)) x.res = null;
+      if (x.res) {
+        const lead = x.res.margin >= 0 ? 'D' : 'R';
+        if (prevLead.has(x.key) && prevLead.get(x.key) !== lead && !x.res.winner) changedAt.set(x.key, NOW);
+        prevLead.set(x.key, lead);
+        if (x.res.winner && !seenWon.has(x.key)) seenWon.set(x.key, first ? -99 : NOW);
+        x.calledH = x.res.calledAt ? hrs(x.res.calledAt) : seenWon.get(x.key);
+      }
+      return x;
+    };
+    races = [...d.senate.map((x) => prep(x, 'S')), ...d.house.map((x) => prep(x, 'H')), ...(d.governors || []).map((x) => prep(x, 'G'))].filter(shown);
+    first = false;
+  }
+
+  // Which 12 races are on screen: news first, then the closest counts, then the rest of the live races,
+  // then whatever closes next. Called races only stay while they're news.
+  function pick() {
+    const used = new Set(), out = [];
+    const take = (list) => { for (const x of list) { if (out.length >= SLOTS) return; if (!used.has(x)) { used.add(x); out.push(x); } } };
+    const byMargin = (a, b) => Math.abs(a.res.margin) - Math.abs(b.res.margin);
+    take(races.filter(recent).sort((a, b) => (won(b) ? 1 : 0) - (won(a) ? 1 : 0)).slice(0, 4));
+    take(races.filter((x) => live(x) && !won(x)).sort(byMargin));
+    take(races.filter((x) => !x.res && x.close <= NOW + 0.01).sort((a, b) => Math.abs(50 - a.p) - Math.abs(50 - b.p))); // polls closed, no votes yet
+    take(races.filter((x) => !x.res && x.close > NOW).sort((a, b) => a.close - b.close || Math.abs(50 - a.p) - Math.abs(50 - b.p)));
+    take(races.filter(won).sort((a, b) => (flipped(b) ? 1 : 0) - (flipped(a) ? 1 : 0) || b.calledH - a.calledH));
+    return out;
+  }
+
+  const KIND = { S: 'Senate', G: 'Governor', H: 'House' };
+  const title = (x) => (x.kind === 'H' ? x.id : `${x.state} ${x.kind === 'S' ? 'Senate' : 'Governor'}`);
+  function card(x) {
+    const r = x.res, s = x.rating === 'Toss-up' ? 'hot' : x.rating.endsWith('D') ? 'D' : 'R';
+    let cls = '', tag = `${x.kind === 'H' ? 'House · ' : ''}<span class="${s}">${esc(x.rating)}</span>`, body, call;
+    if (r) {
+      const sides = [{ c: r.d, p: 'D', fb: x.d }, { c: r.r, p: 'R', fb: x.r }].sort((a, b) => (b.c?.votes || 0) - (a.c?.votes || 0));
+      body = sides.map(({ c, p, fb }, i) => `<div class="row ${i === 0 ? 'lead' : ''}"><span class="n">${esc(c?.name || fb || '—')}<small class="${p}">${p}</small>${won(x) === p ? ' ✓' : ''}</span><span class="p">${(c?.pct || 0).toFixed(1)}%</span><span class="v">${fmt.format(c?.votes || 0)}</span><span class="bar"><i class="${p}" style="width:${(c?.pct || 0).toFixed(1)}%"></i></span></div>`).join('');
+      const gap = Math.abs((r.d?.votes || 0) - (r.r?.votes || 0)), mp = Math.abs(r.margin), leader = sides[0];
+      if (won(x)) {
+        cls = 'w' + won(x);
+        tag += ` · <span class="${won(x)}">${won(x)} win${flipped(x) ? ', flip' : ''}</span>`;
+        call = `<b>${esc(r.winnerName || leader.c?.name || '')}</b> wins${flipped(x) ? `, a <b>${won(x) === 'D' ? 'Democratic' : 'Republican'} flip</b>` : ''}`;
+      } else {
+        if (isClose(x)) { cls = 'close'; tag += ' · <span class="hot">Close</span>'; }
+        call = gap ? `<b>${esc(leader.c?.name || '')}</b> leads by <b>${mp < 0.1 ? '<0.1' : mp.toFixed(1)}%</b> (${fmt.format(gap)} vote${gap === 1 ? '' : 's'})` : '<b>Tied</b>';
+      }
+    } else {
+      body = [{ n: x.d, p: 'D', v: x.p }, { n: x.r, p: 'R', v: 100 - x.p }].map((o) => `<div class="row odds"><span class="n">${esc(o.n || 'No Democrat')}<small class="${o.p}">${o.p}</small></span><span class="p">${o.v.toFixed(0)}%</span><span class="v">odds</span><span class="bar"><i class="${o.p}" style="width:${o.v.toFixed(1)}%;opacity:.55"></i></span></div>`).join('');
+      call = x.close <= NOW ? 'Polls closed · waiting for votes' : `Polls close <b>${clock(x.close)} ET</b>`;
+    }
+    if (recent(x)) cls += ' new';
+    return `<article class="card ${cls}"><div class="ch"><h3>${esc(title(x))}</h3>${r ? `<span class="in">${Math.round(r.pct)}% in</span>` : ''}</div>
+      <div class="tag">${tag}</div>${body}<div class="call">${call}</div></article>`;
+  }
+
+  function top() {
+    const S = DATA.senate, H = DATA.house, sw = (p) => S.filter((x) => x.res?.winner === p).length;
+    const sd = DATA.senateHoldover.D + sw('D'), sr = DATA.senateHoldover.R + sw('R'), open = 100 - sd - sr;
+    const gain = H.filter((x) => x.held === 'R' && x.res?.winner === 'D').length, lost = H.filter((x) => x.held === 'D' && x.res?.winner === 'R').length;
+    const hd = DATA.houseNow.D + gain - lost;
+    const pool = H.filter((x) => x.res && x.res.total > 0 && x.res.pct >= 25);
+    const mg = (s) => (/^D\+/.test(s) ? +s.slice(2) : /^R\+/.test(s) ? -s.slice(2) : 0);
+    const swing = pool.length ? pool.reduce((a, x) => a + (x.res.margin - mg(x.m24)), 0) / pool.length : null;
+    const checked = new Date(DATA.source.checkedAt).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+    $('top').innerHTML = `
+      <div class="brand"><h1>Midterm Watch</h1><p>${DATA.showTest ? '<span class="test">Test data, not real results</span>' : `Results as of ${checked} ET`}</p></div>
+      <div class="m"><h2>Senate <span>51 for control</span></h2><div class="seats"><span class="D">D ${sd}</span><span class="R">R ${sr}</span><small>${open} not called</small></div>
+        <div class="track"><i style="width:${sd}%"></i><u style="width:${sr}%"></u><span class="mk" style="left:50.5%"></span></div></div>
+      <div class="m"><h2>House <span>218 for control</span></h2><div class="seats"><span class="D">D ${hd}</span><small>Dems flipped ${gain}, lost ${lost}</small></div>
+        <div class="track"><i style="width:${hd / 4.35}%"></i><u style="width:${(435 - hd) / 4.35}%"></u><span class="mk" style="left:${218 / 4.35}%"></span></div></div>
+      <div class="sw"><h2 style="margin:0 0 .3cqw;font-size:1.05cqw;color:var(--muted)">National swing</h2>${swing == null ? '<div class="big" style="color:var(--muted)">—</div><p>vs. 2024, once votes are in</p>' : `<div class="big ${swing >= 0 ? 'D' : 'R'}">${swing >= 0 ? 'D' : 'R'} +${Math.abs(swing).toFixed(1)}</div><p>vs. 2024 presidential, ${pool.length} House races</p>`}</div>`;
+  }
+
+  function foot() {
+    const upcoming = races.filter((x) => !x.res && x.close > NOW);
+    let next = '';
+    if (upcoming.length) {
+      const t = Math.min(...upcoming.map((x) => x.close));
+      const states = [...new Set(upcoming.filter((x) => x.close === t).map((x) => x.st))].sort();
+      next = `Next polls close: <b>${clock(t)} ET</b> in ${states.join(', ')}`;
+    } else if (races.some((x) => x.res)) next = 'All polls closed';
+    const called = races.filter(won).length;
+    $('foot').innerHTML = `<span>${next}</span><span>${called ? `<b>${called}</b> of ${races.length} watched races called · ` : ''}Forecast: FLIPR (Silver Bulletin) · Results: civicAPI</span>`;
+  }
+
+  // Each card gets the biggest text that fits it, so nothing is cut off.
+  function fit() {
+    document.querySelectorAll('.card').forEach((c) => {
+      let k = 1.9; c.style.setProperty('--k', k);
+      const textW = (n) => { const r = document.createRange(); r.selectNodeContents(n); return r.getBoundingClientRect().width; };
+      const bad = () => c.scrollHeight > c.clientHeight + 1 || [...c.querySelectorAll('.row .n, h3')].some((n) => textW(n) > n.clientWidth - 2);
+      while (bad() && k > 0.55) { k -= 0.04; c.style.setProperty('--k', k.toFixed(2)); }
+    });
+  }
+
+  function render() {
+    if (!DATA) return;
+    NOW = (Date.now() - T0) / 3.6e6;
+    top(); foot();
+    const ban = [];
+    if (DATA.showTest) ban.push('Test data from civicAPI, not real results');
+    if (DATA.source.stale) ban.push("civicAPI hasn't answered for a few minutes. Showing the last results we had.");
+    $('banner').hidden = !ban.length; $('banner').textContent = ban.join(' · ');
+    const list = pick();
+    $('grid').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No races to show yet.</div>';
+    fit();
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('/api/national' + (TEST ? '?test=1' : ''), { cache: 'no-store' });
+      if (r.ok) { ingest(await r.json()); render(); }
+    } catch (e) { /* keep showing what we have */ }
+    setTimeout(poll, 60_000);
+  }
+  setInterval(render, 30_000); // flags expire and the clock moves even between data checks
+  if (window.ResizeObserver) new ResizeObserver(() => DATA && fit()).observe($('grid'));
+  if (document.fonts?.ready) document.fonts.ready.then(() => DATA && fit());
+  poll();
+
+  // TV niceties: full screen, hide the cursor and buttons when idle, keep the screen awake.
+  $('fs').onclick = () => { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); };
+  let idle; const wake = () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 3000); };
+  ['mousemove', 'keydown', 'touchstart'].forEach((ev) => addEventListener(ev, wake, { passive: true })); wake();
+  const lock = async () => { try { await navigator.wakeLock?.request('screen'); } catch (e) {} };
+  lock(); document.addEventListener('visibilitychange', () => { if (!document.hidden) { lock(); render(); } });
+})();
+</script>
+</body>
+</html>
