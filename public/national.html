@@ -132,6 +132,8 @@ aside { display: grid; gap: 16px; position: sticky; top: calc(env(safe-area-inse
 .empty { color: var(--muted); padding: 8px 0 }
 .pop { position: fixed; z-index: 20; width: 320px; max-width: calc(100vw - 24px); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(10, 16, 28, .18); padding: 10px 12px 12px; display: grid; gap: 6px; font-size: 13px }
 .pop .ph { display: flex; align-items: baseline; gap: 8px }
+.spot { display: block; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--line); font-weight: 700; color: inherit; text-decoration: none }
+.spot:hover { text-decoration: underline }
 .pop .ph b { font-family: var(--num); font-size: 18px }
 .pop .ph .x { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer }
 .tile.sel { outline: 2px solid var(--fg); outline-offset: 1px }
@@ -372,7 +374,8 @@ function detail(x) {
         : `<div class="cand"><span class="n">${esc(x.d || 'No Democrat')}</span><span class="p D">${x.p.toFixed(1)}%</span><span class="v">win chance</span></div>
            <div class="cand"><span class="n">${esc(x.r)}</span><span class="p R">${(100 - x.p).toFixed(1)}%</span><span class="v">win chance</span></div>`}
     <div class="facts">${r ? `<span>FLIPR <strong>D ${x.p.toFixed(1)}%</strong></span><span><strong>${r.pct}%</strong> reporting</span><span>About <strong>${fmt.format(Math.round(voteLeft(x) / 1000) * 1000)}</strong> votes still out</span>` : ''}
-      <span>Held by <strong>${x.held === 'D' ? (x.kind === 'G' ? 'a Democrat' : 'Dems') : (x.kind === 'G' ? 'a Republican' : 'GOP')}</strong></span>${x.kind === 'H' ? `<span>Projected <strong>${esc(x.proj)}</strong></span><span>2024 pres. <strong>${esc(x.m24)}</strong></span>` : ''}<span>Polls close <strong>${clock(x.close)}</strong></span>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>${r && x.civicId ? extras(x) : ''}`;
+      <span>Held by <strong>${x.held === 'D' ? (x.kind === 'G' ? 'a Democrat' : 'Dems') : (x.kind === 'G' ? 'a Republican' : 'GOP')}</strong></span>${x.kind === 'H' ? `<span>Projected <strong>${esc(x.proj)}</strong></span><span>2024 pres. <strong>${esc(x.m24)}</strong></span>` : ''}<span>Polls close <strong>${clock(x.close)}</strong></span>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>${r && x.civicId ? extras(x) : ''}
+    <a class="spot" href="/race?race=${encodeURIComponent(x.kind === 'H' ? x.id : x.id + (x.kind === 'S' ? '-senate' : '-governor'))}${TEST ? '&test=1' : ''}">Race spotlight: county map and where the vote is left →</a>`;
 }
 
 // County map and the count over the night, from civicAPI, inside an opened race.

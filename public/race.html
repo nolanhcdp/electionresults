@@ -217,12 +217,13 @@ body.idle .tools { opacity: 0; pointer-events: none }
   const mapFor = async (st) => { if (!maps.has(st)) maps.set(st, getJSON(`/maps/${st}.json`)); return maps.get(st); };
 
   // The races: Toss-up and Lean Senate, House, and governor races from the forecast, closest first.
-  function buildList(n) {
-    const keep = (x) => /^(Toss-up|Lean )/.test(x.rating) || (x.res?.winner && x.held && x.res.winner !== x.held);
+  function buildList(n, want) {
+    const w = String(want || '').toLowerCase();
+    const keep = (x, key) => /^(Toss-up|Lean )/.test(x.rating) || (x.res?.winner && x.held && x.res.winner !== x.held) || key.toLowerCase() === w;
     const L = [
-      ...n.senate.filter(keep).map((x) => ({ ...x, kind: 'S', key: x.id + '-senate', st: x.id })),
-      ...n.house.filter(keep).map((x) => ({ ...x, kind: 'H', key: x.id, st: x.id.split('-')[0] })),
-      ...(n.governors || []).filter(keep).map((x) => ({ ...x, kind: 'G', key: x.id + '-governor', st: x.id })),
+      ...n.senate.filter((x) => keep(x, x.id + '-senate')).map((x) => ({ ...x, kind: 'S', key: x.id + '-senate', st: x.id })),
+      ...n.house.filter((x) => keep(x, x.id)).map((x) => ({ ...x, kind: 'H', key: x.id, st: x.id.split('-')[0] })),
+      ...(n.governors || []).filter((x) => keep(x, x.id + '-governor')).map((x) => ({ ...x, kind: 'G', key: x.id + '-governor', st: x.id })),
     ];
     const order = { S: 0, H: 1, G: 2 };
     return L.sort((a, b) => order[a.kind] - order[b.kind] || Math.abs(a.p - 50) - Math.abs(b.p - 50));
@@ -526,7 +527,7 @@ body.idle .tools { opacity: 0; pointer-events: none }
       const n = await getJSON('/api/national' + (TEST ? '?test=1' : ''));
       NAT = n;
       const prevKey = race?.key || Q.get('race');
-      LIST = buildList(n);
+      LIST = buildList(n, prevKey);
       $('pick').innerHTML = LIST.map((x) => `<option value="${esc(x.key)}">${esc(shortOf(x))} · ${esc(x.rating)}</option>`).join('');
       const i = Math.max(0, LIST.findIndex((x) => x.key.toLowerCase() === String(prevKey || '').toLowerCase()));
       if (first || !sel) await show(i);
