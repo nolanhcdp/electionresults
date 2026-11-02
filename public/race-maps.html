@@ -685,7 +685,15 @@ html:not(.dash) #dash { display: none }
   const flip = (x) => !!(won(x) && x.held && won(x) !== x.held && won(x) !== 'O');
   const okStatus = (x, st) => (st === 'close' ? live(x) && !won(x) && Math.abs(x.res.margin) < 3 : st === 'called' ? !!won(x) : st === 'flips' ? flip(x) : true);
   const searched = (q) => { const w = String(q || '').toLowerCase().trim().split(/\s+/).filter(Boolean); return w.length ? ALL.filter((x) => w.every((t) => x.hay.includes(t))) : []; };
-  const tabList = (t = TAB) => ALL.filter((x) => x.kind === t && (!F.ratings.length || x.kind === 'I' || F.ratings.includes(bucket(x))) && (!F.state || x.st === F.state) && F.status.every((st) => okStatus(x, st)));
+  // Senate, House, and Governors sort by how close the race is (live margin once counting starts, otherwise the forecast),
+  // or by poll closing time, earliest first. Indiana keeps its district order.
+  let SORT = store.get('sort', 'close');
+  const closeness = (x) => (live(x) && !won(x) ? Math.abs(x.res.margin) : won(x) ? 1000 + Math.abs(x.p - 50) : 100 + Math.abs((x.p ?? 50) - 50));
+  const tabList = (t = TAB) => {
+    const L = ALL.filter((x) => x.kind === t && (!F.ratings.length || x.kind === 'I' || F.ratings.includes(bucket(x))) && (!F.state || x.st === F.state) && F.status.every((st) => okStatus(x, st)));
+    if (t === 'I') return L;
+    return L.sort(SORT === 'polls' ? (a, b) => (CLOSE[a.st] ?? 21) - (CLOSE[b.st] ?? 21) || closeness(a) - closeness(b) : (a, b) => closeness(a) - closeness(b));
+  };
   const projM = (x) => (x.proj ? mg(x.proj) : x.p != null ? (x.p - 50) / 4.5 : null);
   function toggleStar(key) { STARS = STARS.includes(key) ? STARS.filter((y) => y !== key) : [...STARS, key]; store.set('stars', STARS); }
 
@@ -795,7 +803,8 @@ html:not(.dash) #dash { display: none }
     } else {
       $('dside').innerHTML = `<div class="usmap" id="usmap"></div>
         <div class="fchips"><span class="lab">Rating</span>${RATINGS.map((r) => `<button type="button" class="${F.ratings.includes(r) ? 'on' : ''}" data-r="${r}">${r}</button>`).join('')}</div>
-        <div class="fchips"><span class="lab">Election night</span>${STATUS.map(([k, l]) => `<button type="button" class="${F.status.includes(k) ? 'on' : ''}" data-s="${k}">${l}</button>`).join('')}</div>`;
+        <div class="fchips"><span class="lab">Election night</span>${STATUS.map(([k, l]) => `<button type="button" class="${F.status.includes(k) ? 'on' : ''}" data-s="${k}">${l}</button>`).join('')}</div>
+        <div class="fchips"><span class="lab">Sort</span><button type="button" class="${SORT === 'close' ? 'on' : ''}" data-sort="close">Closest race</button><button type="button" class="${SORT === 'polls' ? 'on' : ''}" data-sort="polls">Poll closing</button></div>`;
       usMap();
     }
     // cards
@@ -813,6 +822,10 @@ html:not(.dash) #dash { display: none }
       html = indianaGroups().map(([id, label, L, note]) => L.length ? `<section class="sec" id="${id}"><h2>${label} <span>${L.length}</span></h2>${note ? `<p class="sub2">${note}</p>` : ''}<div class="cards ${id.startsWith('in-s') || id === 'in-house' ? 'compact' : ''}">${L.map(card).join('')}</div></section>` : '').join('');
     } else {
       const L = tabList();
+      if (SORT === 'polls' && L.length) { // one group per closing time
+        const times = [...new Set(L.map((x) => CLOSE[x.st] ?? 21))];
+        html = times.map((h) => { const g = L.filter((x) => (CLOSE[x.st] ?? 21) === h); return `<section class="sec"><h2>Polls close ${clock(h)} ET <span>${g.length}</span></h2><div class="cards">${g.map(card).join('')}</div></section>`; }).join('');
+      } else
       html = L.length ? `<section class="sec"><h2>${F.state ? STATE[F.state] + ' · ' : ''}${TABS.find((t) => t[0] === TAB)[1]} <span>${L.length}</span></h2><div class="cards">${L.map(card).join('')}</div></section>` : '<div class="dnone">No races match these filters.</div>';
     }
     $('dlist').innerHTML = html;
@@ -963,7 +976,7 @@ html:not(.dash) #dash { display: none }
   addEventListener('popstate', () => { const k = new URLSearchParams(location.search).get('race'); if (k && ALL.length) openRace(k, store.get('set', null), false); else openDash(false); });
   $('dq').addEventListener('input', () => renderDash());
   $('dash').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-more],[data-star],[data-unstar],[data-mv],[data-tab],[data-r],[data-s],[data-st],[data-clear],#present,.rc');
+    const t = e.target.closest('[data-sort],[data-more],[data-star],[data-unstar],[data-mv],[data-tab],[data-r],[data-s],[data-st],[data-clear],#present,.rc');
     if (!t) return;
     if (t.dataset.more) { showAll.has(t.dataset.more) ? showAll.delete(t.dataset.more) : showAll.add(t.dataset.more); renderDash(); return; }
     if (t.dataset.star || t.dataset.unstar) { e.stopPropagation(); toggleStar(t.dataset.star || t.dataset.unstar); renderDash(); return; }
@@ -971,6 +984,7 @@ html:not(.dash) #dash { display: none }
     if (t.id === 'present') { const keys = STARS.filter((k) => ALL.some((x) => x.key === k)); if (keys.length) { document.documentElement.requestFullscreen?.().catch?.(() => {}); openRace(keys[0], keys); } return; }
     if (t.dataset.tab) { TAB = t.dataset.tab; store.set('tab2', TAB); $('dq').value = ''; F.state = null; renderDash(); return; }
     if (t.dataset.r) { F.ratings = F.ratings.includes(t.dataset.r) ? F.ratings.filter((y) => y !== t.dataset.r) : [...F.ratings, t.dataset.r]; renderDash(); return; }
+    if (t.dataset.sort) { SORT = t.dataset.sort; store.set('sort', SORT); renderDash(); return; }
     if (t.dataset.s) { F.status = F.status.includes(t.dataset.s) ? F.status.filter((y) => y !== t.dataset.s) : [...F.status, t.dataset.s]; renderDash(); return; }
     if (t.dataset.clear != null) { e.preventDefault(); F.state = null; renderDash(); return; }
     if (t.dataset.st) { if (!t.classList.contains('has')) return; F.state = F.state === t.dataset.st ? null : t.dataset.st; renderDash(); return; }
