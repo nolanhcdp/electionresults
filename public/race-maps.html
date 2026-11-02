@@ -206,7 +206,7 @@ html:not(.dash) #dash { display: none }
 .allbtn { margin-top: 22px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--dim); font-weight: 600; font-size: 14px }
 .allbtn button { font: 800 15px var(--ui); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; cursor: pointer }
 .olist { display: grid; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden }
-.orow { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto 128px; gap: 12px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--line); font-size: 14.5px }
+.orow { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto 104px 128px; gap: 12px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--line); font-size: 14.5px }
 .orow:first-child { border-top: 0 }
 .orow b { font-weight: 900 }
 .orow .who { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--muted) }
@@ -214,7 +214,9 @@ html:not(.dash) #dash { display: none }
 .orow .rt.lt { color: #111 }
 .orow .num { text-align: right; font: 700 14.5px var(--num); white-space: nowrap }
 .orow .num small { display: block; font: 600 12px var(--ui); color: var(--dim) }
-@media (max-width: 600px) { .orow { grid-template-columns: 52px minmax(0, 1fr) 96px; } .orow .rt { display: none } }
+.orow .y24 { text-align: right; font: 700 14px var(--num); white-space: nowrap }
+.orow .y24 small { display: block; font: 600 12px var(--ui); color: var(--dim) }
+@media (max-width: 600px) { .orow { grid-template-columns: 48px minmax(0, 1fr) 78px 92px; gap: 8px } .orow .rt { display: none } }
 .dnone { padding: 40px 10px; text-align: center; color: var(--dim); font-weight: 600 }
 .back { font-weight: 800 }
 /* Overview: chamber scoreboard, what's left to win, and the watch-now feed */
@@ -952,11 +954,13 @@ html:not(.dash) #dash { display: none }
     L = L.sort(SORT === 'polls' ? (a, b) => (CLOSE[a.st] ?? 21) - (CLOSE[b.st] ?? 21) || closeness(a) - closeness(b) : (a, b) => closeness(a) - closeness(b) || a.id.localeCompare(b.id, 'en', { numeric: true }));
     const row = (x) => {
       const r = x.res, lv = live(x);
+      const b = mg(x.m24), sw = lv && b != null ? r.margin - b : null;
+      const y24 = b == null ? '<span class="y24">—</span>' : `<span class="y24"><span class="${b >= 0 ? 'D' : 'R'}">${b >= 0 ? 'Harris' : 'Trump'} +${Math.abs(b).toFixed(1)}</span><small>${sw == null ? '2024' : `swing ${fm(sw)}`}</small></span>`;
       const num = lv ? `<span class="${r.margin >= 0 ? 'D' : 'R'}">${fm(r.margin)}</span><small>${won(x) ? `called ${won(x)}` : Math.round(r.pct || 0) + '% in'}</small>`
         : `<span class="${x.p >= 50 ? 'D' : 'R'}">${x.p >= 50 ? 'D' : 'R'} ${Math.round(Math.max(x.p, 100 - x.p))}%</span><small>Proj. ${esc(x.proj)}</small>`;
-      return `<div class="orow"><b>${esc(x.id)}</b><span class="who">${esc(x.d)} (D) vs. ${esc(x.r)} (R)</span><span class="rt ${LIGHT_RC.has(x.rating) ? 'lt' : ''}" style="--c:${RC[x.rating]}">${esc(x.rating)}</span><span class="num">${num}</span></div>`;
+      return `<div class="orow"><b>${esc(x.id)}</b><span class="who">${esc(x.d)} (D) vs. ${esc(x.r)} (R)</span><span class="rt ${LIGHT_RC.has(x.rating) ? 'lt' : ''}" style="--c:${RC[x.rating]}">${esc(x.rating)}</span>${y24}<span class="num">${num}</span></div>`;
     };
-    return `<section class="sec" style="margin-top:28px"><h2>${F.state ? STATE[F.state] + ' · ' : ''}Every other House race <span>${L.length}</span></h2><p class="sub2">Not on the target list. FLIPR forecast before results, live count after. <a href="#" data-all="0" style="color:var(--fg)">Hide</a></p>${L.length ? `<div class="olist">${L.map(row).join('')}</div>` : '<div class="dnone">None match these filters.</div>'}</section>`;
+    return `<section class="sec" style="margin-top:28px"><h2>${F.state ? STATE[F.state] + ' · ' : ''}Every other House race <span>${L.length}</span></h2><p class="sub2">Not on the target list. 2024 is the presidential margin on the 2026 district lines (The Downballot); then the FLIPR forecast before results, live count after. <a href="#" data-all="0" style="color:var(--fg)">Hide</a></p>${L.length ? `<div class="olist">${L.map(row).join('')}</div>` : '<div class="dnone">None match these filters.</div>'}</section>`;
   }
   async function loadOthers() {
     try {
