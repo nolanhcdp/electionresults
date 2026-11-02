@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500;600;700;800&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
-/* National watch-party display: one screen, no controls. Midterm Watch look (charcoal, not HCDP navy), built to read
+/* National watch-party display: three slides (House, Senate, Governors), auto-rotating or advanced by hand. Midterm Watch look (charcoal, not HCDP navy), built to read
    across a room or off a projector. Everything is sized in container units so it fills any TV or projection. */
 :root {
   /* Projector-tuned: projectors can't show true black and wash out thin strokes and soft grays, so grays are
@@ -74,10 +74,31 @@ body.idle { cursor: none }
 .foot { display: flex; justify-content: space-between; gap: 2cqw; font-size: 1.25cqw; font-weight: 700; color: var(--muted) }
 .foot b { color: var(--fg) }
 .banner { background: var(--hot); color: #111; font-weight: 800; font-size: 1.2cqw; padding: .5cqw 1cqw; border-radius: .4cqw }
-.tools { position: fixed; right: 14px; bottom: 14px; display: flex; gap: 8px; transition: opacity .4s }
+.tools { position: fixed; right: 14px; bottom: calc(1.1vw + 3.4vw); display: flex; gap: 8px; transition: opacity .4s }
 body.idle .tools { opacity: 0; pointer-events: none }
 .tools button, .tools a { font: 600 14px var(--ui); background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.3); padding: 8px 14px; border-radius: 6px; cursor: pointer; text-decoration: none }
-@media (prefers-reduced-motion: reduce) { .card.new::after { animation: none; opacity: 0 } }
+.grid { transition: opacity .35s } .grid.fade { opacity: 0 }
+/* House slide: 20 smaller boxes. Votes and per-candidate bars drop out; one split bar shows the race. */
+.grid.mini { gap: .75cqw }
+.mini .card { gap: calc(.3cqw * var(--k)); padding: calc(.7cqw * var(--k)) calc(.9cqw * var(--k)) }
+.mini .row .v, .mini .row .bar { display: none }
+.mini .row { grid-template-columns: minmax(0, 1fr) auto }
+.split { display: flex; height: calc(.8cqw * var(--k)); border-radius: calc(.4cqw * var(--k)); background: var(--track); overflow: hidden }
+.split i { display: block; height: 100% } .split i.D { background: var(--dem) } .split i.R { background: var(--rep); margin-left: auto }
+.split.odds i { opacity: .55 }
+/* Slide names along the bottom: which slide is up, click to jump; in auto mode a line fills toward the next slide. */
+.foot { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; white-space: nowrap }
+.foot > span { min-width: 0; overflow: hidden; text-overflow: ellipsis }
+.foot .nx { text-align: center }
+.slides { display: flex; gap: .5cqw }
+.slides button { position: relative; font: 800 1.3cqw var(--ui); color: var(--muted); background: transparent; border: .15cqw solid var(--line); border-radius: .4cqw; padding: .35cqw 1cqw; cursor: pointer; overflow: hidden }
+.slides button.on { color: var(--bg); background: var(--fg); border-color: var(--fg) }
+.slides button .cnt { font-family: var(--num); font-weight: 700; margin-left: .45em; opacity: .75 }
+.slides button.on::after { content: ""; position: absolute; left: 0; bottom: 0; height: .25cqw; width: 0; background: var(--hot) }
+body.auto .slides button.on::after { animation: fill var(--every, 20s) linear forwards }
+@keyframes fill { to { width: 100% } }
+.mode { font-size: 1.1cqw; font-weight: 700; color: var(--muted); margin-left: .6cqw; align-self: center }
+@media (prefers-reduced-motion: reduce) { .card.new::after { animation: none; opacity: 0 } .grid { transition: none } }
 </style>
 </head>
 <body>
@@ -87,19 +108,33 @@ body.idle .tools { opacity: 0; pointer-events: none }
   <main class="grid" id="grid"><div class="empty">Loading races…</div></main>
   <footer class="foot" id="foot"></footer>
 </div>
-<div class="tools"><button type="button" id="fs">Full screen</button><a href="/national">Full results</a></div>
+<div class="tools"><button type="button" id="auto">Auto: on</button><button type="button" id="fs">Full screen</button><a href="/national">Full results</a></div>
 
 <script>
 (() => {
   const Q = new URLSearchParams(location.search);
-  const SLOTS = [6, 9, 12].includes(+Q.get('n')) ? +Q.get('n') : 12;
+  // ?n=6|9|12 sets how many cards the Senate and Governors slides hold (default 9). The House slide always holds 20.
+  const BIG = [6, 9, 12].includes(+Q.get('n')) ? +Q.get('n') : 9;
+  const BIGGRID = { 6: [3, 2], 9: [3, 3], 12: [4, 3] }[BIG];
+  const SLIDES = [
+    { key: 'house', kind: 'H', label: 'House', n: 20, cols: 5, rows: 4, mini: true },
+    { key: 'senate', kind: 'S', label: 'Senate', n: BIG, cols: BIGGRID[0], rows: BIGGRID[1] },
+    { key: 'gov', kind: 'G', label: 'Governors', n: BIG, cols: BIGGRID[0], rows: BIGGRID[1] },
+  ];
+  const EVERY = Math.max(8, Number(Q.get('every')) || 20) * 1000; // ?every=30: seconds per slide in auto mode
+  document.documentElement.style.setProperty('--every', EVERY / 1000 + 's');
   if (Q.has('light')) document.body.classList.add('light');
-  document.documentElement.style.setProperty('--cols', SLOTS === 6 ? 3 : SLOTS === 9 ? 3 : 4);
-  document.documentElement.style.setProperty('--rows', SLOTS === 6 ? 2 : 3);
+  const store = { get(k) { try { return localStorage.getItem('ntv-' + k); } catch { return null; } }, set(k, v) { try { localStorage.setItem('ntv-' + k, v); } catch { /* private window */ } } };
+  // ?slide=house|senate|gov opens on that slide, in manual mode. Otherwise the last mode and slide are remembered.
+  const qSlide = SLIDES.findIndex((x) => x.key === Q.get('slide'));
+  let cur = qSlide >= 0 ? qSlide : Math.max(0, SLIDES.findIndex((x) => x.key === store.get('slide')));
+  let auto = qSlide >= 0 ? false : store.get('auto') !== '0';
+  let slideAt = Date.now();
+  let pendingCall = null; // kind of the newest call, so auto mode can jump to it
   const TEST = Q.get('test') === '1';
   const T0 = Date.parse('2026-11-03T05:00:00Z'); // midnight ET on Election Day; times are hours after it
   const hrs = (t) => (Date.parse(t) - T0) / 3.6e6;
-  // Last polls in each state, ET, when civicAPI doesn't give a time.
+  // Last polls in each state, ET (hours after midnight Nov. 3). Used instead of civicAPI's times, which tested wrong.
   const CLOSE = { IN: 19, KY: 19, GA: 19, VA: 19, SC: 19, FL: 20, NH: 20, VT: 19, NC: 19.5, OH: 19.5, WV: 19.5, AL: 20, CT: 20, DE: 20, IL: 20, ME: 20, MD: 20, MA: 20, MS: 20, MO: 20, NJ: 20, OK: 20, PA: 20, RI: 20, TN: 20, AR: 20.5, AZ: 21, CO: 21, KS: 21, LA: 21, MI: 21, MN: 21, NE: 21, NM: 21, NY: 21, SD: 21, TX: 21, WI: 21, WY: 21, IA: 22, MT: 22, NV: 22, UT: 22, CA: 23, ID: 23, OR: 23, WA: 23, HI: 24, AK: 25 };
   const fmt = new Intl.NumberFormat('en-US');
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -107,6 +142,7 @@ body.idle .tools { opacity: 0; pointer-events: none }
   const $ = (id) => document.getElementById(id);
 
   let DATA = null, NOW = 0, races = [];
+  const ALL = () => races;
   const prevLead = new Map(), changedAt = new Map(), seenWon = new Map();
   let first = true;
 
@@ -121,13 +157,13 @@ body.idle .tools { opacity: 0; pointer-events: none }
     DATA = d; NOW = (Date.now() - T0) / 3.6e6;
     const prep = (x, kind) => {
       x.kind = kind; x.key = kind + ':' + x.id; x.st = kind === 'H' ? x.id.split('-')[0] : x.id;
-      x.close = x.pollsClose ? hrs(x.pollsClose) : (CLOSE[x.st] ?? 21);
+      x.close = CLOSE[x.st] ?? (x.pollsClose ? hrs(x.pollsClose) : 21); // our table first: civicAPI's closing times were off by hours in testing
       if (x.res && !(x.res.total > 0)) x.res = null;
       if (x.res) {
         const lead = x.res.margin >= 0 ? 'D' : 'R';
         if (prevLead.has(x.key) && prevLead.get(x.key) !== lead && !x.res.winner) changedAt.set(x.key, NOW);
         prevLead.set(x.key, lead);
-        if (x.res.winner && !seenWon.has(x.key)) seenWon.set(x.key, first ? -99 : NOW);
+        if (x.res.winner && !seenWon.has(x.key)) { seenWon.set(x.key, first ? -99 : NOW); if (!first && shown(x)) pendingCall = kind; }
         x.calledH = x.res.calledAt ? hrs(x.res.calledAt) : seenWon.get(x.key);
       }
       return x;
@@ -136,13 +172,14 @@ body.idle .tools { opacity: 0; pointer-events: none }
     first = false;
   }
 
-  // Which 12 races are on screen: news first, then the closest counts, then the rest of the live races,
+  // Which races are on a slide: news first, then the closest counts, then the rest of the live races,
   // then whatever closes next. Called races only stay while they're news.
-  function pick() {
-    const used = new Set(), out = [];
+  function pick(sl) {
+    const used = new Set(), out = [], SLOTS = sl.n;
+    const races = ALL().filter((x) => x.kind === sl.kind);
     const take = (list) => { for (const x of list) { if (out.length >= SLOTS) return; if (!used.has(x)) { used.add(x); out.push(x); } } };
     const byMargin = (a, b) => Math.abs(a.res.margin) - Math.abs(b.res.margin);
-    take(races.filter(recent).sort((a, b) => (won(b) ? 1 : 0) - (won(a) ? 1 : 0)).slice(0, 4));
+    take(races.filter(recent).sort((a, b) => (won(b) ? 1 : 0) - (won(a) ? 1 : 0)).slice(0, sl.mini ? 6 : 4));
     take(races.filter((x) => live(x) && !won(x)).sort(byMargin));
     take(races.filter((x) => !x.res && x.close <= NOW + 0.01).sort((a, b) => Math.abs(50 - a.p) - Math.abs(50 - b.p))); // polls closed, no votes yet
     take(races.filter((x) => !x.res && x.close > NOW).sort((a, b) => a.close - b.close || Math.abs(50 - a.p) - Math.abs(50 - b.p)));
@@ -152,7 +189,8 @@ body.idle .tools { opacity: 0; pointer-events: none }
 
   const KIND = { S: 'Senate', G: 'Governor', H: 'House' };
   const title = (x) => (x.kind === 'H' ? x.id : `${x.state} ${x.kind === 'S' ? 'Senate' : 'Governor'}`);
-  function card(x) {
+  function card(x, mini) {
+    if (mini) return miniCard(x);
     const r = x.res, s = x.rating === 'Toss-up' ? 'hot' : x.rating.endsWith('D') ? 'D' : 'R';
     let cls = '', tag = `${x.kind === 'H' ? 'House · ' : ''}<span class="${s}">${esc(x.rating)}</span>`, body, call;
     if (r) {
@@ -173,6 +211,33 @@ body.idle .tools { opacity: 0; pointer-events: none }
     }
     if (recent(x)) cls += ' new';
     return `<article class="card ${cls}"><div class="ch"><h3>${esc(title(x))}</h3>${r ? `<span class="in">${Math.round(r.pct)}% in</span>` : ''}</div>
+      <div class="tag">${tag}</div>${body}<div class="call">${call}</div></article>`;
+  }
+
+  // House slide box: district, % in, rating, both candidates' shares, one split bar, and the lead or the call.
+  const lastName = (n) => String(n || '').replace(/\s+(jr\.?|sr\.?|ii|iii|iv)$/i, '').split(' ').pop();
+  function miniCard(x) {
+    const r = x.res, s = x.rating === 'Toss-up' ? 'hot' : x.rating.endsWith('D') ? 'D' : 'R';
+    let cls = '', tag = `<span class="${s}">${esc(x.rating)}</span>`, body, call;
+    if (r) {
+      const sides = [{ c: r.d, p: 'D', fb: x.d }, { c: r.r, p: 'R', fb: x.r }].sort((a, b) => (b.c?.votes || 0) - (a.c?.votes || 0));
+      body = sides.map(({ c, p, fb }, i) => `<div class="row ${i === 0 ? 'lead' : ''}"><span class="n">${esc(lastName(c?.name || fb) || '—')}<small class="${p}">${p}</small>${won(x) === p ? ' ✓' : ''}</span><span class="p">${(c?.pct || 0).toFixed(1)}%</span></div>`).join('')
+        + `<div class="split"><i class="D" style="width:${(r.d?.pct || 0).toFixed(1)}%"></i><i class="R" style="width:${(r.r?.pct || 0).toFixed(1)}%"></i></div>`;
+      const mp = Math.abs(r.margin), leader = sides[0];
+      if (won(x)) {
+        cls = 'w' + won(x);
+        call = `<b>${esc(lastName(r.winnerName || leader.c?.name))}</b> wins${flipped(x) ? ` · <b class="${won(x)}">flip</b>` : ''}`;
+      } else {
+        if (isClose(x)) { cls = 'close'; tag += ' · <span class="hot">Close</span>'; }
+        call = (r.d?.votes || 0) === (r.r?.votes || 0) ? '<b>Tied</b>' : `<b>${esc(lastName(leader.c?.name))}</b> +${mp < 0.1 ? '<0.1' : mp.toFixed(1)}`;
+      }
+    } else {
+      body = [{ n: x.d, p: 'D', v: x.p }, { n: x.r, p: 'R', v: 100 - x.p }].map((o) => `<div class="row odds"><span class="n">${esc(lastName(o.n) || 'No Democrat')}<small class="${o.p}">${o.p}</small></span><span class="p">${o.v.toFixed(0)}%</span></div>`).join('')
+        + `<div class="split odds"><i class="D" style="width:${x.p.toFixed(1)}%"></i><i class="R" style="width:${(100 - x.p).toFixed(1)}%"></i></div>`;
+      call = x.close <= NOW ? 'Waiting for votes' : `Polls close <b>${clock(x.close)}</b>`;
+    }
+    if (recent(x)) cls += ' new';
+    return `<article class="card ${cls}"><div class="ch"><h3>${esc(x.id)}</h3>${r ? `<span class="in">${Math.round(r.pct)}% in</span>` : ''}</div>
       <div class="tag">${tag}</div>${body}<div class="call">${call}</div></article>`;
   }
 
@@ -202,8 +267,9 @@ body.idle .tools { opacity: 0; pointer-events: none }
       const states = [...new Set(upcoming.filter((x) => x.close === t).map((x) => x.st))].sort();
       next = `Next polls close: <b>${clock(t)} ET</b> in ${states.join(', ')}`;
     } else if (races.some((x) => x.res)) next = 'All polls closed';
-    const called = races.filter(won).length;
-    $('foot').innerHTML = `<span>${next}</span><span>${called ? `<b>${called}</b> of ${races.length} watched races called · ` : ''}Forecast: FLIPR (Silver Bulletin) · Results: civicAPI</span>`;
+    const sl = SLIDES[cur], mine = races.filter((x) => x.kind === sl.kind), called = mine.filter(won).length;
+    const nav = SLIDES.map((x, i) => `<button type="button" data-i="${i}" class="${i === cur ? 'on' : ''}">${x.label}<span class="cnt">${races.filter((y) => y.kind === x.kind).length}</span></button>`).join('');
+    $('foot').innerHTML = `<span class="slides">${nav}<span class="mode">${auto ? '' : 'Manual'}</span></span><span class="nx">${next}</span><span>${called ? `<b>${called}</b> of ${mine.length} called · ` : ''}civicAPI · FLIPR</span>`;
   }
 
   // Each card gets the biggest text that fits it, so nothing is cut off.
@@ -224,10 +290,63 @@ body.idle .tools { opacity: 0; pointer-events: none }
     if (DATA.showTest) ban.push('Test data from civicAPI, not real results');
     if (DATA.source.stale) ban.push("civicAPI hasn't answered for a few minutes. Showing the last results we had.");
     $('banner').hidden = !ban.length; $('banner').textContent = ban.join(' · ');
-    const list = pick();
-    $('grid').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No races to show yet.</div>';
+    drawSlide();
+  }
+
+  function drawSlide() {
+    const sl = SLIDES[cur], g = $('grid');
+    g.classList.toggle('mini', !!sl.mini);
+    g.style.setProperty('--cols', sl.cols); g.style.setProperty('--rows', sl.rows);
+    const list = pick(sl);
+    g.innerHTML = list.length ? list.map((x) => card(x, sl.mini)).join('') : `<div class="empty">No ${sl.label.toLowerCase()} races to show.</div>`;
     fit();
   }
+  const hasRaces = (i) => races.some((x) => x.kind === SLIDES[i].kind);
+  function go(i, { fade = true } = {}) {
+    cur = (i + SLIDES.length) % SLIDES.length; slideAt = Date.now(); store.set('slide', SLIDES[cur].key);
+    if (!DATA) return;
+    const g = $('grid');
+    if (!fade) { foot(); drawSlide(); return; }
+    g.classList.add('fade');
+    setTimeout(() => { foot(); drawSlide(); g.classList.remove('fade'); }, 350);
+  }
+  function setAuto(on) {
+    auto = on; store.set('auto', on ? '1' : '0'); slideAt = Date.now();
+    document.body.classList.toggle('auto', on);
+    $('auto').textContent = on ? 'Auto: on' : 'Auto: off';
+    if (DATA) foot();
+  }
+  // Auto mode: next slide every EVERY ms (skipping empty ones); a new call jumps to its slide once and holds there.
+  setInterval(() => {
+    if (!auto || !DATA) return;
+    if (pendingCall) {
+      const i = SLIDES.findIndex((x) => x.kind === pendingCall); pendingCall = null;
+      if (i >= 0) { if (i !== cur) go(i); else slideAt = Date.now(); return; }
+    }
+    if (Date.now() - slideAt < EVERY) return;
+    let i = cur;
+    for (let t = 0; t < SLIDES.length; t++) { i = (i + 1) % SLIDES.length; if (hasRaces(i)) break; }
+    go(i);
+  }, 1000);
+  // Manual: arrows, Page Up/Down and presentation clickers, number keys, or the slide names. Any of them turns auto off.
+  addEventListener('keydown', (e) => {
+    const k = e.key;
+    let i = null;
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(k)) i = cur + 1;
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(k)) i = cur - 1;
+    else if (/^[1-9]$/.test(k) && +k <= SLIDES.length) i = +k - 1;
+    else if (k === 'a' || k === 'A') { setAuto(!auto); return; }
+    if (i == null) return;
+    e.preventDefault(); pendingCall = null;
+    if (auto) setAuto(false);
+    go(i);
+  });
+  $('foot').addEventListener('click', (e) => {
+    const b = e.target.closest('.slides button'); if (!b) return;
+    pendingCall = null; if (auto) setAuto(false); go(+b.dataset.i);
+  });
+  $('auto').onclick = () => setAuto(!auto);
+  setAuto(auto);
 
   async function poll() {
     try {
