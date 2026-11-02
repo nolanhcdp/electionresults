@@ -121,7 +121,7 @@ body.idle .tools { opacity: 0; pointer-events: none }
 .toast { position: fixed; left: 50%; bottom: 7vh; transform: translateX(-50%); background: var(--fg); color: var(--bg); font: 700 15px var(--ui); padding: 10px 16px; border-radius: 8px; z-index: 20 }
 
 /* Square or portrait (square graphic export, phones held upright): map on top, numbers below. */
-@container stage (max-aspect-ratio: 4/3) {
+@container stage (max-aspect-ratio: 11/10) {
   .in { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1.15fr) auto auto; padding: 3.4cqw; row-gap: 2cqw }
   .hd h1 { font-size: 6.4cqw } .hd .sub { font-size: 2.1cqw; margin-top: 1.2cqw } .chip { font-size: 1.9cqw }
   .nav { display: none }
@@ -499,7 +499,10 @@ body.idle .tools { opacity: 0; pointer-events: none }
   $('fs').onclick = () => { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); };
   let idle; const wake = () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 3500); };
   ['mousemove', 'keydown', 'touchstart'].forEach((ev) => addEventListener(ev, wake, { passive: true })); wake();
-  let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => race && show(idx), 150); });
+  // Redraw when the map area changes size (window resize, or a page first shown in a hidden tab or pane).
+  let rz, lastW = 0, lastH = 0;
+  const redraw = () => { clearTimeout(rz); rz = setTimeout(() => race && show(idx), 150); };
+  new ResizeObserver(([e]) => { const { width: w, height: h } = e.contentRect; if (Math.abs(w - lastW) > 4 || Math.abs(h - lastH) > 4) { lastW = w; lastH = h; redraw(); } }).observe($('map'));
 
   // Save image: lay the stage out at an exact size, capture it, put it back.
   async function save(kind) {
