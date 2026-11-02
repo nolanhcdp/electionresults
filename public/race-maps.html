@@ -24,6 +24,7 @@ body.light .dh h1, body.light .hd h1 { font-family: 'Newsreader', Georgia, serif
 body.light .rc:hover { box-shadow: 0 4px 16px rgba(29, 53, 87, .08) }
 * { box-sizing: border-box }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--ui); overflow: hidden }
+html, body { overflow-x: clip }
 [hidden] { display: none !important }
 button { font-family: inherit }
 body.idle { cursor: none }
@@ -132,7 +133,7 @@ body.light .map .lbl .a, body.light .map .lbl .b { fill: #111 }
 body.idle .tools { opacity: 0; pointer-events: none }
 .tools button { font: 700 1.05cqw var(--ui); color: var(--fg); background: var(--card); border: .12cqw solid var(--line); border-radius: .45cqw; padding: .45cqw .85cqw; cursor: pointer }
 /* ---------- Dashboard (the page you land on) ---------- */
-html.dash, html.dash body { overflow: auto; height: auto }
+html.dash, html.dash body { overflow-y: auto; overflow-x: clip; height: auto }
 html.dash .stage { display: none }
 html:not(.dash) #dash { display: none }
 #dash { max-width: 1440px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 40px) 60px; font-size: 15px }
@@ -202,6 +203,18 @@ html:not(.dash) #dash { display: none }
 .rc .ob.odds i { opacity: .6 }
 .rc .r3 { display: flex; justify-content: space-between; gap: 8px; font: 700 14px var(--num); color: var(--muted) }
 .rc .r3 .D { color: var(--dem) } .rc .r3 .R { color: var(--rep) }
+.allbtn { margin-top: 22px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--dim); font-weight: 600; font-size: 14px }
+.allbtn button { font: 800 15px var(--ui); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; cursor: pointer }
+.olist { display: grid; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden }
+.orow { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto 128px; gap: 12px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--line); font-size: 14.5px }
+.orow:first-child { border-top: 0 }
+.orow b { font-weight: 900 }
+.orow .who { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--muted) }
+.orow .rt { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 99px; color: #fff; background: var(--c) }
+.orow .rt.lt { color: #111 }
+.orow .num { text-align: right; font: 700 14.5px var(--num); white-space: nowrap }
+.orow .num small { display: block; font: 600 12px var(--ui); color: var(--dim) }
+@media (max-width: 600px) { .orow { grid-template-columns: 52px minmax(0, 1fr) 96px; } .orow .rt { display: none } }
 .dnone { padding: 40px 10px; text-align: center; color: var(--dim); font-weight: 600 }
 .back { font-weight: 800 }
 /* Overview: chamber scoreboard, what's left to win, and the watch-now feed */
@@ -234,13 +247,16 @@ html:not(.dash) #dash { display: none }
 .mrow2 .bar2 { position: relative; display: flex; height: 8px; border-radius: 99px; background: var(--card); overflow: hidden }
 .mrow2 .bar2 i { background: var(--dem) } .mrow2 .bar2 u { background: var(--rep); margin-left: auto }
 .mrow2 .bar2 b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg) }
+.board .big { flex-wrap: wrap; row-gap: 4px }
+.board .bx, .rc, .left2, .mrow2 { min-width: 0 }
 @media (max-width: 900px) {
-  .board { grid-template-columns: 1fr 1fr }
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)) }
   .dbody { grid-template-columns: 1fr }
   .dside { position: static }
   .usmap svg, .usmap .cap, .usmap .key { display: none }
   .usmap select { display: block; width: 100%; font: 700 16px var(--ui); color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px }
-  .cards, .cards.compact { grid-template-columns: 1fr }
+  .cards, .cards.compact { grid-template-columns: minmax(0, 1fr) }
+  .dsearch input { font-size: 16px }
   .dh .links { margin-left: 0 }
 }
 .toast { position: fixed; left: 50%; bottom: 7vh; transform: translateX(-50%); background: var(--fg); color: var(--bg); font: 700 15px var(--ui); padding: 10px 16px; border-radius: 8px; z-index: 20 }
@@ -688,6 +704,7 @@ html:not(.dash) #dash { display: none }
   // Senate, House, and Governors sort by how close the race is (live margin once counting starts, otherwise the forecast),
   // or by poll closing time, earliest first. Indiana keeps its district order.
   let SORT = store.get('sort', 'close');
+  let SHOWALL = false, OTHERS = null; // every other House race: a plain list, off until asked for each visit
   const closeness = (x) => (live(x) && !won(x) ? Math.abs(x.res.margin) : won(x) ? 1000 + Math.abs(x.p - 50) : 100 + Math.abs((x.p ?? 50) - 50));
   const tabList = (t = TAB) => {
     const L = ALL.filter((x) => x.kind === t && (!F.ratings.length || x.kind === 'I' || F.ratings.includes(bucket(x))) && (!F.state || x.st === F.state) && F.status.every((st) => okStatus(x, st)));
@@ -758,7 +775,7 @@ html:not(.dash) #dash { display: none }
   }
 
   function usMap() {
-    const L = ALL.filter((x) => x.kind === TAB && (!F.ratings.length || F.ratings.includes(bucket(x))) && F.status.every((st) => okStatus(x, st)));
+    const L = [...ALL, ...(TAB === 'H' && SHOWALL && OTHERS ? OTHERS : [])].filter((x) => x.kind === TAB && (!F.ratings.length || F.ratings.includes(bucket(x))) && F.status.every((st) => okStatus(x, st)));
     const per = {};
     for (const x of L) { const c = per[x.st]; if (!c || Math.abs((c.p ?? 50) - 50) > Math.abs((x.p ?? 50) - 50)) per[x.st] = x; }
     const n = {}; L.forEach((x) => { n[x.st] = (n[x.st] || 0) + 1; });
@@ -828,6 +845,7 @@ html:not(.dash) #dash { display: none }
       } else
       html = L.length ? `<section class="sec"><h2>${F.state ? STATE[F.state] + ' · ' : ''}${TABS.find((t) => t[0] === TAB)[1]} <span>${L.length}</span></h2><div class="cards">${L.map(card).join('')}</div></section>` : '<div class="dnone">No races match these filters.</div>';
     }
+    if (TAB === 'H' && !q) html += allHouse();
     $('dlist').innerHTML = html;
     document.querySelectorAll('#dlist .th').forEach((el) => { if (!el.firstChild) io ? io.observe(el) : drawThumb(ALL.find((y) => y.key === el.dataset.th), el); });
   }
@@ -926,6 +944,27 @@ html:not(.dash) #dash { display: none }
     };
     return `<section class="sec"><h2>State legislatures <span>${L.length}</span></h2><div class="mrows">${L.map(row).join('')}</div></section>`;
   }
+  // The other 345 House races: no maps, just the matchup, rating, forecast, and the live count.
+  function allHouse() {
+    if (!SHOWALL) return `<div class="allbtn"><button type="button" data-all="1">Show all 435 House races</button><span>Adds the ${OTHERS ? OTHERS.length : 345} races not on the target list as a simple list.</span></div>`;
+    if (!OTHERS) return '<div class="allbtn"><span>Loading every House race…</span></div>';
+    let L = OTHERS.filter((x) => (!F.ratings.length || F.ratings.includes(bucket(x))) && (!F.state || x.st === F.state) && F.status.every((st) => okStatus(x, st)));
+    L = L.sort(SORT === 'polls' ? (a, b) => (CLOSE[a.st] ?? 21) - (CLOSE[b.st] ?? 21) || closeness(a) - closeness(b) : (a, b) => closeness(a) - closeness(b) || a.id.localeCompare(b.id, 'en', { numeric: true }));
+    const row = (x) => {
+      const r = x.res, lv = live(x);
+      const num = lv ? `<span class="${r.margin >= 0 ? 'D' : 'R'}">${fm(r.margin)}</span><small>${won(x) ? `called ${won(x)}` : Math.round(r.pct || 0) + '% in'}</small>`
+        : `<span class="${x.p >= 50 ? 'D' : 'R'}">${x.p >= 50 ? 'D' : 'R'} ${Math.round(Math.max(x.p, 100 - x.p))}%</span><small>Proj. ${esc(x.proj)}</small>`;
+      return `<div class="orow"><b>${esc(x.id)}</b><span class="who">${esc(x.d)} (D) vs. ${esc(x.r)} (R)</span><span class="rt ${LIGHT_RC.has(x.rating) ? 'lt' : ''}" style="--c:${RC[x.rating]}">${esc(x.rating)}</span><span class="num">${num}</span></div>`;
+    };
+    return `<section class="sec" style="margin-top:28px"><h2>${F.state ? STATE[F.state] + ' · ' : ''}Every other House race <span>${L.length}</span></h2><p class="sub2">Not on the target list. FLIPR forecast before results, live count after. <a href="#" data-all="0" style="color:var(--fg)">Hide</a></p>${L.length ? `<div class="olist">${L.map(row).join('')}</div>` : '<div class="dnone">None match these filters.</div>'}</section>`;
+  }
+  async function loadOthers() {
+    try {
+      const n = await getJSON('/api/national?all=1' + (TEST ? '&test=1' : ''));
+      OTHERS = (n.houseOther || []).map((x) => ({ ...x, kind: 'H', key: x.id, st: x.id.split('-')[0], other: true }));
+    } catch { OTHERS = OTHERS || []; }
+    if (document.documentElement.classList.contains('dash') && TAB === 'H') renderDash();
+  }
   function indianaGroups() {
     const I = ALL.filter((x) => x.kind === 'I' || x.key === 'IN-5');
     const how = I.filter((x) => HOWARD.has(x.key));
@@ -976,7 +1015,7 @@ html:not(.dash) #dash { display: none }
   addEventListener('popstate', () => { const k = new URLSearchParams(location.search).get('race'); if (k && ALL.length) openRace(k, store.get('set', null), false); else openDash(false); });
   $('dq').addEventListener('input', () => renderDash());
   $('dash').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-sort],[data-more],[data-star],[data-unstar],[data-mv],[data-tab],[data-r],[data-s],[data-st],[data-clear],#present,.rc');
+    const t = e.target.closest('[data-all],[data-sort],[data-more],[data-star],[data-unstar],[data-mv],[data-tab],[data-r],[data-s],[data-st],[data-clear],#present,.rc');
     if (!t) return;
     if (t.dataset.more) { showAll.has(t.dataset.more) ? showAll.delete(t.dataset.more) : showAll.add(t.dataset.more); renderDash(); return; }
     if (t.dataset.star || t.dataset.unstar) { e.stopPropagation(); toggleStar(t.dataset.star || t.dataset.unstar); renderDash(); return; }
@@ -984,6 +1023,7 @@ html:not(.dash) #dash { display: none }
     if (t.id === 'present') { const keys = STARS.filter((k) => ALL.some((x) => x.key === k)); if (keys.length) { document.documentElement.requestFullscreen?.().catch?.(() => {}); openRace(keys[0], keys); } return; }
     if (t.dataset.tab) { TAB = t.dataset.tab; store.set('tab2', TAB); $('dq').value = ''; F.state = null; renderDash(); return; }
     if (t.dataset.r) { F.ratings = F.ratings.includes(t.dataset.r) ? F.ratings.filter((y) => y !== t.dataset.r) : [...F.ratings, t.dataset.r]; renderDash(); return; }
+    if (t.dataset.all) { e.preventDefault(); SHOWALL = t.dataset.all === '1'; renderDash(); if (SHOWALL && !OTHERS) loadOthers(); return; }
     if (t.dataset.sort) { SORT = t.dataset.sort; store.set('sort', SORT); renderDash(); return; }
     if (t.dataset.s) { F.status = F.status.includes(t.dataset.s) ? F.status.filter((y) => y !== t.dataset.s) : [...F.status, t.dataset.s]; renderDash(); return; }
     if (t.dataset.clear != null) { e.preventDefault(); F.state = null; renderDash(); return; }
@@ -1043,7 +1083,7 @@ html:not(.dash) #dash { display: none }
         const k = Q.get('race');
         if (k && ALL.some((x) => x.key.toLowerCase() === k.toLowerCase())) { const x = ALL.find((y) => y.key.toLowerCase() === k.toLowerCase()); TAB = x.kind === 'I' ? 'I' : x.kind; SET = store.get('set', null); if (!SET || !SET.includes(x.key)) SET = tabList(x.kind).map((y) => y.key); openRace(x.key, SET, false); }
         else openDash(false);
-      } else if (dash) renderDash();
+      } else if (dash) { renderDash(); if (SHOWALL && TAB === 'H') loadOthers(); }
       else { const i = refreshList(race?.key); if (!sel) await show(i); }
     } catch (e) {
       if (first) { $('title').textContent = 'Couldn’t load the races'; $('sub').textContent = 'Check the connection and reload.'; }
