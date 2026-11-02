@@ -210,7 +210,7 @@ html, body { margin: 0 }
     </div>
     <div class="chips" id="chips" role="group" aria-label="Filter races"></div>
     <div id="list"></div>
-    <p class="foot">Forecast: FLIPR Deluxe (Silver Bulletin); Senate and governors as of Oct. 28, House as of Oct. 27. Results: <a href="https://civicapi.org" target="_blank" rel="noopener" style="color:inherit">civicAPI</a>, checked every minute; compare close races with another source. The Senate shows Likely, Lean, and Toss-up races plus any Solid race that flips; seat counts include every race. Close means no call yet and a lead under 3 points. National swing compares Democrats' current House margins with the 2024 presidential margin in the same districts, counting races at least a quarter in. Times are Eastern.</p>
+    <p class="foot">Forecast: FLIPR Deluxe (Silver Bulletin); All races as of Nov. 1. Results: <a href="https://civicapi.org" target="_blank" rel="noopener" style="color:inherit">civicAPI</a>, checked every minute; compare close races with another source. The Senate shows Likely, Lean, and Toss-up races plus any Solid race that flips; seat counts include every race. Close means no call yet and a lead under 3 points. National swing compares Democrats' current House margins with the 2024 presidential margin in the same districts, counting races at least a quarter in. Times are Eastern.</p>
   </main>
 </div>
 
@@ -377,7 +377,7 @@ function detail(x) {
            <div class="cand"><span class="n">${esc(x.r)}</span><span class="p R">${(100 - x.p).toFixed(1)}%</span><span class="v">win chance</span></div>`}
     <div class="facts">${r ? `<span>FLIPR <strong>D ${x.p.toFixed(1)}%</strong></span><span><strong>${r.pct}%</strong> reporting</span><span>About <strong>${fmt.format(Math.round(voteLeft(x) / 1000) * 1000)}</strong> votes still out</span>` : ''}
       <span>Held by <strong>${x.held === 'D' ? (x.kind === 'G' ? 'a Democrat' : 'Dems') : (x.kind === 'G' ? 'a Republican' : 'GOP')}</strong></span>${x.kind === 'H' ? `<span>Projected <strong>${esc(x.proj)}</strong></span><span>2024 pres. <strong>${esc(x.m24)}</strong></span>` : ''}<span>Polls close <strong>${clock(x.close)}</strong></span>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>${r && x.civicId ? extras(x) : ''}
-    <a class="spot" href="/race?race=${encodeURIComponent(x.kind === 'H' ? x.id : x.id + (x.kind === 'S' ? '-senate' : '-governor'))}${TEST ? '&test=1' : ''}">Race spotlight: county map and where the vote is left →</a>`;
+    <a class="spot" href="/race-maps?race=${encodeURIComponent(x.kind === 'H' ? x.id : x.id + (x.kind === 'S' ? '-senate' : '-governor'))}${TEST ? '&test=1' : ''}">Race map: county results, projection, and where the vote is left →</a>`;
 }
 
 // County map and the count over the night, from civicAPI, inside an opened race.
