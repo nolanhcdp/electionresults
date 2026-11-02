@@ -87,6 +87,14 @@ i.D { background: var(--dem) } i.R { background: var(--rep) }
 .mapw { position: relative; min-height: 0; min-width: 0; background: var(--panel); border: .12cqw solid var(--line); border-radius: .9cqw; overflow: hidden }
 .map { position: absolute; inset: 0 }
 .map svg { display: block; width: 100%; height: 100% }
+/* Projector mode: on in full screen (or ?projector). Projectors wash out pale colors, thin lines, and light gray text,
+   so secondary text gets darker and bolder, counties get heavier borders, and the map's palest colors get stronger. */
+body.proj { --muted: #e3e8ef; --dim: #c9d1dc; --ghost: #2b323d }
+body.proj.light { --muted: #26324a; --dim: #39455b; --ghost: #d6cebd; --line: #c9c0ae }
+body.proj .map .c { stroke-width: 1.3 }
+body.proj .cand .vt, body.proj .status, body.proj .stat .k, body.proj .left .sum, body.proj .lrow, body.proj .mt p, body.proj .legend .ticks, body.proj .legend .note, body.proj .spark text, body.proj .ft { font-weight: 700 }
+body.proj .stat .k { font-size: 1.05cqw } body.proj .cand .vt { font-size: 1.3cqw } body.proj .mt p { font-size: 1.25cqw } body.proj .legend .ticks { font-size: 1.2cqw }
+body.proj .cand.trail .nm { color: var(--fg) }
 .map .c { stroke: var(--county-line); stroke-width: .7; transition: fill .5s, fill-opacity .5s; cursor: pointer }
 .map .c:hover, .map .c.sel { stroke: var(--fg); stroke-width: 2 }
 .map .hatch { pointer-events: none }
@@ -341,11 +349,14 @@ html:not(.dash) #dash { display: none }
   const STOPS = {
     dark: { D: [[0, '#d9d6e0'], [4, '#b9cff7'], [12, '#7aa9f5'], [25, '#3a78e6'], [45, '#1b46a3']], R: [[0, '#d9d6e0'], [4, '#f7c4bd'], [12, '#f48a7e'], [25, '#df4636'], [45, '#9e1d12']] },
     light: { D: [[0, '#e7e3ea'], [4, '#bcd0f2'], [12, '#7aa6ec'], [25, '#2f74e0'], [45, '#0c3f99']], R: [[0, '#e7e3ea'], [4, '#f2c1bb'], [12, '#ea8a80'], [25, '#d8402f'], [45, '#8f1c12']] },
+    // Projector: even a 1-2 point county is clearly blue or red.
+    darkP: { D: [[0, '#b8b3c4'], [2, '#9dbcf5'], [10, '#5f95f0'], [25, '#2f6fe0'], [45, '#1b46a3']], R: [[0, '#b8b3c4'], [2, '#f5aea4'], [10, '#f0705f'], [25, '#da3a29'], [45, '#9e1d12']] },
+    lightP: { D: [[0, '#cfc8dc'], [2, '#9dbaf0'], [10, '#5a8fe6'], [25, '#215fd3'], [45, '#0b3a8f']], R: [[0, '#cfc8dc'], [2, '#efa69c'], [10, '#e46a5b'], [25, '#cc3424'], [45, '#86190f']] },
   };
   const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const lerp = (a, b, t) => { const A = hex(a), B = hex(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
   function color(m) {
-    const s = STOPS[document.body.classList.contains('light') ? 'light' : 'dark'][m >= 0 ? 'D' : 'R'], x = Math.min(Math.abs(m), 45);
+    const s = STOPS[(document.body.classList.contains('light') ? 'light' : 'dark') + (document.body.classList.contains('proj') ? 'P' : '')][m >= 0 ? 'D' : 'R'], x = Math.min(Math.abs(m), 45);
     for (let i = 1; i < s.length; i++) if (x <= s[i][0]) return lerp(s[i - 1][1], s[i][1], (x - s[i - 1][0]) / (s[i][0] - s[i - 1][0]));
     return s[s.length - 1][1];
   }
@@ -607,7 +618,7 @@ html:not(.dash) #dash { display: none }
       const m = mode === 'base' ? (p.d24 - p.r24) / p.t24 * 100 : c && c.tot ? (mode === 'swing' ? ((c.dv - c.rv) / c.tot - (p.d24 - p.r24) / p.t24) * 100 : (c.dv - c.rv) / c.tot * 100) : null;
       return `<g class="lbl" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})"><text class="a" y="-.2em">${esc(p.n)}</text>${m == null ? '' : `<text class="b" y="1.05em">${fm(m)}</text>`}</g>`;
     }).join('');
-    const fa = Math.max(12, W * 0.0135).toFixed(1), fb = Math.max(11, W * 0.012).toFixed(1);
+    const P = document.body.classList.contains('proj') ? 1.3 : 1, fa = Math.max(12, W * 0.0135 * P).toFixed(1), fb = Math.max(11, W * 0.012 * P).toFixed(1);
     box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="--fa:${fa}px;--fb:${fb}px" role="img" aria-label="County map of ${esc(titleOf(x))}"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="2.6" height="7" fill="${document.body.classList.contains('light') ? '#1D3557' : '#0b0d10'}" fill-opacity="${document.body.classList.contains('light') ? '.35' : '.5'}"/></pattern></defs>${ghosts}${shapes}${outline && !x.district ? `<path class="st" d="${path(outline)}"/>` : ''}${labels}</svg>`;
     if (sel) box.querySelector(`.c[data-k="${sel}"]`)?.classList.add('sel');
     const T = { base: x.leg ? ['How these counties voted in 2024', 'President, whole counties; the district covers part of some'] : ['How it voted in 2024', 'President, by county'], live: ['Live count by county', 'Striped: less than half of the county counted'], swing: ['Swing from 2024', 'Change in margin vs. 2024 president · counties with 10%+ counted'] }[mode];
@@ -987,6 +998,15 @@ html:not(.dash) #dash { display: none }
     else if (['1', '2', '3'].includes(e.key)) { const b = document.querySelectorAll('#modes button')[+e.key - 1]; if (!b.disabled) { mode = b.dataset.m; Q.delete('map'); show(idx); } }
     else if (e.key === 'Escape') { sel = null; $('tip').hidden = true; document.querySelectorAll('#map .c.sel').forEach((n) => n.classList.remove('sel')); }
   });
+  // Projector mode follows full screen (Present opens full screen too); ?projector keeps it on.
+  const projSync = () => {
+    const on = Q.has('projector') || !!document.fullscreenElement;
+    if (on === document.body.classList.contains('proj')) return;
+    document.body.classList.toggle('proj', on); thumbs.clear();
+    if (document.documentElement.classList.contains('dash')) renderDash(); else if (race) show(idx);
+  };
+  document.addEventListener('fullscreenchange', projSync);
+  if (Q.has('projector')) document.body.classList.add('proj');
   $('fs').onclick = () => { (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}); };
   let idle; const wake = () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 3500); };
   ['mousemove', 'keydown', 'touchstart'].forEach((ev) => addEventListener(ev, wake, { passive: true })); wake();
