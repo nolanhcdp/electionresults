@@ -13,8 +13,16 @@ function apply(s, b) {
     case 'pin': {
       const id = str(b.id, 300);
       if (!id) throw new Error('Which race?');
-      if (b.on) { if (!s.pinned.includes(id)) s.pinned.push(id); }
+      if (b.on) { if (!s.pinned.includes(id)) s.pinned.push(id); s.tvHidden = (s.tvHidden || []).filter((x) => x !== id); } // pinning brings it back to the TV
       else s.pinned = s.pinned.filter((x) => x !== id);
+      return;
+    }
+    case 'tvHide': { // take a race off the TV display (or put it back); phones are unaffected
+      const id = str(b.id, 300);
+      if (!id) throw new Error('Which race?');
+      const list = (s.tvHidden || []).filter((x) => x !== id);
+      if (b.on) { list.push(id); s.pinned = s.pinned.filter((x) => x !== id); }
+      s.tvHidden = list;
       return;
     }
     case 'ticker': {
