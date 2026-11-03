@@ -218,6 +218,10 @@ body.idle .tv-tools { opacity: 0; pointer-events: none; }
 .crow .s { color: var(--muted); font-size: 13px; }
 .pinbtn { font: 600 13px var(--ui); padding: 7px 14px; border-radius: 5px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; min-width: 84px; }
 .pinbtn[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1a1a1a; }
+.crbtns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.pinbtn[data-tvhide][aria-pressed="true"] { background: transparent; border-color: var(--fg); color: var(--fg); }
+.crow.offtv .o, .crow.offtv .s { opacity: .55; }
+.offtag { font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; margin-left: 6px; opacity: 1; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .seg button { font: 600 13px var(--ui); padding: 7px 14px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }

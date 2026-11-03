@@ -34,7 +34,8 @@
 
   // ---------- layout ----------
   function layout() {
-    const races = B.allRaces(results, state);
+    const off = new Set(state?.tvHidden || []); // races HQ took off the TV in Control
+    const races = B.allRaces(results, state).filter((r) => !off.has(r.id));
     const byId = new Map(races.map((r) => [r.id, r]));
     const pinned = (state?.pinned || []).map((id) => byId.get(id)).filter(Boolean);
     const units = pinned.reduce((a, r) => a + (B.isBoard(r) ? 2 : 1), 0);

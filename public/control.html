@@ -192,16 +192,17 @@
 
   function renderRaces() {
     const races = B.allRaces(results, state);
-    const pinned = new Set(state.pinned || []);
+    const pinned = new Set(state.pinned || []), off = new Set(state.tvHidden || []);
     $('raceList').innerHTML = B.LEVELS.map((lv) => {
       const list = races.filter((r) => r.level === lv);
       if (!list.length) return '';
       return `<div class="grouph">${lv}</div>` + list.map((r) => {
         const { line } = B.stats(r);
         const src = r.source === 'state' ? 'Whole district. ' : r.source === 'hand' ? 'Entered by hand. ' : '';
-        const on = pinned.has(r.id);
-        return `<div class="crow"><div><div class="o">${B.esc(r.office)}</div><div class="s">${src}${line.replace(/<\/?b>/g, '')}</div></div>
-          <button class="pinbtn" type="button" data-pin="${B.esc(r.id)}" aria-pressed="${on}">${on ? 'Pinned' : 'Pin'}</button></div>`;
+        const on = pinned.has(r.id), hid = off.has(r.id);
+        return `<div class="crow${hid ? ' offtv' : ''}"><div><div class="o">${B.esc(r.office)}${hid ? ' <span class="offtag">Off the TV</span>' : ''}</div><div class="s">${src}${line.replace(/<\/?b>/g, '')}</div></div>
+          <div class="crbtns"><button class="pinbtn" type="button" data-tvhide="${B.esc(r.id)}" aria-pressed="${hid}" title="${hid ? 'Put this race back on the TV' : 'Take this race off the TV (phones still show it)'}">${hid ? 'Show on TV' : 'Hide from TV'}</button>
+          <button class="pinbtn" type="button" data-pin="${B.esc(r.id)}" aria-pressed="${on}">${on ? 'Pinned' : 'Pin'}</button></div></div>`;
       }).join('');
     }).join('') || '<p class="note">No races yet. Once the clerk or the state posts results they show up here.</p>';
   }
@@ -237,6 +238,8 @@
 
   // ---------- events ----------
   $('raceList').addEventListener('click', (e) => {
+    const h = e.target.closest('[data-tvhide]');
+    if (h) { change({ op: 'tvHide', id: h.dataset.tvhide, on: h.getAttribute('aria-pressed') !== 'true' }, $('pinErr')); return; }
     const b = e.target.closest('[data-pin]'); if (!b) return;
     change({ op: 'pin', id: b.dataset.pin, on: b.getAttribute('aria-pressed') !== 'true' }, $('pinErr'));
   });
