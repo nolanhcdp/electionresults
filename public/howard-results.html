@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D3557">
+<title>Howard County Results Dashboard</title>
+<meta name="description" content="Every contest on the Howard County clerk's election night report: turnout, straight-ticket votes, how Democrats ran down the ballot, and full results.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/board.css">
+<style>
+  .hr { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+  .hr a { color: inherit; }
+  .hr-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 20px; border-bottom: 2px solid var(--fg); padding-bottom: 12px; }
+  .hr-top h1 { font-family: var(--display); font-weight: 600; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 4px 0 0; }
+  .hr-home { font-size: 14px; color: var(--muted); }
+  .hr-when { font-size: 14px; color: var(--muted); text-align: right; }
+  .hr-when b { color: var(--fg); }
+  .hr .err { margin: 16px 0; padding: 12px 14px; border: 1px solid var(--warn); border-radius: 8px; color: var(--warn); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0 8px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .stat .big { font-family: var(--display); font-weight: 600; font-size: clamp(26px, 4vw, 38px); line-height: 1; display: block; font-variant-numeric: tabular-nums; }
+  .stat .lbl { display: block; margin-top: 6px; font-size: 14px; color: var(--muted); }
+  .meter { display: block; height: 6px; border-radius: 3px; background: var(--track); margin-top: 10px; overflow: hidden; }
+  .meter i { display: block; height: 100%; background: var(--amber); }
+
+  h2.sec { font-family: var(--display); font-weight: 600; font-size: 26px; margin: 34px 0 4px; }
+  p.sub { margin: 0 0 14px; color: var(--muted); font-size: 15px; max-width: 720px; }
+
+  .split { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .split-bar { display: flex; height: 34px; border-radius: 6px; overflow: hidden; background: var(--track); }
+  .split-bar i { display: block; height: 100%; }
+  .split-legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; margin-top: 10px; font-size: 15px; }
+  .split-legend b { font-variant-numeric: tabular-nums; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+
+  .ladder { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px 14px; }
+  .lrow { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) 4.6rem; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .lrow:last-child { border-bottom: 0; }
+  .lname { font-size: 15px; font-weight: 600; line-height: 1.2; min-width: 0; }
+  .lname small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ltrack { position: relative; height: 20px; }
+  .ltrack .zero { position: absolute; top: -7px; bottom: -7px; border-left: 1px solid var(--muted); opacity: .6; }
+  .ltrack .ref { position: absolute; top: -7px; bottom: -7px; border-left: 2px dashed var(--amber); }
+  .ltrack i { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; }
+  .lval { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 15px; }
+  .laxis { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) 4.6rem; gap: 12px; font-size: 13px; color: var(--muted); padding: 8px 0 4px; }
+  .lticks { position: relative; height: 1.2em; }
+  .lticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .lnote { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .lnote .sw { background: none; border-left: 2px dashed var(--amber); border-radius: 0; width: 2px; height: 12px; margin-right: 8px; }
+
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 34px 0 6px; }
+  .tools h2.sec { margin: 0 auto 0 0; }
+  .tools input { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); min-width: 0; width: 15rem; max-width: 100%; }
+  .chip { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); cursor: pointer; font-size: 14px; }
+  .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+  h3.grp { font-family: var(--display); font-weight: 600; font-size: 21px; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
+  .hc { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 12px; min-width: 0; }
+  .hc h4 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 19px; line-height: 1.2; }
+  .hc .vf { margin: 3px 0 10px; font-size: 13px; color: var(--muted); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 7px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); margin-left: 6px; vertical-align: 2px; font-family: var(--ui); }
+  .hcr { padding: 5px 0; }
+  .hcr .top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .hcr .nm { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hcr .nm .pt { font-weight: 500; color: var(--muted); font-size: 13px; margin-left: 4px; }
+  .hcr .v { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+  .hcr .p { font-variant-numeric: tabular-nums; font-weight: 700; width: 3.6rem; text-align: right; }
+  .hcr .bar { height: 7px; border-radius: 4px; background: var(--track); margin-top: 4px; overflow: hidden; }
+  .hcr .bar i { display: block; height: 100%; border-radius: 4px; background: var(--muted); }
+  .hcr.lead .nm::after { content: ' ✓'; color: var(--amber); }
+  .hc .hcf { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .hr .empty { color: var(--muted); padding: 20px 0; }
+  .nb { margin: 36px 0 0; font-size: 12px; opacity: .75; }
+  .src { margin: 28px 0 0; font-size: 13px; color: var(--muted); }
+
+  @media (max-width: 760px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .lrow, .laxis { grid-template-columns: minmax(0, 1fr) 3.9rem; gap: 4px 10px; }
+    .lrow .lname { grid-column: 1 / -1; }
+    .lname small { display: inline; margin-left: 6px; }
+    .laxis > span:first-child { display: none; }
+    .hr-when { text-align: left; }
+    .tools input { width: 100%; }
+  }
+</style>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<main class="hr">
+  <header class="hr-top">
+    <div><a class="hr-home" href="/">All results</a><h1>Howard County results</h1></div>
+    <div class="hr-when" id="when">Loading the clerk's report…</div>
+  </header>
+  <div class="err" id="err" hidden></div>
+
+  <section class="stats" id="stats"></section>
+
+  <h2 class="sec">Straight-ticket votes</h2>
+  <p class="sub">Voters who marked one party for every partisan race.</p>
+  <div class="split" id="split"></div>
+
+  <h2 class="sec">Democrats down the ballot</h2>
+  <p class="sub">Every race with a Democrat and a Republican, by Democratic margin in Howard County. Races to the right of the dashed line ran ahead of the straight-ticket split.</p>
+  <div class="ladder" id="ladder"></div>
+
+  <div class="tools">
+    <h2 class="sec">Every contest</h2>
+    <input id="q" type="search" placeholder="Search a race or candidate" aria-label="Search races" autocomplete="off">
+  </div>
+  <div class="tools" style="margin-top:4px" id="chips"></div>
+  <div id="list"></div>
+
+  <p class="src">Unofficial results from the <a id="srcLink" href="#" target="_blank" rel="noopener">Howard County Clerk's summary report</a>, checked every minute. The clerk reports county totals only. Races that cross county lines (Congress, the legislature, statewide offices) show Howard County's votes only.</p>
+  <p class="nb">Built by NB · <a href="https://ko-fi.com/nolanb" target="_blank" rel="noopener">Support the work here</a></p>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fmt = new Intl.NumberFormat('en-US');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const pct = (x, d = 1) => (x * 100).toFixed(d) + '%';
+  const sum = (a) => a.reduce((t, c) => t + c.votes, 0);
+  const COLOR = { D: 'var(--dem)', R: 'var(--rep)', L: 'var(--amber)' };
+  const PNAME = { D: 'Democrat', R: 'Republican', L: 'Libertarian', I: 'Independent' };
+  const mlabel = (m) => (Math.abs(m) < 0.0005 ? 'Even' : (m > 0 ? 'D+' : 'R+') + (Math.abs(m) * 100).toFixed(1));
+  const GROUPS = ['Public questions', 'Federal and state', 'Statehouse', 'County', 'Township and town'];
+  const GNAME = { 'Federal and state': 'Statewide and Congress', 'Statehouse': 'Legislature', 'County': 'County', 'Township and town': 'Township and town', 'Public questions': 'Public questions' };
+
+  let data = null, filter = 'all', q = '';
+  try { filter = sessionStorage.getItem('hr-filter') || 'all'; } catch {}
+
+  const isQuestion = (c) => c.cands.length && c.cands.every((k) => /^(yes|no)$/i.test(k.name));
+  const isStraight = (c) => /^STRAIGHT PARTY/i.test(c.id);
+  const groupOf = (c) => (isQuestion(c) ? 'Public questions' : c.level);
+  const partisan = (c) => c.cands.some((k) => k.party === 'D') && c.cands.some((k) => k.party === 'R');
+
+  function stats() {
+    const m = data.meta, s = data.statistics || {};
+    const blank = typeof s['Ballots Cast - Blank'] === 'number' ? s['Ballots Cast - Blank'] : null;
+    const turnout = m.ballotsCast != null && m.registered ? m.ballotsCast / m.registered : null;
+    const out = [];
+    out.push(`<div class="stat"><span class="big">${turnout != null ? pct(turnout) : '—'}</span><span class="lbl">turnout so far</span>${turnout != null ? `<span class="meter"><i style="width:${(turnout * 100).toFixed(1)}%"></i></span>` : ''}</div>`);
+    out.push(`<div class="stat"><span class="big">${m.ballotsCast != null ? fmt.format(m.ballotsCast) : '—'}</span><span class="lbl">ballots counted</span></div>`);
+    out.push(`<div class="stat"><span class="big">${m.registered ? fmt.format(m.registered) : '—'}</span><span class="lbl">registered voters</span></div>`);
+    out.push(`<div class="stat"><span class="big">${data.contests.length}</span><span class="lbl">contests on the report${blank ? `<br>${fmt.format(blank)} blank ballots` : ''}</span></div>`);
+    $('stats').innerHTML = out.join('');
+  }
+
+  let straightMargin = null;
+  function split() {
+    const c = data.contests.find(isStraight);
+    if (!c || !sum(c.cands)) { $('split').innerHTML = '<p class="empty" style="padding:4px 0">No straight-ticket votes on the report yet.</p>'; straightMargin = null; return; }
+    const tot = sum(c.cands);
+    const order = [...c.cands].sort((a, b) => ({ D: 0, L: 1, R: 3 }[a.party] ?? 2) - ({ D: 0, L: 1, R: 3 }[b.party] ?? 2));
+    const d = c.cands.find((k) => k.party === 'D')?.votes || 0, r = c.cands.find((k) => k.party === 'R')?.votes || 0;
+    straightMargin = (d - r) / tot;
+    $('split').innerHTML = `<div class="split-bar">${order.map((k) => `<i style="width:${(k.votes / tot) * 100}%;background:${COLOR[k.party] || 'var(--muted)'}" title="${esc(k.name)}"></i>`).join('')}</div>
+      <div class="split-legend">${order.map((k) => `<span><span class="sw" style="background:${COLOR[k.party] || 'var(--muted)'}"></span>${esc(k.name.replace(/ Party$/, ''))} <b>${fmt.format(k.votes)}</b> (${pct(k.votes / tot)})</span>`).join('')}<span>Straight-ticket margin <b>${mlabel(straightMargin)}</b></span></div>`;
+  }
+
+  function ladder() {
+    const rows = data.contests.filter((c) => !isStraight(c) && partisan(c) && sum(c.cands)).map((c) => {
+      const tot = sum(c.cands);
+      const ds = c.cands.filter((k) => k.party === 'D'), rs = c.cands.filter((k) => k.party === 'R');
+      const m = (sum(ds) - sum(rs)) / tot;
+      const who = c.voteFor > 1 ? 'Democrats' : ds[0].name;
+      return { c, m, who };
+    }).sort((a, b) => b.m - a.m);
+    if (!rows.length) { $('ladder').innerHTML = '<p class="empty">No votes counted in D-vs-R races yet.</p>'; return; }
+    // Scale fits the races plus Even, so a county where every race leans one way still gets wide bars.
+    const ms = [0, ...rows.map((r) => r.m), ...(straightMargin != null ? [straightMargin] : [])];
+    const lo = Math.min(...ms) - 0.03, hi = Math.max(...ms) + 0.03;
+    const x = (m) => ((m - lo) / (hi - lo)) * 100;
+    const ref = straightMargin != null ? `<span class="ref" style="left:${x(straightMargin)}%"></span>` : '';
+    const ticks = [[lo + 0.03, mlabel(lo + 0.03)], [0, 'Even'], [hi - 0.03, mlabel(hi - 0.03)]].filter(([m], i, a) => i === 1 || Math.abs(x(m) - x(0)) > 14);
+    $('ladder').innerHTML = `<div class="laxis"><span></span><div class="lticks">${ticks.map(([m, l]) => `<span style="left:${x(m)}%">${l}</span>`).join('')}</div><span></span></div>` +
+      rows.map(({ c, m, who }) => {
+        const a = Math.min(x(0), x(m)), w = Math.abs(x(m) - x(0));
+        return `<div class="lrow"><div class="lname">${esc(who)}<small>${esc(c.office)}</small></div><div class="ltrack"><span class="zero" style="left:${x(0)}%"></span>${ref}<i style="left:${a}%;width:${Math.max(w, 0.6)}%;background:${m >= 0 ? 'var(--dem)' : 'var(--rep)'}"></i></div><div class="lval" style="color:${m >= 0 ? 'var(--dem)' : 'var(--rep)'}">${mlabel(m)}</div></div>`;
+      }).join('') +
+      (straightMargin != null ? `<p class="lnote"><span class="sw"></span>Straight-ticket margin, ${mlabel(straightMargin)}</p>` : '');
+  }
+
+  function card(c) {
+    const tot = sum(c.cands);
+    const sorted = [...c.cands].sort((a, b) => b.votes - a.votes);
+    const unopp = !isQuestion(c) && c.cands.length <= c.voteFor;
+    const lead = new Set(tot ? sorted.slice(0, c.voteFor).map((k) => k.name) : []);
+    const blankShare = c.total ? c.undervotes / c.total : 0;
+    return `<article class="hc"><h4>${esc(c.office)}${unopp ? '<span class="tag">Unopposed</span>' : ''}</h4>
+      <p class="vf">${c.voteFor > 1 ? `Vote for ${c.voteFor} · ` : ''}${fmt.format(tot)} votes</p>
+      ${sorted.map((k) => {
+        const share = tot ? k.votes / tot : 0;
+        return `<div class="hcr${lead.has(k.name) && !unopp ? ' lead' : ''}"><div class="top"><span class="nm">${esc(k.name)}${k.party ? `<span class="pt">${esc(PNAME[k.party] || k.party)}</span>` : ''}</span><span class="v">${fmt.format(k.votes)}</span><span class="p">${tot ? pct(share) : '—'}</span></div><div class="bar"><i style="width:${share * 100}%;background:${COLOR[k.party] || (/^yes$/i.test(k.name) ? 'var(--fg)' : 'var(--muted)')}"></i></div></div>`;
+      }).join('')}
+      <div class="hcf"><span>${fmt.format(c.undervotes)} left blank${c.total ? ` (${pct(blankShare)}${c.voteFor > 1 ? ' of possible votes' : ''})` : ''}</span>${c.overvotes ? `<span>${fmt.format(c.overvotes)} overvotes</span>` : ''}</div>
+    </article>`;
+  }
+
+  function chips() {
+    const opts = [['all', 'All'], ['partisan', 'D vs R'], ...GROUPS.map((g) => [g, GNAME[g]])];
+    $('chips').innerHTML = opts.map(([k, l]) => `<button type="button" class="chip" data-f="${esc(k)}" aria-pressed="${filter === k}">${esc(l)}</button>`).join('');
+  }
+
+  function list() {
+    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const show = data.contests.filter((c) => !isStraight(c))
+      .filter((c) => filter === 'all' || (filter === 'partisan' ? partisan(c) : groupOf(c) === filter))
+      .filter((c) => { const hay = (c.office + ' ' + c.cands.map((k) => k.name).join(' ')).toLowerCase(); return words.every((w) => hay.includes(w)); });
+    if (!show.length) { $('list').innerHTML = '<p class="empty">No contests match.</p>'; return; }
+    $('list').innerHTML = GROUPS.map((g) => {
+      const cs = show.filter((c) => groupOf(c) === g);
+      return cs.length ? `<h3 class="grp">${esc(GNAME[g])}</h3><div class="cards">${cs.map(card).join('')}</div>` : '';
+    }).join('');
+  }
+
+  function render() {
+    const m = data.meta;
+    $('when').innerHTML = `${esc(m.status || 'Unofficial results')}<br>Clerk's report from <b>${esc(m.reportTime || '—')}</b>`;
+    $('srcLink').href = data.url;
+    stats(); split(); ladder(); chips(); list();
+  }
+
+  async function load() {
+    try {
+      const r = await fetch('/api/clerk', { cache: 'no-store' });
+      const j = await r.json();
+      if (!r.ok || j.error) throw new Error(j.error || 'The clerk\'s report didn\'t load');
+      data = j; $('err').hidden = true; render();
+    } catch (e) {
+      $('err').hidden = false;
+      $('err').textContent = data ? `Couldn't reach the clerk's report just now (${e.message}). Showing the last numbers we had.` : `Couldn't load the clerk's report: ${e.message}. Trying again shortly.`;
+    }
+    setTimeout(load, 60_000);
+  }
+
+  $('chips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-f]'); if (!b || !data) return;
+    filter = b.dataset.f; try { sessionStorage.setItem('hr-filter', filter); } catch {}
+    chips(); list();
+  });
+  $('q').addEventListener('input', (e) => { q = e.target.value; if (data) list(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && data) render(); });
+  load();
+})();
+</script>
+</body>
+</html>
