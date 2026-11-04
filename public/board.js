@@ -43,7 +43,7 @@
 
   function subLine(r) {
     const bits = [];
-    if (r.source === 'state') bits.push(r.scope === 'statewide' ? 'Statewide' : 'Whole district');
+    if (r.source === 'state') bits.push(r.howardOnly ? 'Howard County only, district count not in yet' : r.scope === 'statewide' ? 'Statewide' : 'Whole district');
     if (r.source === 'hand') bits.push('Entered by HQ');
     if (r.source === 'clerk' && r.partial && !r.backup) bits.push('Howard County only');
     if (r.backup) bits.push('Backup count from civicAPI');
@@ -87,7 +87,7 @@
   const sideTop = (cands, p) => cands.filter((c) => c.party === p).sort((a, b) => b.votes - a.votes)[0] || null;
   function panelButtons(r) {
     if (!r.civicId) return '';
-    const wide = r.scope === 'district' || r.scope === 'statewide';
+    const wide = !r.howardOnly && (r.scope === 'district' || r.scope === 'statewide');
     const open = panels.open.get(r.id);
     const btn = (kind, label) => `<button type="button" class="pmore" data-panel="${kind}" data-race="${esc(r.id)}" data-civic="${esc(r.civicId)}" aria-expanded="${open === kind}">${label}</button>`;
     return `<div class="pmores">${wide ? btn('county', 'By county') : ''}${btn('time', 'Over the night')}</div>`;
@@ -169,7 +169,7 @@
     const registered = state?.registered || m.registered || null;
     const expected = state?.expected || null;
     const p = m.precincts && m.precincts.of ? m.precincts : null;
-    const final = !!p && p.n >= p.of; // every Election Day precinct in: the expected-vote estimate has done its job
+    const final = false; // vote centers: precinct counts don't mean much, so the count is never treated as final
     return {
       ballots,
       registered,
@@ -177,7 +177,7 @@
       share: !final && ballots != null && expected ? Math.min(1, ballots / expected) : null,
       final,
       reportTime: m.reportTime ? m.reportTime.replace(/^\d{2}\/\d{2}\/\d{4}\s+/, '') : null,
-      precincts: m.precincts && m.precincts.of ? m.precincts : null, // Election Day precincts reporting, from the clerk
+      precincts: null, // vote centers: precinct counts aren't shown
     };
   }
 
