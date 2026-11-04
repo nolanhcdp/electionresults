@@ -40,5 +40,22 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/national.js": {
+      "maxDuration": 150
+    },
+    "api/results.js": {
+      "maxDuration": 150
+    },
+    "api/mcp.js": {
+      "maxDuration": 150
+    },
+    "api/indiana.js": {
+      "maxDuration": 150
+    },
+    "api/county.js": {
+      "maxDuration": 150
+    }
+  }
 }
