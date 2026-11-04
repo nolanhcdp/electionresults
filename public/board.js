@@ -44,6 +44,7 @@
   function subLine(r) {
     const bits = [];
     if (r.source === 'state') bits.push(r.howardOnly ? 'Howard County only, district count not in yet' : r.scope === 'statewide' ? 'Statewide' : 'Whole district');
+    if (r.fromCivic) bits.push('civicAPI count');
     if (r.source === 'hand') bits.push('Entered by HQ');
     if (r.source === 'clerk' && r.partial && !r.backup) bits.push('Howard County only');
     if (r.backup) bits.push('Backup count from civicAPI');

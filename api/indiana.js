@@ -8,7 +8,7 @@ import config from '../lib/config.js';
 import { enrCategories, enrCategoryRaces, enrQuestions, seatKey } from '../lib/enr.js';
 import { BALLOT, isContested, GROUP_OF, officeName } from '../lib/ballot.js';
 import { previewIndiana } from '../lib/preview.js';
-import { seatRace } from '../lib/civicapi.js';
+import { seatCount, withNames } from '../lib/civicapi.js';
 
 const ORDER = ['Statewide', 'Congress', 'State Senate', 'State House', 'Ballot questions'];
 const STATE_OFFICES = /^(US Representative|United States Representative|State Senator|State Representative|Governor|Attorney General|Secretary of State|Treasurer of State|State Treasurer|Comptroller|State Comptroller|Auditor of State|US Senator|United States Senator)/i;
@@ -68,8 +68,17 @@ export default async function handler(req, res) {
       });
     }
     races.sort((a, b) => ORDER.indexOf(a.group) - ORDER.indexOf(b.group) || district(a.seat) - district(b.seat));
-    // Link each seat to civicAPI for county breakdowns and vote timelines (optional: skipped if civicAPI is down).
-    await Promise.all(races.filter((r) => r.id.startsWith('seat:')).map(async (r) => { try { r.civicId = (await seatRace(r.seat))?.id || undefined; } catch { /* no link */ } }));
+    // civicAPI is the main count for every seat (the state's site only stands in where civicAPI has no votes), and its
+    // race id links county breakdowns and vote timelines. Skipped quietly if civicAPI is down.
+    const sumV = (cs) => cs.reduce((a, c) => a + (Number(c.votes) || 0), 0);
+    await Promise.all(races.filter((r) => r.id.startsWith('seat:')).map(async (r) => {
+      try {
+        const cc = await seatCount(r.seat);
+        if (!cc) return;
+        r.civicId = cc.id;
+        if (cc.cands && sumV(cc.cands)) { r.cands = withNames(r.cands, cc.cands); r.fromCivic = true; r.pct = cc.pct; }
+      } catch { /* no civicAPI: the state's numbers stand */ }
+    }));
 
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=180');
     return res.status(200).json({ live, election: settings?.election || null, races, builtAt: new Date().toISOString() });
