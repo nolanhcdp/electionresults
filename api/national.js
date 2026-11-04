@@ -55,7 +55,8 @@ export default async function handler(req, res) {
   const senate = withRes(FORECAST.senate, 'S:');
   const governors = withRes(FORECAST.governors || [], '', e.gov);
   const all = [...house, ...senate, ...governors];
-  const real = (r) => showTest || r.test === false;
+  // After polls close, a race whose test flag we couldn't confirm (civicAPI too slow for the detail check) counts as real.
+  const real = (r) => showTest || r.test === false || (r.test == null && Date.now() >= Date.parse('2026-11-03T23:00:00Z'));
   const measures = e.measures.map((r) => {
     const show = real(r), yes = show ? votesOf(r, 'yes') : 0, no = show ? votesOf(r, 'no') : 0;
     const w = show ? (r.candidates || []).find((x) => x.winner) : null;
